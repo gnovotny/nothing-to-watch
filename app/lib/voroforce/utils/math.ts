@@ -23,7 +23,7 @@ export const easedMinLerp = (
   // Calculate the raw difference
   const diff = end - start
 
-  if (diff < min) {
+  if (Math.abs(diff) < min) {
     return end
   }
 

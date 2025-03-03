@@ -1,6 +1,7 @@
 import { easedMinLerp, MIN_LERP_EASING_TYPES } from './math'
+import type { VOROFORCE_MODES } from '../store'
 
-export type ConfigUniform =
+export type BaseConfigUniform =
   | {
       value: string | boolean
       animatable: never
@@ -15,6 +16,11 @@ export type ConfigUniform =
       targetFactor?: number
       targetEasing?: MIN_LERP_EASING_TYPES
     }
+
+export type ConfigUniform = BaseConfigUniform & {
+  modes?: Record<VOROFORCE_MODES | 'default', BaseConfigUniform>
+}
+
 export type ConfigUniforms = Map<string, ConfigUniform>
 
 export const handleAnimatingUniforms = (uniforms: ConfigUniforms) => {
@@ -47,6 +53,33 @@ export const updateUniforms = (
   Object.entries(updates).forEach(([key, value]) => {
     const uniform = uniforms.get(key)
     if (uniform) {
+      if (
+        animatingUniforms &&
+        typeof value === 'number' &&
+        uniform.animatable
+      ) {
+        if (uniform.value !== value) {
+          uniform.targetValue = value
+          if (!animatingUniforms.has(key)) {
+            animatingUniforms.set(key, uniform)
+          }
+        }
+      } else {
+        uniform.value = value
+      }
+    }
+  })
+}
+
+export const updateUniformsByMode = (
+  uniforms: ConfigUniforms,
+  mode: VOROFORCE_MODES,
+  animatingUniforms?: ConfigUniforms,
+) => {
+  uniforms.forEach((uniform, key) => {
+    const uniformMode = uniform.modes?.[mode] ?? uniform.modes?.default
+    if (uniformMode) {
+      const value = uniformMode.value
       if (
         animatingUniforms &&
         typeof value === 'number' &&

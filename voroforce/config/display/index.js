@@ -12,9 +12,42 @@ export default {
       uniforms: {
         iForceMaxNeighborLevel: { value: 0 },
         bForceMaxQuality: { value: false },
-        fRoundnessMod: { value: 1, animatable: true },
-        fEdgeMod: { value: 1, animatable: true },
-        fEdgeSmoothnessMod: { value: 1, animatable: true },
+        fRoundnessMod: {
+          value: 1,
+          animatable: true,
+          modes: {
+            default: {
+              value: 1,
+            },
+            select: {
+              value: 3,
+            },
+          },
+        },
+        fEdgeMod: {
+          value: 1,
+          animatable: true,
+          modes: {
+            default: {
+              value: 1,
+            },
+            select: {
+              value: 5,
+            },
+          },
+        },
+        fEdgeSmoothnessMod: {
+          value: 1,
+          animatable: true,
+          modes: {
+            default: {
+              value: 1,
+            },
+            select: {
+              value: 3,
+            },
+          },
+        },
       },
     },
     post: {
@@ -25,10 +58,26 @@ export default {
           // value: 0.3,
           value: 0.3,
           animatable: true,
+          modes: {
+            default: {
+              value: 0.3,
+            },
+            select: {
+              value: 1,
+            },
+          },
         },
         fEdgeStrength: {
           value: 0.3,
           animatable: true,
+          modes: {
+            default: {
+              value: 0.3,
+            },
+            select: {
+              value: 1,
+            },
+          },
         },
         iChannel0: {
           src: '/assets/rust.jpg',
