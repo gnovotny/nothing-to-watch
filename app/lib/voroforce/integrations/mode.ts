@@ -113,7 +113,7 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
 }
 
 export const handleMode = () => {
-  const { mode: initialMode, instance, config } = store.getState()
+  const { mode: initialMode, instance } = store.getState()
 
   const { controls, dimensions } = instance
 
