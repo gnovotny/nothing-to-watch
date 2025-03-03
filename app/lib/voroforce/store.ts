@@ -10,16 +10,18 @@ import type {
   UserConfig,
 } from './utils'
 
-type VoroforceInstance = ReturnType<typeof voroforce>
-export type UnsafeVoroforceInstance = VoroforceInstance & {
-  loader: NonNullable<VoroforceInstance['loader']>
-  controls: NonNullable<VoroforceInstance['controls']>
-  display: NonNullable<VoroforceInstance['display']> & {
-    scene: NonNullable<NonNullable<VoroforceInstance['display']>['scene']>
-    renderer: NonNullable<NonNullable<VoroforceInstance['display']>['renderer']>
+type SafeVoroforceInstance = ReturnType<typeof voroforce>
+export type VoroforceInstance = SafeVoroforceInstance & {
+  loader: NonNullable<SafeVoroforceInstance['loader']>
+  controls: NonNullable<SafeVoroforceInstance['controls']>
+  display: NonNullable<SafeVoroforceInstance['display']> & {
+    scene: NonNullable<NonNullable<SafeVoroforceInstance['display']>['scene']>
+    renderer: NonNullable<
+      NonNullable<SafeVoroforceInstance['display']>['renderer']
+    >
   }
-  simulation: NonNullable<VoroforceInstance['simulation']>
-  dimensions: NonNullable<VoroforceInstance['dimensions']>
+  simulation: NonNullable<SafeVoroforceInstance['simulation']>
+  dimensions: NonNullable<SafeVoroforceInstance['dimensions']>
 }
 
 export enum VOROFORCE_MODES {
@@ -31,10 +33,10 @@ export enum VOROFORCE_MODES {
 export type VoroforceState = {
   container: HTMLElement
   setContainer: (container: HTMLElement) => void
-  instance: UnsafeVoroforceInstance
-  setInstance: (instance: UnsafeVoroforceInstance) => void
-  config: UnsafeVoroforceInstance['config']
-  setConfig: (instance: UnsafeVoroforceInstance['config']) => void
+  instance: VoroforceInstance
+  setInstance: (instance: VoroforceInstance) => void
+  config: VoroforceInstance['config']
+  setConfig: (instance: VoroforceInstance['config']) => void
   film?: Film
   setFilm: (film?: Film) => void
   filmBatches: Map<number, FilmData[]>
@@ -65,9 +67,8 @@ export const store = create(
   subscribeWithSelector<VoroforceState>(
     (set, get) =>
       ({
-        setInstance: (instance: UnsafeVoroforceInstance) => set({ instance }),
-        setConfig: (config: UnsafeVoroforceInstance['config']) =>
-          set({ config }),
+        setInstance: (instance: VoroforceInstance) => set({ instance }),
+        setConfig: (config: VoroforceInstance['config']) => set({ config }),
         setContainer: (container: HTMLElement) => set({ container }),
         setFilm: (film?: Film) => set({ film }),
         filmBatches: new Map<number, FilmBatch>(),
