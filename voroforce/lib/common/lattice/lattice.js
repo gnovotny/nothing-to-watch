@@ -334,5 +334,6 @@ export const handleLattice = (latticeConfig, cells, width, height) => {
   const immediate =
     prevRows !== latticeConfig.rows || prevCols !== latticeConfig.cols
 
+  console.log('immediate', immediate)
   packLattice(cells, latticeConfig, immediate)
 }

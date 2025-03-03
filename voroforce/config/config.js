@@ -10,7 +10,7 @@ export const baseLatticeConfig = {
 }
 
 export const introModeLatticeConfig = mergeConfigs(baseLatticeConfig, {
-  autoTargetMediaVersion2SubgridCount: 5,
+  autoTargetMediaVersion2SubgridCount: 10,
   targetCellSizeViewportPercentage: 0.075,
 })
 

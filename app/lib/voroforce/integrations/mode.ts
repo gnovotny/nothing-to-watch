@@ -1,5 +1,5 @@
 import { store, VOROFORCE_MODES } from '../store'
-import { forceSimulationStepConfigs } from '√/config'
+import { baseLatticeConfig, forceSimulationStepConfigs } from '√/config'
 import {
   updateUniforms,
   updateUniformsByMode,
@@ -113,16 +113,28 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
 }
 
 export const handleMode = () => {
-  const {
-    instance: { controls },
-  } = store.getState()
+  const { mode: initialMode, instance, config } = store.getState()
 
-  controls.addEventListener('selected', (async ({
+  if (initialMode === VOROFORCE_MODES.intro) {
+    setTimeout(() => {
+      instance.config.lattice = {
+        rows: instance.config.lattice.rows,
+        cols: instance.config.lattice.cols,
+        ...baseLatticeConfig,
+      }
+      instance.resize()
+      // handleModeChange(VOROFORCE_MODES.preview)
+      console.log('innit')
+    }, 1000)
+  }
+
+  instance.controls.addEventListener('selected', (async ({
     cell,
   }: { cell: VoroforceCell }) => {
-    const mode = cell ? VOROFORCE_MODES.select : VOROFORCE_MODES.preview
-    if (mode !== store.getState().mode) {
-      handleModeChange(mode)
-    }
+    const mode = store.getState().mode
+    if (mode === VOROFORCE_MODES.intro) return
+    const newMode = cell ? VOROFORCE_MODES.select : VOROFORCE_MODES.preview
+    if (newMode === mode) return
+    handleModeChange(newMode)
   }) as unknown as EventListener)
 }

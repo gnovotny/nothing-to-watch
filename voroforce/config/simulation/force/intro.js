@@ -4,9 +4,9 @@ export const forceSimulationStepIntroConfig = {
     alphaTarget: 0,
     alphaDecay: 0,
     alphaMin: 0,
-    velocityDecay: 0.5,
-    velocityDecayBase: 0.5,
-    velocityDecayTransitionEnterMode: 0.5,
+    velocityDecay: 0.85,
+    velocityDecayBase: 0.85,
+    velocityDecayTransitionEnterMode: 0.85,
   },
   forces: [
     {

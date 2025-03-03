@@ -24,6 +24,7 @@ export type UnsafeVoroforceInstance = VoroforceInstance & {
 export enum VOROFORCE_MODES {
   preview = 'preview',
   select = 'select',
+  intro = 'intro',
 }
 
 export type VoroforceState = {
@@ -56,6 +57,9 @@ export type VoroforceState = {
   }
 }
 
+// const playedIntro = Boolean(localStorage.getItem('playedIntro'))
+const playedIntro = false
+
 export const store = create(
   subscribeWithSelector<VoroforceState>(
     (set, get) =>
@@ -66,7 +70,7 @@ export const store = create(
         setContainer: (container: HTMLElement) => set({ container }),
         setFilm: (film?: Film) => set({ film }),
         filmBatches: new Map<number, FilmBatch>(),
-        mode: VOROFORCE_MODES.preview,
+        mode: playedIntro ? VOROFORCE_MODES.preview : VOROFORCE_MODES.intro,
         isPreviewMode: true,
         isSelectMode: false,
         setMode: (mode: VOROFORCE_MODES) =>
@@ -84,8 +88,7 @@ export const store = create(
             settingsOpen,
           })
         },
-        // playedIntro: Boolean(localStorage.getItem('playedIntro')),
-        playedIntro: false,
+        playedIntro,
         setPlayedIntro: (playedIntro: boolean) => {
           set({
             playedIntro,
