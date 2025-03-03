@@ -84,7 +84,8 @@ export const store = create(
             settingsOpen,
           })
         },
-        playedIntro: Boolean(localStorage.getItem('playedIntro')),
+        // playedIntro: Boolean(localStorage.getItem('playedIntro')),
+        playedIntro: false,
         setPlayedIntro: (playedIntro: boolean) => {
           set({
             playedIntro,

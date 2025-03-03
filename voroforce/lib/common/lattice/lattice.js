@@ -55,16 +55,20 @@ export function packLattice(cells, latticeConfig, immediate = false) {
 
 /**
  * Generates subgrids of 18x12 elements from the center outward
- * @param {number} totalRows - Total rows in the main grid
- * @param {number} totalCols - Total columns in the main grid
+ * @param {Object} latticeConfig - Lattice config
  * @param {number} cells - Number of cells to include in subgrids
  * @returns {Array} - Array of subgrid coordinates in [row, col] format
  */
 export function generateCenterOutwardSubgridsAndAssignCellIds(
-  totalRows,
-  totalCols,
+  latticeConfig,
   cells,
 ) {
+  const {
+    rows: totalRows,
+    cols: totalCols,
+    autoTargetMediaVersion2SubgridCount = 0,
+  } = latticeConfig
+
   const elementCount = cells.length
   // Calculate center of grid
   const centerRow = Math.floor(totalRows / 2)
@@ -122,8 +126,12 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
           const cell = cells[cellIndex]
           if (cell) {
             cell.id = currentCellId++
-            cell.subgrid = currentSubgrid
+            cell.subgrid = currentSubgrid // for json and media v2 layers
             cell.subgridIndex = subgridIndex
+
+            if (currentSubgrid < autoTargetMediaVersion2SubgridCount) {
+              cell.targetMediaVersion = 2
+            }
           }
           remainingElements--
         }
@@ -298,18 +306,30 @@ function calculateOptimalLattice(
 export const handleLattice = (latticeConfig, cells, width, height) => {
   const prevRows = latticeConfig.rows
   const prevCols = latticeConfig.cols
+
   Object.assign(
     latticeConfig,
     calculateOptimalLattice(width, height, cells.length, latticeConfig.aspect),
   )
 
+  if (latticeConfig.targetCellSizeViewportPercentage) {
+    const landscape = width > height
+    const targetCellSize =
+      (landscape ? width : height) *
+      latticeConfig.targetCellSizeViewportPercentage
+    const factor =
+      targetCellSize / latticeConfig[landscape ? 'cellWidth' : 'cellHeight']
+    latticeConfig.cellWidth *= factor
+    latticeConfig.cellHeight *= factor
+    latticeConfig.latticeWidth *= factor
+    latticeConfig.latticeHeight *= factor
+    latticeConfig.offsetX = -(latticeConfig.latticeWidth - width) / 2
+    latticeConfig.offsetY = -(latticeConfig.latticeHeight - height) / 2
+  }
+
   console.log('lattice config', latticeConfig)
 
-  generateCenterOutwardSubgridsAndAssignCellIds(
-    latticeConfig.rows,
-    latticeConfig.cols,
-    cells,
-  )
+  generateCenterOutwardSubgridsAndAssignCellIds(latticeConfig, cells)
 
   const immediate =
     prevRows !== latticeConfig.rows || prevCols !== latticeConfig.cols

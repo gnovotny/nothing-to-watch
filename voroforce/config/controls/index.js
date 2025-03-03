@@ -1,6 +1,7 @@
 export default {
   autoFocusCenter: {
-    enabled: true,
+    // enabled: true,
+    enabled: false,
     random: false,
   },
   maxPointerSpeed: 0.5, // percentage of diagonal per second (px/s)
