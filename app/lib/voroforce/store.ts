@@ -19,6 +19,7 @@ export type UnsafeVoroforceInstance = VoroforceInstance & {
     renderer: NonNullable<NonNullable<VoroforceInstance['display']>['renderer']>
   }
   simulation: NonNullable<VoroforceInstance['simulation']>
+  dimensions: NonNullable<VoroforceInstance['dimensions']>
 }
 
 export enum VOROFORCE_MODES {

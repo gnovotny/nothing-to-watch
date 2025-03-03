@@ -115,6 +115,8 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
 export const handleMode = () => {
   const { mode: initialMode, instance, config } = store.getState()
 
+  const { controls, dimensions } = instance
+
   if (initialMode === VOROFORCE_MODES.intro) {
     setTimeout(() => {
       instance.config.lattice = {
@@ -123,8 +125,19 @@ export const handleMode = () => {
         ...baseLatticeConfig,
       }
       instance.resize()
-      // handleModeChange(VOROFORCE_MODES.preview)
-      console.log('innit')
+
+      setTimeout(() => {
+        handleModeChange(VOROFORCE_MODES.preview)
+
+        controls.targetPointer = {
+          x:
+            dimensions.get('width') / 2 +
+            (0.5 - Math.random()) * 0.05 * dimensions.get('width'),
+          y:
+            dimensions.get('height') / 2 +
+            (0.5 - Math.random()) * 0.05 * dimensions.get('height'),
+        }
+      }, 2000)
     }, 1000)
   }
 
