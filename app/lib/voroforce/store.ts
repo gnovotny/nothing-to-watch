@@ -12,6 +12,7 @@ import type {
 
 type VoroforceInstance = ReturnType<typeof voroforce>
 export type UnsafeVoroforceInstance = VoroforceInstance & {
+  loader: NonNullable<VoroforceInstance['loader']>
   controls: NonNullable<VoroforceInstance['controls']>
   display: NonNullable<VoroforceInstance['display']> & {
     scene: NonNullable<NonNullable<VoroforceInstance['display']>['scene']>
@@ -51,7 +52,7 @@ export type VoroforceState = {
   configUniforms: {
     main: ConfigUniforms
     post: ConfigUniforms
-    transitioning: ConfigUniforms
+    animating: ConfigUniforms
   }
 }
 

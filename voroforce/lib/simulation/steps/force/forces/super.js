@@ -58,11 +58,32 @@ export const superForce = ({
     cell,
     x,
     y,
-    l
+    l,
+    mediaV1DistThreshold,
+    mediaV2DistThreshold,
+    mediaV1LevelAdjacencyThreshold,
+    mediaV2LevelAdjacencyThreshold,
+    colLevelAdjacency,
+    rowLevelAdjacency,
+    maxLevelAdjacency
 
   const mediaEnabled = globalConfig.media.enabled && pushManageMediaVersions
 
+  if (mediaEnabled) {
+    const diagonal = dimensions.get('diagonal')
+    mediaV1DistThreshold = diagonal * 0.075
+    mediaV2DistThreshold = diagonal * 0.025
+
+    mediaV1LevelAdjacencyThreshold = 18
+    mediaV2LevelAdjacencyThreshold = 6
+
+    console.log('mediaV1Threshold', mediaV1DistThreshold)
+    console.log('mediaV2Threshold', mediaV2DistThreshold)
+  }
+
   function force(alpha) {
+    // centerCell = select(cells) ?? lastKnownCenterCell
+    // lastKnownCenterCell = centerCell
     centerCell = select(cells)
 
     // if (!centerCell) {
@@ -153,6 +174,11 @@ export const superForce = ({
         continue
       }
 
+      colLevelAdjacency = Math.abs(cell.col - centerCell.col)
+      rowLevelAdjacency = Math.abs(cell.row - centerCell.row)
+
+      maxLevelAdjacency = Math.max(colLevelAdjacency, rowLevelAdjacency)
+
       pointerFollowModX = 1
       pointerFollowModY = 1
       // if (i === centerCell.index) {
@@ -195,9 +221,16 @@ export const superForce = ({
       l = Math.sqrt(l)
 
       if (mediaEnabled) {
-        if (l < 150) {
-          cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
-        } else if (l < 200) {
+        if (
+          l < mediaV2DistThreshold ||
+          maxLevelAdjacency <= mediaV2LevelAdjacencyThreshold
+        ) {
+          // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
+          cell.targetMediaVersion = 2
+        } else if (
+          l < mediaV1DistThreshold ||
+          maxLevelAdjacency <= mediaV1LevelAdjacencyThreshold
+        ) {
           cell.targetMediaVersion = Math.max(cell.targetMediaVersion, 1)
         }
       }
@@ -217,8 +250,8 @@ export const superForce = ({
       }
 
       if (
-        Math.abs(cell.col - centerCell.col) <= latticeMaxLevelsFromCenter ||
-        Math.abs(cell.row - centerCell.row) <= latticeMaxLevelsFromCenter
+        colLevelAdjacency <= latticeMaxLevelsFromCenter ||
+        rowLevelAdjacency < latticeMaxLevelsFromCenter
       ) {
         const source = cell
         const ii = i - 1
@@ -245,8 +278,8 @@ export const superForce = ({
       }
 
       if (
-        Math.abs(cell.col - centerCell.col) <= latticeMaxLevelsFromCenter ||
-        Math.abs(cell.row - centerCell.row) <= latticeMaxLevelsFromCenter
+        colLevelAdjacency <= latticeMaxLevelsFromCenter ||
+        rowLevelAdjacency < latticeMaxLevelsFromCenter
       ) {
         const source = cell
         const ii = i - globalConfig.lattice.cols

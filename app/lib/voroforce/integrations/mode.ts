@@ -1,26 +1,25 @@
 import { store, VOROFORCE_MODES } from '../store'
-import type { VoroforceCell } from '../utils/cells'
 import { forceSimulationStepConfigs } from '√/config'
-import { updateUniforms } from '../utils'
+import { updateUniforms, type VoroforceCell } from '../utils'
 
 let afterModeChangeTimeout: NodeJS.Timeout
 
 const handleModeChange = (mode: VOROFORCE_MODES): void => {
   const {
     setMode,
-    instance: {
-      simulation,
-      controls,
-      // display: { scene },
-    },
+    instance: { simulation },
     configUniforms: {
       main: mainUniforms,
       post: postUniforms,
-      transitioning: transitioningUniforms,
+      animating: animatingUniforms,
     },
   } = store.getState()
 
   setMode(mode)
+  const forceStepConfig = forceSimulationStepConfigs[mode]
+  // when switching from select to preview mode, need to up velocityDecay during the transition (voronoi cell propagation speed limits in shader)
+  forceStepConfig.parameters.velocityDecay =
+    forceStepConfig.parameters.velocityDecayTransitionEnterMode
 
   if (mode === VOROFORCE_MODES.select) {
     // renderer.resizeScissor({
@@ -34,11 +33,11 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
     updateUniforms(
       mainUniforms,
       {
-        fEdgeMode: 5,
+        fEdgeMod: 5,
         fEdgeSmoothnessMod: 3,
         fRoundnessMod: 3,
       },
-      transitioningUniforms,
+      animatingUniforms,
     )
     updateUniforms(
       postUniforms,
@@ -46,19 +45,19 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
         fAlphaStrength: 1,
         fEdgeStrength: 1,
       },
-      transitioningUniforms,
+      animatingUniforms,
     )
-  } else {
-    controls.enableFocus()
+  } else if (mode === VOROFORCE_MODES.preview) {
+    // controls.enableFocus()
 
     updateUniforms(
       mainUniforms,
       {
-        fEdgeMode: 1,
+        fEdgeMod: 1,
         fEdgeSmoothnessMod: 1,
         fRoundnessMod: 1,
       },
-      transitioningUniforms,
+      animatingUniforms,
     )
     updateUniforms(
       postUniforms,
@@ -66,38 +65,44 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
         fAlphaStrength: 0.3,
         fEdgeStrength: 0.3,
       },
-      transitioningUniforms,
+      animatingUniforms,
     )
   }
 
-  updateUniforms(
-    mainUniforms,
-    {
-      bForceMaxQuality: true,
-    },
-    transitioningUniforms,
-  )
+  // when switching modes, need to temporarily up the neighbor searches in the shader to max supported level (voronoi cell propagation speed limits in shader)
+  updateUniforms(mainUniforms, {
+    // bForceMaxQuality: true,
+    iForceMaxNeighborLevel: 3,
+  })
+
+  simulation.updateForceStepConfig(forceStepConfig)
 
   clearTimeout(afterModeChangeTimeout)
   afterModeChangeTimeout = setTimeout(() => {
-    if (mode === 'preview') {
-      updateUniforms(
-        mainUniforms,
-        {
-          bForceMaxQuality: false,
-        },
-        transitioningUniforms,
-      )
-    } else {
-      // renderer.resizeScissor({
-      //   offset: {
-      //     [landscape ? 'left' : 'top']: 800, // todo measurement
-      //   },
-      // })
-    }
-  }, 1000)
+    // we revert back to default neighbor level as using max is extremely expensive
+    updateUniforms(mainUniforms, {
+      // bForceMaxQuality: false,
+      iForceMaxNeighborLevel: 0,
+    })
 
-  simulation.updateForceStepConfig(forceSimulationStepConfigs[mode])
+    // revert to default velocityDecay after the transition (voronoi cell propagation speed limits in shader, see above)
+    forceStepConfig.parameters.velocityDecay =
+      forceStepConfig.parameters.velocityDecayBase
+    simulation.updateForceStepConfig(forceSimulationStepConfigs[mode])
+
+    // if (mode === 'preview') {
+    //   // updateUniforms(mainUniforms, {
+    //   //   bForceMaxQuality: false,
+    //   //   iForceMaxNeighborLevel: 0,
+    //   // })
+    // } else {
+    //   // renderer.resizeScissor({
+    //   //   offset: {
+    //   //     [landscape ? 'left' : 'top']: 800, // todo measurement
+    //   //   },
+    //   // })
+    // }
+  }, 2000)
 }
 
 export const handleMode = () => {

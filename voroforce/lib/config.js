@@ -21,6 +21,7 @@ const baseConfig = {
   },
   media: {
     enabled: false,
+    preload: 'v0', // 'v0', 'first' or false
   },
   lattice: {
     enabled: true,

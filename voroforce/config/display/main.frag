@@ -25,6 +25,7 @@ uniform int iLatticeCols;
 uniform int iFocusedIndex;
 uniform float iTime;
 uniform bool bForceMaxQuality;
+uniform int iForceMaxNeighborLevel;
 uniform float fRoundnessMod;
 uniform float fEdgeMod;
 uniform float fEdgeSmoothnessMod;
@@ -389,6 +390,14 @@ Data updateData(vec2 p, uvec4 prevIndices) {
 
     bool highQuality = false;
     uint maxNeighborIterations = GLOBAL_MAX_NEIGHBOR_ITERATIONS;
+
+    if (iForceMaxNeighborLevel == 1) {
+        maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_1;
+    } else if (iForceMaxNeighborLevel == 2) {
+        maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_2;
+    } else if (iForceMaxNeighborLevel == 3) {
+        maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
+    }
 
 //    if (bForceMaxQuality) {
 //        highQuality = true;

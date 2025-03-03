@@ -32,7 +32,7 @@ export const getVoroforceConfigProps = (userConfig: UserConfig) => {
   const configUniforms = {
     main: new Map<string, ConfigUniform>(Object.entries(mainConfigUniforms)),
     post: new Map<string, ConfigUniform>(Object.entries(postConfigUniforms)),
-    transitioning: new Map<string, ConfigUniform>(),
+    animating: new Map<string, ConfigUniform>(),
   }
 
   return {

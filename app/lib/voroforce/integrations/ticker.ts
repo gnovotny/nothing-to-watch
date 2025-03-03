@@ -1,15 +1,15 @@
 import { store } from '../store'
-import { handleTransitioningUniforms } from '../utils'
+import { handleAnimatingUniforms } from '../utils'
 
 export const handleTicker = () => {
   const {
     instance: { ticker },
-    configUniforms: { transitioning: transitioningUniforms },
+    configUniforms: { animating: animatingUniforms },
   } = store.getState()
 
   // controls.addEventListener('pointerMove', ({ pointer }) => {})
   ticker.addEventListener('tick', (() => {
     // console.log('tick')
-    handleTransitioningUniforms(transitioningUniforms)
+    handleAnimatingUniforms(animatingUniforms)
   }) as unknown as EventListener)
 }

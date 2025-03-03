@@ -16,9 +16,33 @@ export class Loader extends EventTarget {
     this.loadedIndex = 0
   }
 
-  loadAllV0MediaLayers() {
-    for (let i = 0, l = this.config.versions[0].layers; i < l; i++) {
-      void this.loadMediaLayer(0, i)
+  preloadAllMediaLayersVersion0(onLoad) {
+    const count = this.config.versions[0].layers
+    let loaded = 0
+    const onLoadLayer = () => {
+      loaded++
+      if (loaded === count) {
+        this.dispatchEvent(new LoaderEvent('preloaded'))
+        onLoad?.()
+      }
+    }
+    for (let i = 0; i < count; i++) {
+      void this.loadMediaLayer(0, i, onLoadLayer)
+    }
+  }
+
+  preloadFirstMediaLayerAllVersions(onLoad) {
+    const count = this.config.versions.length
+    let loaded = 0
+    const onLoadLayer = () => {
+      loaded++
+      if (loaded === count) {
+        this.dispatchEvent(new LoaderEvent('preloaded'))
+        onLoad?.()
+      }
+    }
+    for (let i = 0; i < count; i++) {
+      void this.loadMediaLayer(i, 0, onLoadLayer)
     }
   }
 

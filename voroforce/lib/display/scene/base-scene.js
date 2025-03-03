@@ -275,7 +275,14 @@ export default class BaseScene {
       },
     )
 
-    this.loader.loadAllV0MediaLayers()
+    switch (this.globalConfig.media.preload) {
+      case 'v0':
+        this.loader.preloadAllMediaLayersVersion0()
+        break
+      case 'first':
+        this.loader.preloadFirstMediaLayerAllVersions()
+        break
+    }
   }
 
   updateMedia() {
@@ -356,6 +363,7 @@ export default class BaseScene {
       iLatticeCols: { value: cols },
       iLatticeRows: { value: rows },
       bForceMaxQuality: { value: false },
+      iForceMaxNeighborLevel: { value: 0 },
       fRoundnessMod: { value: 1 },
       fEdgeMod: { value: 1 },
       fEdgeSmoothnessMod: { value: 1 },

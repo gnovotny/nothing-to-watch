@@ -5,10 +5,27 @@ export const revealVoroforceContainer = () => {
 }
 
 export const handleIntro = () => {
-  const { playedIntro } = store.getState()
+  const {
+    playedIntro,
+    instance: { loader, ticker },
+    config,
+  } = store.getState()
 
   if (playedIntro) {
-    revealVoroforceContainer()
+    if (config.media.enabled && config.media.preload) {
+      loader.addEventListener('preloaded', () => {
+        // media will be uploaded to gpu on next tick
+        ticker.addEventListener(
+          'tick',
+          () => {
+            revealVoroforceContainer()
+          },
+          { once: true },
+        )
+      })
+    } else {
+      revealVoroforceContainer()
+    }
   } else {
     store.subscribe((state) => state.playedIntro, revealVoroforceContainer)
   }

@@ -10,10 +10,11 @@ export default {
       // enabled: false,
       fragmentShader: mainFrag,
       uniforms: {
+        iForceMaxNeighborLevel: { value: 0 },
         bForceMaxQuality: { value: false },
-        fRoundnessMod: { value: 1 },
-        fEdgeMod: { value: 1 },
-        fEdgeSmoothnessMod: { value: 1 },
+        fRoundnessMod: { value: 1, animatable: true },
+        fEdgeMod: { value: 1, animatable: true },
+        fEdgeSmoothnessMod: { value: 1, animatable: true },
       },
     },
     post: {
@@ -23,9 +24,11 @@ export default {
         fAlphaStrength: {
           // value: 0.3,
           value: 0.3,
+          animatable: true,
         },
         fEdgeStrength: {
           value: 0.3,
+          animatable: true,
         },
         iChannel0: {
           src: '/assets/rust.jpg',

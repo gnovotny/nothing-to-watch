@@ -6,6 +6,13 @@ export const forceSimulationStepConfigs = {
       // alphaDecay: 0,
       // alphaMin: 0,
       // velocityDecay: 0.6,
+      alpha: 0.2,
+      alphaTarget: 0,
+      alphaDecay: 0,
+      alphaMin: 0,
+      velocityDecay: 0.7,
+      velocityDecayBase: 0.7,
+      velocityDecayTransitionEnterMode: 0.85,
     },
     forces: [
       {
@@ -41,7 +48,7 @@ export const forceSimulationStepConfigs = {
           // yFactor: 1.5,
           yFactor: 3.5,
           xFactor: 1,
-          maxLevelsFromCenter: 55,
+          maxLevelsFromCenter: 25,
         },
         origin: {
           enabled: true,
@@ -53,11 +60,13 @@ export const forceSimulationStepConfigs = {
   },
   select: {
     parameters: {
-      // alpha: 0.35,
-      // alphaTarget: 0,
-      // alphaDecay: 0,
-      // alphaMin: 0,
+      alpha: 0.2,
+      alphaTarget: 0,
+      alphaDecay: 0,
+      alphaMin: 0,
       velocityDecay: 0.5,
+      velocityDecayBase: 0.5,
+      velocityDecayTransitionEnterMode: 0.5,
     },
     forces: [
       {
@@ -98,18 +107,18 @@ export const forceSimulationStepConfigs = {
           strength: 0.1,
         },
       },
-      {
-        type: 'moveCenterToPoint',
-        enabled: true,
-        strength: 0.1,
-        // yFactor: 1.5,
-        // xFactor: 0.8,
-        selector: 'focused',
-        point: {
-          x: undefined,
-          y: undefined,
-        },
-      },
+      // {
+      //   type: 'moveCenterToPoint',
+      //   enabled: true,
+      //   strength: 0.1,
+      //   // yFactor: 1.5,
+      //   // xFactor: 0.8,
+      //   selector: 'focused',
+      //   point: {
+      //     x: undefined,
+      //     y: undefined,
+      //   },
+      // },
     ],
   },
 }
