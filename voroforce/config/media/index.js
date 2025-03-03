@@ -1,0 +1,33 @@
+export default {
+  enabled: true,
+  baseUrl: import.meta.env.VITE_TEXTURES_BASE_URL ?? '/media',
+  versions: [
+    {
+      cols: 512,
+      rows: 288,
+      width: 2048,
+      height: 624,
+      layers: 1,
+      layerIndexStart: 0,
+      layerSrcFormat: '/low/dds/{INDEX}.dds',
+    },
+    {
+      cols: 90,
+      rows: 60,
+      width: 1980,
+      height: 1980,
+      layers: 6,
+      layerIndexStart: 0,
+      layerSrcFormat: '/mid/dds/{INDEX}.dds',
+    },
+    {
+      cols: 18,
+      rows: 12,
+      width: 1980,
+      height: 1980,
+      layers: 141,
+      layerIndexStart: 0,
+      layerSrcFormat: '/high/dds/{INDEX}.dds',
+    },
+  ],
+}

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Discover new movies in style" />
+    <title>There's nothing to watch</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div
+      id="voroforce"
+      class="pointer-events-auto fixed inset-0 h-screen w-screen bg-background opacity-0 transition-opacity duration-700"
+    >
+      <canvas class="h-full w-full"></canvas>
+    </div>
+    <script type="module" src="/app/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    /* Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./app/*"],
+      "√/*": ["./voroforce/*"],
+      "~/*": ["./*"]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
