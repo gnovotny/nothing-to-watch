@@ -1,5 +1,5 @@
 export * from './films'
 export * from './uniforms'
 export * from './math'
-export * from './user-config'
+export * from './config'
 export * from './cells'
