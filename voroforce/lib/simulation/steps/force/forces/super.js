@@ -84,11 +84,15 @@ export const superForce = ({
     // console.log('mediaV2Threshold', mediaV2DistThreshold)
   }
 
-  function applyLattice(cell, target, alpha) {
+  function applyLattice(cell, target, alpha, strengthMod = 1) {
     let x = target.x + target.vx - cell.x - cell.vx
     let y = target.y + target.vy - cell.y - cell.vy
     let l = Math.sqrt(x * x + y * y)
-    l = ((l - globalConfig.lattice.cellWidth) / l) * alpha * latticeStrength
+    l =
+      ((l - globalConfig.lattice.cellWidth) / l) *
+      alpha *
+      latticeStrength *
+      strengthMod
     x *= l * latticeXFactor * 0.5
     y *= l * latticeYFactor * 0.5
 
