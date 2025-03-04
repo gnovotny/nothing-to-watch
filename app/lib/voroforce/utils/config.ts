@@ -16,9 +16,12 @@ export const transformConfig = (
   config: typeof baseConfig,
   userConfig: UserConfig,
 ) => {
-  if (userConfig.cells) {
-    config.cells = userConfig.cells
-  }
+  const urlParams = new URLSearchParams(window.location.search)
+  const cellsOverride = urlParams.get('cells')
+
+  config.cells = cellsOverride
+    ? Number.parseInt(cellsOverride)
+    : (userConfig.cells ?? config.cells)
   if (userConfig.noPostEffects) {
     config.display.scene.post.enabled = false
   }

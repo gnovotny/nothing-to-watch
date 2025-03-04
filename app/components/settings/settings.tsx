@@ -22,20 +22,24 @@ const NUM_CELL_OPTIONS = [5000, 25000, 50000]
 export const Settings = () => {
   const landscape = useMediaQuery(orientation('landscape'))
 
-  const { open, setOpen, vConfig, setVConfig } = useVoroforce(
-    useShallow((state) => ({
-      open: state.settingsOpen,
-      setOpen: state.setSettingsOpen,
-      vConfig: state.userConfig,
-      setVConfig: state.setUserConfig,
-    })),
-  )
+  const { open, setOpen, userConfig, setVConfig, setPlayedIntro } =
+    useVoroforce(
+      useShallow((state) => ({
+        open: state.settingsOpen,
+        setOpen: state.setSettingsOpen,
+        userConfig: state.userConfig,
+        setVConfig: state.setUserConfig,
+        setPlayedIntro: state.setPlayedIntro,
+      })),
+    )
 
   const forceHigherQuality = useVoroforce(
     (state) => state.userConfig.forceHigherQuality,
   )
 
   const noPostEffects = useVoroforce((state) => state.userConfig.noPostEffects)
+
+  const reload = () => window.location.reload()
 
   return (
     <Drawer
@@ -66,12 +70,12 @@ export const Settings = () => {
                     <Badge
                       key={option}
                       onClick={() => {
-                        vConfig.cells = option
-                        setVConfig(vConfig)
-                        window.location.reload()
+                        userConfig.cells = option
+                        setVConfig(userConfig)
+                        reload()
                       }}
                       className={cn({
-                        'bg-primary/80': vConfig.cells !== option,
+                        'bg-primary/80': userConfig.cells !== option,
                       })}
                     >
                       {option}
@@ -85,8 +89,8 @@ export const Settings = () => {
                     id='higher-quality'
                     checked={Boolean(forceHigherQuality)}
                     onCheckedChange={(checked) => {
-                      vConfig.forceHigherQuality = checked
-                      setVConfig(vConfig)
+                      userConfig.forceHigherQuality = checked
+                      setVConfig(userConfig)
                     }}
                   />
                   <Label htmlFor='higher-quality'>Force higher quality</Label>
@@ -96,13 +100,22 @@ export const Settings = () => {
                     id='no-post-effects'
                     checked={Boolean(noPostEffects)}
                     onCheckedChange={(checked) => {
-                      vConfig.noPostEffects = checked
-                      setVConfig(vConfig)
+                      userConfig.noPostEffects = checked
+                      setVConfig(userConfig)
+                      reload()
                     }}
                   />
                   <Label htmlFor='no-post-effects'>No post effects</Label>
                 </div>
               </div>
+              <Button
+                onClick={() => {
+                  setPlayedIntro(false)
+                  reload()
+                }}
+              >
+                Replay Intro
+              </Button>
             </div>
             <DrawerFooter>
               <Button variant='outline' onClick={() => setOpen(false)}>
