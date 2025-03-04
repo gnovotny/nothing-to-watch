@@ -13,11 +13,14 @@ import { Button } from '../ui/button'
 import { Drawer, DrawerFooter, DrawerPortal } from '../ui/drawer'
 import { FilmPoster } from './shared/film-poster'
 import { FilmRatingGauge } from './shared/film-rating-gauge'
+import { Plus } from 'lucide-react'
 
 const FilmView = ({
   film,
   className = '',
 }: { film?: Film; className?: string }) => {
+  const customLinks = useVoroforce((state) => state.userConfig.customLinks)
+
   if (!film) return
   return (
     <div className={cn('flex flex-col pb-9 landscape:h-full', className)}>
@@ -98,14 +101,19 @@ const FilmView = ({
               IMDB
             </a>
           </Button>
-          <Button asChild>
-            <a
-              href={`https://freehdmovies.to/search/${slugify(film.title.toLowerCase())}`}
-              target='_blank'
-              rel='noreferrer'
-            >
-              Stream
-            </a>
+          {customLinks?.map(({ name, baseUrl, slug, property }) => (
+            <Button asChild key={baseUrl}>
+              <a
+                href={`${baseUrl}${(slug ? slugify : (v: string) => v)(String(film[property]).toLowerCase())}`}
+                target='_blank'
+                rel='noreferrer noopener'
+              >
+                {name}
+              </a>
+            </Button>
+          ))}
+          <Button size='icon' className='hidden lg:inline-flex'>
+            <Plus />
           </Button>
         </div>
       </div>

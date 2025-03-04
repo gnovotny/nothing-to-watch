@@ -1,15 +1,24 @@
-import { down, matchMediaQuery } from '../../utils/mq'
 import { mergeConfigs } from '√/lib'
 import baseConfig, { introModeLatticeConfig } from '√/config'
-import type { ConfigUniform } from './uniforms'
-import type { VoroforceState } from '../store'
 import { forceSimulationStepIntroConfig } from '√/config/simulation/force/intro'
 
-// export type UserConfig = Record<string, string | number | boolean>
+import { down, matchMediaQuery } from '../../utils/mq'
+
+import type { VoroforceState } from '../store'
+import type { ConfigUniform } from './uniforms'
+
+export type CustomLink = {
+  name: string
+  baseUrl: string
+  slug: boolean
+  property: 'title' | 'tmdbId' | 'imdbId'
+}
+
 export type UserConfig = {
   cells?: number
   noPostEffects?: boolean
   forceHigherQuality?: boolean
+  customLinks?: CustomLink[]
 }
 
 export const transformConfig = (
@@ -43,7 +52,7 @@ export const getVoroforceConfigProps = (state: VoroforceState) => {
               },
             },
             media: {
-              preload: 'v0', // default is "first" but high and mid are loaded via intro lattice setup
+              preload: 'v0', // default is "first" but "high" and "mid" media versions are loaded via "intro" lattice setup
             },
           }
         : {}),
