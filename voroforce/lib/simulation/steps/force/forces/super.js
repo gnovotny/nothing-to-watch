@@ -84,6 +84,25 @@ export const superForce = ({
     // console.log('mediaV2Threshold', mediaV2DistThreshold)
   }
 
+  function applyLattice(cell, target, alpha) {
+    let x = target.x + target.vx - cell.x - cell.vx
+    let y = target.y + target.vy - cell.y - cell.vy
+    let l = Math.sqrt(x * x + y * y)
+    l = ((l - globalConfig.lattice.cellWidth) / l) * alpha * latticeStrength
+    x *= l * latticeXFactor * 0.5
+    y *= l * latticeYFactor * 0.5
+
+    target.vx -= x
+    target.vy -= y
+    cell.vx += x
+    cell.vy += y
+  }
+
+  function applyOrigin(cell, alpha) {
+    cell.vx += (cell.ix - cell.x) * originStrength * alpha * originXFactor
+    cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
+  }
+
   function force(alpha) {
     // centerCell = select(cells) ?? lastKnownCenterCell
     // lastKnownCenterCell = centerCell
@@ -171,40 +190,34 @@ export const superForce = ({
     for (i = 0; i < cells.length; ++i) {
       cell = cells[i]
 
-      if (originEnabled) {
-        cell.vx += (cell.ix - cell.x) * originStrength * alpha * originXFactor
-        cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
+      if (centerCell) {
+        colLevelAdjacency = Math.abs(cell.col - centerCell.col)
+        rowLevelAdjacency = Math.abs(cell.row - centerCell.row)
+        maxLevelAdjacency = Math.max(colLevelAdjacency, rowLevelAdjacency)
+
+        pointerFollowModX = 1
+        pointerFollowModY = 1
+        // if (i === centerCell.index) {
+        //   continue
+        // }
+        // if (i === centerCell.index) {
+        //   // if (!pointerFollowAltActive) {
+        //   //   continue
+        //   // } else {
+        //   //   pointerFollowMod = 0.25
+        //   // }
+        //
+        //   const midX = (cell.x + cell.vx + centerCellX) * 0.5
+        //   const midY = (cell.x + cell.vx + centerCellY) * 0.5
+        //
+        //   pointerFollowModX = mapRange(centerCellX, midX, 0, 1, centerX)
+        //   pointerFollowModY = mapRange(centerCellY, midY, 0, 1, centerY)
+        // }
       }
 
-      if (!centerCell) {
-        continue
-      }
+      if (originEnabled) applyOrigin(cell, alpha)
 
-      colLevelAdjacency = Math.abs(cell.col - centerCell.col)
-      rowLevelAdjacency = Math.abs(cell.row - centerCell.row)
-
-      maxLevelAdjacency = Math.max(colLevelAdjacency, rowLevelAdjacency)
-
-      pointerFollowModX = 1
-      pointerFollowModY = 1
-      // if (i === centerCell.index) {
-      //   continue
-      // }
-      // if (i === centerCell.index) {
-      //   // if (!pointerFollowAltActive) {
-      //   //   continue
-      //   // } else {
-      //   //   pointerFollowMod = 0.25
-      //   // }
-      //
-      //   const midX = (cell.x + cell.vx + centerCellX) * 0.5
-      //   const midY = (cell.x + cell.vx + centerCellY) * 0.5
-      //
-      //   pointerFollowModX = mapRange(centerCellX, midX, 0, 1, centerX)
-      //   pointerFollowModY = mapRange(centerCellY, midY, 0, 1, centerY)
-      // }
-
-      if (pushEnabled) {
+      if (pushEnabled && centerCell) {
         x = cell.x + cell.vx - centerX
         y = cell.y + cell.vy - centerY
 
@@ -257,60 +270,16 @@ export const superForce = ({
         }
       }
 
-      if (latticeEnabled) {
+      if (latticeEnabled && centerCell) {
         if (
           colLevelAdjacency <= latticeMaxLevelsFromCenter ||
-          rowLevelAdjacency < latticeMaxLevelsFromCenter
+          rowLevelAdjacency <= latticeMaxLevelsFromCenter
         ) {
-          const source = cell
-          const ii = i - 1
-          if (ii > 0) {
-            const target = cells[ii]
-
-            if (target) {
-              let x = target.x + target.vx - source.x - source.vx
-              let y = target.y + target.vy - source.y - source.vy
-              let l = Math.sqrt(x * x + y * y)
-              l =
-                ((l - globalConfig.lattice.cellWidth) / l) *
-                alpha *
-                latticeStrength
-              x *= l * latticeXFactor * 0.5
-              y *= l * latticeYFactor * 0.5
-
-              target.vx -= x
-              target.vy -= y
-              source.vx += x
-              source.vy += y
-            }
+          if (cell.col > 0) {
+            applyLattice(cell, cells[i - 1], alpha)
           }
-        }
-
-        if (
-          colLevelAdjacency <= latticeMaxLevelsFromCenter ||
-          rowLevelAdjacency < latticeMaxLevelsFromCenter
-        ) {
-          const source = cell
-          const ii = i - globalConfig.lattice.cols
-          if (ii > 0) {
-            const target = cells[ii]
-
-            if (target) {
-              let x = target.x + target.vx - source.x - source.vx
-              let y = target.y + target.vy - source.y - source.vy
-              let l = Math.sqrt(x * x + y * y)
-              l =
-                ((l - globalConfig.lattice.cellHeight) / l) *
-                alpha *
-                latticeStrength
-              x *= l * latticeXFactor * 0.5
-              y *= l * latticeYFactor * 0.5
-
-              target.vx -= x
-              target.vy -= y
-              source.vx += x
-              source.vy += y
-            }
+          if (cell.row > 0) {
+            applyLattice(cell, cells[i - globalConfig.lattice.cols], alpha)
           }
         }
       }
