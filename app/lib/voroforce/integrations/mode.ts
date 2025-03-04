@@ -84,6 +84,9 @@ const handleIntro = () => {
 
   const { controls, dimensions } = instance
 
+  // revealVoroforceContainer()
+  // setPlayedIntro(true)
+  // return
   setTimeout(() => {
     instance.config.lattice = {
       rows: instance.config.lattice.rows,

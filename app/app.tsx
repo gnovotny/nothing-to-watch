@@ -5,6 +5,7 @@ import { Settings } from './components/settings/settings'
 import { SmallScreenWarning } from './components/small-screen-warning/small-screen-warning'
 import { About } from './components/about/about'
 import FilmViewDrawer from './components/film/view/film-view'
+import FilmPreview from './components/film/film-preview'
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
         <div className='relative h-screen w-full'>
           <Settings />
           <About />
-          {/*<FilmPreview />*/}
+          <FilmPreview />
           <FilmViewDrawer />
         </div>
       </div>

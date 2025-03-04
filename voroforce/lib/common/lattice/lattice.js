@@ -78,14 +78,13 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
   // Constants for subgrid dimensions
   const SUBGRID_ROWS = 18
   const SUBGRID_COLS = 12
+  const SUBGRID_SIZE = SUBGRID_ROWS * SUBGRID_COLS
 
   // Result array to store coordinates
   const result = []
 
   // Calculate how many complete subgrids we can create
-  const maxCompleteSubgrids = Math.floor(
-    elementCount / (SUBGRID_ROWS * SUBGRID_COLS),
-  )
+  const maxCompleteSubgrids = Math.floor(elementCount / SUBGRID_SIZE)
   let remainingElements = elementCount
 
   // Create spiral pattern for subgrid placement
@@ -104,14 +103,13 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
 
   let currentCellId = 0
   let currentSubgrid = 0
+  let currentSubgridIndex = 0
 
   // Function to add a subgrid
   const addSubgrid = (gridRow, gridCol) => {
     // Calculate top-left corner of this subgrid
     const startRow = centerRow - subgridOffsetRow + gridRow * SUBGRID_ROWS
     const startCol = centerCol - subgridOffsetCol + gridCol * SUBGRID_COLS
-
-    let subgridIndex = 0
 
     // Add each cell in the subgrid
     for (let r = 0; r < SUBGRID_ROWS && remainingElements > 0; r++) {
@@ -121,29 +119,30 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
 
         // Check if this cell is within the main grid boundaries
         if (row >= 0 && row < totalRows && col >= 0 && col < totalCols) {
-          result.push([row, col])
-
           const cellIndex = row * totalCols + col
           const cell = cells[cellIndex]
           if (cell) {
+            result.push([row, col])
+
             cell.id = currentCellId++
+            currentSubgrid = Math.floor(cell.id / SUBGRID_SIZE)
+            currentSubgridIndex = Math.floor(cell.id % SUBGRID_SIZE)
             cell.subgrid = currentSubgrid // for json and media v2 layers
-            cell.subgridIndex = subgridIndex
+            cell.subgridIndex = currentSubgridIndex
 
             if (currentSubgrid < autoTargetMediaVersion2SubgridCount) {
               cell.targetMediaVersion = 2
             } else if (currentSubgrid < autoTargetMediaVersion1SubgridCount) {
               cell.targetMediaVersion = 1
             }
-          }
-          remainingElements--
-        }
 
-        subgridIndex++
+            remainingElements--
+          }
+        }
       }
     }
 
-    currentSubgrid++
+    // currentBatch++
   }
 
   // Add center subgrid first
@@ -189,6 +188,9 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
       }
     }
   }
+
+  console.log('currentSubgrid', currentSubgrid)
+  console.log('currentCellId', currentCellId)
 
   return result
 }

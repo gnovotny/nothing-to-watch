@@ -57,6 +57,11 @@ export const getCellFilm = async (
     filmBatches.set(cell.subgrid, filmBatch ?? [])
   }
 
+  console.log('cell.id', cell.id)
+  console.log('cell.index', cell.index)
+  console.log('cell.subgrid', cell.subgrid)
+  console.log('cell.subgridIndex', cell.subgridIndex)
+
   return filmBatch?.[cell.subgridIndex]
     ? new Film(filmBatch[cell.subgridIndex])
     : undefined
