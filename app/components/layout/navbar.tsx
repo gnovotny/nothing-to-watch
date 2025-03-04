@@ -1,12 +1,19 @@
-import { GithubIcon, Settings } from 'lucide-react'
+import { Settings, Info } from 'lucide-react'
 import { useVoroforce } from '../../lib/voroforce'
 import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
-import config from '../../config'
+import { useShallow } from 'zustand/react/shallow'
 
 export const Navbar = () => {
-  const setSettingsOpen = useVoroforce((state) => state.setSettingsOpen)
-  const settingsOpen = useVoroforce((state) => state.settingsOpen)
+  const { settingsOpen, setSettingsOpen, aboutOpen, setAboutOpen } =
+    useVoroforce(
+      useShallow((state) => ({
+        settingsOpen: state.settingsOpen,
+        setSettingsOpen: state.setSettingsOpen,
+        aboutOpen: state.aboutOpen,
+        setAboutOpen: state.setAboutOpen,
+      })),
+    )
 
   return (
     <div className='fixed inset-x-0 top-0 z-10 flex w-full flex-row items-center justify-end gap-1 p-6 lg:p-9'>
@@ -14,12 +21,12 @@ export const Navbar = () => {
       <Button
         variant='ghost'
         size='icon'
-        asChild
+        onClick={() => {
+          setAboutOpen(!aboutOpen)
+        }}
         className='!size-8 [&_svg]:!size-6 pointer-events-auto rounded-full'
       >
-        <a href={config.githubUrl} target='_blank' rel='noopener noreferrer'>
-          <GithubIcon />
-        </a>
+        <Info />
       </Button>
       <Button
         variant='ghost'

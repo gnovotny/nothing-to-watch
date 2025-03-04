@@ -35,6 +35,8 @@ export const Settings = () => {
     (state) => state.userConfig.forceHigherQuality,
   )
 
+  const noPostEffects = useVoroforce((state) => state.userConfig.noPostEffects)
+
   return (
     <Drawer
       open={open}
@@ -58,7 +60,7 @@ export const Settings = () => {
             </DrawerHeader>
             <div className='flex flex-col gap-3 p-4 pb-0'>
               <div className='flex flex-col gap-1'>
-                <div>Cell limit</div>
+                <div>Movie limit</div>
                 <div className='flex flex-row gap-1'>
                   {NUM_CELL_OPTIONS.map((option) => (
                     <Badge
@@ -69,7 +71,7 @@ export const Settings = () => {
                         window.location.reload()
                       }}
                       className={cn({
-                        'bg-primary/80': vConfig.cells === option,
+                        'bg-primary/80': vConfig.cells !== option,
                       })}
                     >
                       {option}
@@ -88,6 +90,17 @@ export const Settings = () => {
                     }}
                   />
                   <Label htmlFor='higher-quality'>Force higher quality</Label>
+                </div>
+                <div className='flex flex-row gap-1'>
+                  <Switch
+                    id='no-post-effects'
+                    checked={Boolean(noPostEffects)}
+                    onCheckedChange={(checked) => {
+                      vConfig.noPostEffects = checked
+                      setVConfig(vConfig)
+                    }}
+                  />
+                  <Label htmlFor='no-post-effects'>No post effects</Label>
                 </div>
               </div>
             </div>

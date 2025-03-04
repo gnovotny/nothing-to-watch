@@ -3,6 +3,7 @@ import { Navbar } from './components/layout/navbar'
 import { ThemeProvider } from './components/layout/theme'
 import { Settings } from './components/settings/settings'
 import { SmallScreenWarning } from './components/small-screen-warning/small-screen-warning'
+import { About } from './components/about/about'
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
         <Navbar />
         <div className='relative h-screen w-full'>
           <Settings />
+          <About />
           {/*<FilmPreview />*/}
           {/*<FilmViewDrawer />*/}
         </div>

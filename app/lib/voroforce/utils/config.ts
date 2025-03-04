@@ -9,6 +9,7 @@ import { forceSimulationStepIntroConfig } from '√/config/simulation/force/intr
 export type UserConfig = {
   cells?: number
   noPostEffects?: boolean
+  forceHigherQuality?: boolean
 }
 
 export const transformConfig = (

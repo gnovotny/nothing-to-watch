@@ -47,6 +47,8 @@ export type VoroforceState = {
   isPreviewMode: boolean
   settingsOpen: boolean
   setSettingsOpen: (settingsOpen: boolean) => void
+  aboutOpen: boolean
+  setAboutOpen: (aboutOpen: boolean) => void
   playedIntro: boolean
   setPlayedIntro: (playedIntro: boolean) => void
   filmViewBounds?: RectReadOnly
@@ -88,6 +90,12 @@ export const store = create(
         setSettingsOpen: (settingsOpen: boolean) => {
           set({
             settingsOpen,
+          })
+        },
+        aboutOpen: false,
+        setAboutOpen: (aboutOpen: boolean) => {
+          set({
+            aboutOpen,
           })
         },
         playedIntro,
