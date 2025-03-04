@@ -1,6 +1,6 @@
-import { isNumber } from '../../utils/type-check'
+import { isNumber } from '../../utils'
 
-export default class SharedCell {
+export class SharedCell {
   subgrid
   subgridIndex
 

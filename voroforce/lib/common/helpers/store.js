@@ -1,8 +1,10 @@
-import SharedCell from '../data/shared-cell'
-import SharedCellCollection from '../data/shared-cell-collection'
-import { SharedData } from '../data/shared-data'
-import { SharedLoadedMediaVersionLayersData } from '../data/shared-loaded-media-version-layers-data'
-import { SharedPointer } from '../data/shared-pointer'
+import {
+  SharedCell,
+  SharedData,
+  SharedPointer,
+  SharedCellCollection,
+  SharedLoadedMediaVersionLayersData,
+} from '../data'
 import { Dimensions } from './dimensions'
 
 class StoreEvent extends Event {
@@ -102,15 +104,23 @@ export class Store extends EventTarget {
   }
 
   getSimulationWorkerConfig() {
-    // display config can contain big shaders
+    // display config can contain classes and big shaders
     const { display: _, ...config } = this.get('config')
     return config
   }
 
   getSimulationWorkerState() {
     // remove non-transferable
-    const { ticker, dimensions, loader, container, canvas, config, ...rest } =
-      this.#state
+    const {
+      ticker,
+      dimensions,
+      loader,
+      controls,
+      container,
+      canvas,
+      config,
+      ...rest
+    } = this.#state
 
     return {
       ...rest,

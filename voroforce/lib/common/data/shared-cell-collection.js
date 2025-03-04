@@ -1,4 +1,4 @@
-export default class SharedCellCollection extends Array {
+export class SharedCellCollection extends Array {
   constructor() {
     super()
     this.focusedArrayIndex = 0

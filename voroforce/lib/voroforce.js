@@ -13,7 +13,7 @@ import { isTouchDevice, mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
 
 export class Voroforce {
-  media = false
+  mediaEnabled = false
   multiThreading = false
   renderInParallel = false
   simulationIsWarm = false
@@ -30,9 +30,7 @@ export class Voroforce {
     this.initData()
     this.initHelpers()
     this.handleLattice()
-
     this.initStore()
-
     this.initComponents()
     this.initEventListeners()
     void this.initDevTools()
@@ -47,20 +45,19 @@ export class Voroforce {
     const mTConfig = this.config.multiThreading
     if (!mTConfig?.enabled) return
 
-    this.multiThreading = true
+    this.multiThreading = true // hardcoded
     this.renderInParallel = mTConfig.renderInParallel
   }
 
   handleMediaConfig() {
-    this.media = this.config.media?.enabled
+    this.mediaEnabled = this.config.media?.enabled
   }
 
   initComponents() {
-    this.simulation =
-      new // this.multiThreading ? MultiThreadedSimulation : Simulation
-      MultiThreadedSimulation(this.store, {
-        onUpdated: this.onSimulationUpdated.bind(this),
-      })
+    // hardcoded
+    this.simulation = new MultiThreadedSimulation(this.store, {
+      onUpdated: this.onSimulationUpdated.bind(this),
+    })
     this.display = new Display(this.store)
     this.controls = new Controls(this.store, this.display)
   }
@@ -68,7 +65,7 @@ export class Voroforce {
   initHelpers() {
     this.dimensions = new Dimensions(this.container)
     this.ticker = new Ticker()
-    if (this.media) {
+    if (this.mediaEnabled) {
       this.loader = new Loader(
         this.sharedLoadedMediaVersionLayersData,
         this.config,
@@ -84,7 +81,7 @@ export class Voroforce {
     )
     this.cells = this.sharedCellData.cells
 
-    if (this.media) {
+    if (this.mediaEnabled) {
       this.sharedLoadedMediaVersionLayersData =
         initSharedLoadedMediaVersionLayersData(this.config)
     }
@@ -111,7 +108,7 @@ export class Voroforce {
       dimensions: this.dimensions,
       ticker: this.ticker,
       loader: this.loader,
-      // controls: this.controls,
+      controls: this.controls,
       ...this.sharedData,
       ...this.sharedCellData,
       ...this.sharedLoadedMediaVersionLayersData,
@@ -131,6 +128,7 @@ export class Voroforce {
     this.dimensions.addEventListener('resize', this.resize)
     this.ticker.addEventListener('tick', this.update)
 
+    // TODO
     if (this.config.handleVisibilityChange?.enabled) {
       initVisibilityEventHandlers(
         () => {
@@ -169,7 +167,7 @@ export class Voroforce {
     this.store.set('devTools', this.devTools)
   }
 
-  // simulation workers must complete before triggering resize
+  // multithreaded simulation step workers must complete before triggering resize
   deferredResize() {
     this.handleLattice()
     const dimensions = this.store.get('dimensions').get()
@@ -231,6 +229,7 @@ export class Voroforce {
     this.dimensions.removeEventListener('resize', this.resize)
   }
 
+  // TODO
   dispose() {
     this.removeEventListeners()
 

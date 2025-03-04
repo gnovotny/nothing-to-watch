@@ -1,6 +1,6 @@
-import { arrayBuffer } from '../../utils/array-buffer'
-import SharedCell from './shared-cell'
-import SharedCellCollection from './shared-cell-collection'
+import { arrayBuffer } from '../../utils'
+import { SharedCell } from './shared-cell'
+import { SharedCellCollection } from './shared-cell-collection'
 
 const getNumCellsFromOptions = (cellOptions) =>
   Array.isArray(cellOptions) ? cellOptions.length : Math.abs(cellOptions)
