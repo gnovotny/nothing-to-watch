@@ -39,7 +39,6 @@ export const handleAnimatingUniforms = (uniforms: ConfigUniforms) => {
         uniform.targetValue = undefined
         uniform.targetFactor = undefined
         uniforms.delete(key)
-        console.log('done')
       }
     }
   })

@@ -117,31 +117,39 @@ export const handleMode = () => {
 
   if (initialMode === VOROFORCE_MODES.intro) {
     if (config.media.enabled && loader.loadingMediaLayers !== 0) {
-      loader.addEventListener('idle', () => {
-        // media will be uploaded to gpu on next tick
-        ticker.addEventListener(
-          'tick',
-          () => {
-            handleIntro()
-          },
-          { once: true },
-        )
-      })
+      loader.addEventListener(
+        'idle',
+        () => {
+          // media will be uploaded to gpu on next tick
+          ticker.addEventListener(
+            'tick',
+            () => {
+              handleIntro()
+            },
+            { once: true },
+          )
+        },
+        { once: true },
+      )
     } else {
       handleIntro()
     }
   } else {
     if (config.media.enabled && config.media.preload) {
-      loader.addEventListener('preloaded', () => {
-        // media will be uploaded to gpu on next tick
-        ticker.addEventListener(
-          'tick',
-          () => {
-            revealVoroforceContainer()
-          },
-          { once: true },
-        )
-      })
+      loader.addEventListener(
+        'preloaded',
+        () => {
+          // media will be uploaded to gpu on next tick
+          ticker.addEventListener(
+            'tick',
+            () => {
+              revealVoroforceContainer()
+            },
+            { once: true },
+          )
+        },
+        { once: true },
+      )
     } else {
       revealVoroforceContainer()
     }

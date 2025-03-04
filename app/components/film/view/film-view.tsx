@@ -9,7 +9,14 @@ import config from '../../../config'
 import { cn } from '../../../lib/utils/tw'
 import { type Film, useVoroforce } from '../../../lib/voroforce'
 import { Badge } from '../../ui/badge'
-import { Drawer, DrawerFooter, DrawerPortal } from '../../ui/drawer'
+import {
+  Drawer,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerPortal,
+  DrawerTitle,
+} from '../../ui/drawer'
 import { FilmPoster } from '../shared/film-poster'
 import { FilmRatingGauge } from '../shared/film-rating-gauge'
 
@@ -175,12 +182,10 @@ const FilmViewDrawer = () => {
           <div className='relative h-full w-full'>
             <div className='not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 absolute not-landscape:bottom-4 not-landscape:left-1/2 not-landscape:h-1.5 not-landscape:w-[100px] cursor-grab rounded-full bg-muted landscape:top-1/2 landscape:right-4 landscape:h-[100px] landscape:w-1.5' />
             <div className='not-landscape:w-full landscape:h-full'>
-              {/*<DrawerHeader>*/}
-              {/*  <DrawerTitle>Move Goal</DrawerTitle>*/}
-              {/*  <DrawerDescription>*/}
-              {/*    Set your daily activity goal.*/}
-              {/*  </DrawerDescription>*/}
-              {/*</DrawerHeader>*/}
+              <DrawerHeader className='sr-only'>
+                <DrawerTitle>{film?.title}</DrawerTitle>
+                <DrawerDescription>{film?.title}</DrawerDescription>
+              </DrawerHeader>
               {filmView}
               <DrawerFooter>
                 <Button variant='outline' onClick={exitVoroforceSelectMode}>
