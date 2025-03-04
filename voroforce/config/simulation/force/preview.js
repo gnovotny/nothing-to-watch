@@ -1,14 +1,8 @@
 export const forceSimulationStepPreviewConfig = {
   parameters: {
     // alpha: 0.15,
-    // alphaTarget: 0,
-    // alphaDecay: 0,
-    // alphaMin: 0,
     // velocityDecay: 0.6,
     alpha: 0.2,
-    alphaTarget: 0,
-    alphaDecay: 0,
-    alphaMin: 0,
     velocityDecay: 0.7,
     velocityDecayBase: 0.7,
     velocityDecayTransitionEnterMode: 0.85,

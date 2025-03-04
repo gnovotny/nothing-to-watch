@@ -80,8 +80,8 @@ export const superForce = ({
     mediaV1LevelAdjacencyThreshold = 18
     mediaV2LevelAdjacencyThreshold = 6
 
-    console.log('mediaV1Threshold', mediaV1DistThreshold)
-    console.log('mediaV2Threshold', mediaV2DistThreshold)
+    // console.log('mediaV1Threshold', mediaV1DistThreshold)
+    // console.log('mediaV2Threshold', mediaV2DistThreshold)
   }
 
   function force(alpha) {

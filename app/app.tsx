@@ -1,5 +1,3 @@
-import FilmPreview from './components/film/film-preview'
-import FilmViewDrawer from './components/film/film-view'
 import { Intro } from './components/intro/intro'
 import { Navbar } from './components/layout/navbar'
 import { ThemeProvider } from './components/layout/theme'
@@ -13,8 +11,8 @@ function App() {
         <Navbar />
         <div className='relative h-screen w-full'>
           <Settings />
-          <FilmPreview />
-          <FilmViewDrawer />
+          {/*<FilmPreview />*/}
+          {/*<FilmViewDrawer />*/}
         </div>
       </div>
       <SmallScreenWarning />

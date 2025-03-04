@@ -67,6 +67,7 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
     rows: totalRows,
     cols: totalCols,
     autoTargetMediaVersion2SubgridCount = 0,
+    autoTargetMediaVersion1SubgridCount = 0,
   } = latticeConfig
 
   const elementCount = cells.length
@@ -131,6 +132,8 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
 
             if (currentSubgrid < autoTargetMediaVersion2SubgridCount) {
               cell.targetMediaVersion = 2
+            } else if (currentSubgrid < autoTargetMediaVersion1SubgridCount) {
+              cell.targetMediaVersion = 1
             }
           }
           remainingElements--
@@ -334,6 +337,5 @@ export const handleLattice = (latticeConfig, cells, width, height) => {
   const immediate =
     prevRows !== latticeConfig.rows || prevCols !== latticeConfig.cols
 
-  console.log('immediate', immediate)
   packLattice(cells, latticeConfig, immediate)
 }

@@ -6,6 +6,10 @@ import {
   type VoroforceCell,
 } from '../utils'
 
+export const revealVoroforceContainer = () => {
+  store.getState().container.classList.remove('opacity-0')
+}
+
 let afterModeChangeTimeout: NodeJS.Timeout
 
 const handleModeChange = (mode: VOROFORCE_MODES): void => {
@@ -111,34 +115,72 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
     // }
   }, 2000)
 }
-
-export const handleMode = () => {
-  const { mode: initialMode, instance } = store.getState()
+const handleIntro = () => {
+  const { instance, setPlayedIntro } = store.getState()
 
   const { controls, dimensions } = instance
 
-  if (initialMode === VOROFORCE_MODES.intro) {
+  setTimeout(() => {
+    instance.config.lattice = {
+      rows: instance.config.lattice.rows,
+      cols: instance.config.lattice.cols,
+      ...baseLatticeConfig,
+    }
+    instance.resize()
+
+    revealVoroforceContainer()
+    setPlayedIntro(true)
+
     setTimeout(() => {
-      instance.config.lattice = {
-        rows: instance.config.lattice.rows,
-        cols: instance.config.lattice.cols,
-        ...baseLatticeConfig,
+      handleModeChange(VOROFORCE_MODES.preview)
+
+      controls.targetPointer = {
+        x:
+          dimensions.get('width') / 2 +
+          (0.5 - Math.random()) * 0.05 * dimensions.get('width'),
+        y:
+          dimensions.get('height') / 2 +
+          (0.5 - Math.random()) * 0.05 * dimensions.get('height'),
       }
-      instance.resize()
+    }, 2000)
+  }, 1000)
+}
 
-      setTimeout(() => {
-        handleModeChange(VOROFORCE_MODES.preview)
+export const handleMode = () => {
+  const { mode: initialMode, instance, config } = store.getState()
 
-        controls.targetPointer = {
-          x:
-            dimensions.get('width') / 2 +
-            (0.5 - Math.random()) * 0.05 * dimensions.get('width'),
-          y:
-            dimensions.get('height') / 2 +
-            (0.5 - Math.random()) * 0.05 * dimensions.get('height'),
-        }
-      }, 2000)
-    }, 1000)
+  const { loader, ticker } = instance
+
+  if (initialMode === VOROFORCE_MODES.intro) {
+    if (config.media.enabled && loader.loadingMediaLayers !== 0) {
+      loader.addEventListener('idle', () => {
+        // media will be uploaded to gpu on next tick
+        ticker.addEventListener(
+          'tick',
+          () => {
+            handleIntro()
+          },
+          { once: true },
+        )
+      })
+    } else {
+      handleIntro()
+    }
+  } else {
+    if (config.media.enabled && config.media.preload) {
+      loader.addEventListener('preloaded', () => {
+        // media will be uploaded to gpu on next tick
+        ticker.addEventListener(
+          'tick',
+          () => {
+            revealVoroforceContainer()
+          },
+          { once: true },
+        )
+      })
+    } else {
+      revealVoroforceContainer()
+    }
   }
 
   instance.controls.addEventListener('selected', (async ({

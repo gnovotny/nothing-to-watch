@@ -27,6 +27,24 @@ export const handleIntro = () => {
       revealVoroforceContainer()
     }
   } else {
-    store.subscribe((state) => state.playedIntro, revealVoroforceContainer)
+    store.subscribe(
+      (state) => state.playedIntro,
+      () => {
+        if (config.media.enabled && loader.loadingMediaLayers !== 0) {
+          loader.addEventListener('idle', () => {
+            // media will be uploaded to gpu on next tick
+            ticker.addEventListener(
+              'tick',
+              () => {
+                revealVoroforceContainer()
+              },
+              { once: true },
+            )
+          })
+        } else {
+          revealVoroforceContainer()
+        }
+      },
+    )
   }
 }

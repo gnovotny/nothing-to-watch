@@ -14,6 +14,7 @@ export class Loader extends EventTarget {
     this.config = config.media
 
     this.loadedIndex = 0
+    this.loadingMediaLayers = 0
   }
 
   preloadAllMediaLayersVersion0(onLoad) {
@@ -52,6 +53,8 @@ export class Loader extends EventTarget {
       0
     )
       return
+
+    this.loadingMediaLayers++
 
     this.sharedLoadedMediaVersionLayersData[versionIndex].data[layerIndex] = 1
 
@@ -111,14 +114,20 @@ export class Loader extends EventTarget {
 
     onLoad?.()
 
-    // this.checkFinish()
+    this.loadingMediaLayers--
+
+    this.checkFinish()
   }
 
-  // checkFinish() {
-  //   // if (this.loadedIndex === this.mediaLayersLen) {
-  //   //   this.dispatchEvent(new LoaderEvent())
-  //   // }
-  // }
+  checkFinish() {
+    // if (this.loadedIndex === this.mediaLayersLen) {
+    //   this.dispatchEvent(new LoaderEvent())
+    // }
+
+    if (this.loadingMediaLayers === 0) {
+      this.dispatchEvent(new LoaderEvent('idle'))
+    }
+  }
 
   requestMediaLayerLoad(versionIndex, layers) {
     layers.forEach((layerIndex) => {

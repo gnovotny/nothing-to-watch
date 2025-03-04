@@ -1,9 +1,6 @@
 export const forceSimulationStepSelectConfig = {
   parameters: {
     alpha: 0.2,
-    alphaTarget: 0,
-    alphaDecay: 0,
-    alphaMin: 0,
     velocityDecay: 0.5,
     velocityDecayBase: 0.5,
     velocityDecayTransitionEnterMode: 0.5,
