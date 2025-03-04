@@ -4,7 +4,7 @@ import { ThemeProvider } from './components/layout/theme'
 import { Settings } from './components/settings/settings'
 import { SmallScreenWarning } from './components/small-screen-warning/small-screen-warning'
 import { About } from './components/about/about'
-import FilmViewDrawer from './components/film/film-view'
+import FilmViewDrawer from './components/film/view/film-view'
 
 function App() {
   return (

@@ -1,25 +1,29 @@
-import { useMediaQuery } from '@/hooks/use-media-query'
-import { orientation } from '@/lib/utils/mq'
+import { useMediaQuery } from '../../../hooks/use-media-query'
+import { orientation } from '../../../lib/utils/mq'
 import { useEffect, useMemo } from 'react'
 import useMeasure from 'react-use-measure'
 import slugify from 'slugify'
 import { Drawer as DrawerPrimitive } from 'vaul'
 import { useShallow } from 'zustand/react/shallow'
-import config from '../../config'
-import { cn } from '../../lib/utils/tw'
-import { type Film, useVoroforce } from '../../lib/voroforce'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { Drawer, DrawerFooter, DrawerPortal } from '../ui/drawer'
-import { FilmPoster } from './shared/film-poster'
-import { FilmRatingGauge } from './shared/film-rating-gauge'
-import { Plus } from 'lucide-react'
+import config from '../../../config'
+import { cn } from '../../../lib/utils/tw'
+import { type Film, useVoroforce } from '../../../lib/voroforce'
+import { Badge } from '../../ui/badge'
+import { Drawer, DrawerFooter, DrawerPortal } from '../../ui/drawer'
+import { FilmPoster } from '../shared/film-poster'
+import { FilmRatingGauge } from '../shared/film-rating-gauge'
+
+import { Button } from '../../ui/button'
+import { AddCustomLinkDialog } from './add-custom-link-dialog'
+import { X } from 'lucide-react'
 
 const FilmView = ({
   film,
   className = '',
 }: { film?: Film; className?: string }) => {
   const customLinks = useVoroforce((state) => state.userConfig.customLinks)
+  const userConfig = useVoroforce((state) => state.userConfig)
+  const setUserConfig = useVoroforce((state) => state.setUserConfig)
 
   if (!film) return
   return (
@@ -101,20 +105,32 @@ const FilmView = ({
               IMDB
             </a>
           </Button>
-          {customLinks?.map(({ name, baseUrl, slug, property }) => (
+          {customLinks?.map(({ name, baseUrl, slug, property }, index) => (
             <Button asChild key={baseUrl}>
-              <a
-                href={`${baseUrl}${(slug ? slugify : (v: string) => v)(String(film[property]).toLowerCase())}`}
-                target='_blank'
-                rel='noreferrer noopener'
-              >
-                {name}
-              </a>
+              <div className='relative'>
+                <a
+                  href={`${baseUrl}${(slug ? (v: string) => slugify(v).toLowerCase() : (v: string) => v)(String(film[property]))}`}
+                  target='_blank'
+                  rel='noreferrer noopener'
+                >
+                  {name}
+                </a>
+                <Button
+                  size='icon'
+                  variant='unstyled'
+                  className='-top-2 -end-2 absolute inline-flex size-5 items-center justify-center rounded-full border-2 border-white bg-red-500 font-bold text-white text-xs dark:border-gray-900'
+                  onClick={() => {
+                    userConfig.customLinks?.splice(index, 1)
+                    userConfig.customLinks = [...(userConfig.customLinks ?? [])]
+                    setUserConfig(userConfig)
+                  }}
+                >
+                  <X className='!size-3' />
+                </Button>
+              </div>
             </Button>
           ))}
-          <Button size='icon' className='hidden lg:inline-flex'>
-            <Plus />
-          </Button>
+          <AddCustomLinkDialog />
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ let afterModeChangeTimeout: NodeJS.Timeout
 const handleModeChange = (mode: VOROFORCE_MODES): void => {
   const {
     setMode,
-    instance: { simulation },
+    instance: { simulation, controls },
     configUniforms: {
       main: mainUniforms,
       post: postUniforms,
@@ -29,53 +29,17 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
   forceStepConfig.parameters.velocityDecay =
     forceStepConfig.parameters.velocityDecayTransitionEnterMode
 
-  // if (mode === VOROFORCE_MODES.select) {
-  //   // renderer.resizeScissor({
-  //   //   offset: {
-  //   //     left: 0,
-  //   //     top: 0,
-  //   //   },
-  //   // })
-  //   // controls.disableFocus()
-  //
-  //   updateUniforms(
-  //     mainUniforms,
-  //     {
-  //       fEdgeMod: 5,
-  //       fEdgeSmoothnessMod: 3,
-  //       fRoundnessMod: 3,
-  //     },
-  //     animatingUniforms,
-  //   )
-  //   updateUniforms(
-  //     postUniforms,
-  //     {
-  //       fAlphaStrength: 1,
-  //       fEdgeStrength: 1,
-  //     },
-  //     animatingUniforms,
-  //   )
-  // } else if (mode === VOROFORCE_MODES.preview) {
-  //   // controls.enableFocus()
-  //
-  //   updateUniforms(
-  //     mainUniforms,
-  //     {
-  //       fEdgeMod: 1,
-  //       fEdgeSmoothnessMod: 1,
-  //       fRoundnessMod: 1,
-  //     },
-  //     animatingUniforms,
-  //   )
-  //   updateUniforms(
-  //     postUniforms,
-  //     {
-  //       fAlphaStrength: 0.3,
-  //       fEdgeStrength: 0.3,
-  //     },
-  //     animatingUniforms,
-  //   )
-  // }
+  if (mode === VOROFORCE_MODES.select) {
+    // renderer.resizeScissor({
+    //   offset: {
+    //     left: 0,
+    //     top: 0,
+    //   },
+    // })
+    controls.disableFocus()
+  } else if (mode === VOROFORCE_MODES.preview) {
+    controls.enableFocus()
+  }
 
   updateUniformsByMode(mainUniforms, mode, animatingUniforms)
   updateUniformsByMode(postUniforms, mode, animatingUniforms)
