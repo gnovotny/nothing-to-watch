@@ -309,16 +309,16 @@ export const superForce = ({
           cell.col === centerCell.col &&
           previousCenterCell?.col === centerCell.col
 
-        let pushYMod = 1
-        let pushXMod = 1
+        const pushYMod = 1
+        const pushXMod = 1
 
-        if (centerCol && rowLevelAdjacency < 20) {
-          pushXMod = 1 - (20 - rowLevelAdjacency) / 20
-        }
-
-        if (centerRow && colLevelAdjacency < 40) {
-          pushYMod = 1 - (40 - colLevelAdjacency) / 40
-        }
+        // if (centerCol && rowLevelAdjacency < 20) {
+        //   pushXMod = 1 - (20 - rowLevelAdjacency) / 20
+        // }
+        //
+        // if (centerRow && colLevelAdjacency < 40) {
+        //   pushYMod = 1 - (40 - colLevelAdjacency) / 40
+        // }
 
         // if (centerRow && colLevelAdjacency > 1 && colLevelAdjacency < 20) {
         //   pushXMod += ((20 - colLevelAdjacency) / 20) * 0.3
