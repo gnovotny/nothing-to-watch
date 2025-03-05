@@ -27,13 +27,14 @@ export const pushForce = ({
     diagonalFactor = 1,
     manageMediaVersions = true,
     skipYOnCenterCellRow = false,
+    handleEnd,
   },
   globalConfig,
 }) => {
   const select = (cells) => cells[selector]
 
-  // biome-ignore lint/style/useSingleVarDeclarator: annoying
   let centerCell,
+    previousCenterCell,
     centerX,
     centerY,
     targetCenterX,
@@ -50,7 +51,10 @@ export const pushForce = ({
   const mediaEnabled = globalConfig.media.enabled && manageMediaVersions
 
   function force(alpha) {
-    centerCell = select(cells)
+    if (select(cells)?.index !== centerCell?.index) {
+      previousCenterCell = centerCell
+      centerCell = select(cells)
+    }
 
     if (!centerCell) {
       // centerX = undefined
@@ -121,7 +125,7 @@ export const pushForce = ({
     )
 
     // TODO TMP
-    // centerX = centerCellX
+    centerX = centerCellX
     centerY = centerCellY
 
     let pointerFollowModX = 1
@@ -187,7 +191,12 @@ export const pushForce = ({
 
       cell.vx += x * vCommon * xFactor * pointerFollowModX
 
-      if (skipYOnCenterCellRow && cell.row === centerCell.row) continue
+      if (
+        skipYOnCenterCellRow &&
+        cell.row === centerCell.row &&
+        previousCenterCell?.row === centerCell.row
+      )
+        continue
       cell.vy += y * vCommon * yFactor * pointerFollowModY
     }
   }

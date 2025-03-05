@@ -6,7 +6,7 @@ import lcg from './utils/lcg'
 const RANDOM = lcg()
 
 export default class ForceSimulationStep extends BaseSimulationStep {
-  forces = new Set()
+  forces = []
 
   constructor(store, options) {
     super(store, options)
@@ -22,6 +22,7 @@ export default class ForceSimulationStep extends BaseSimulationStep {
   updateConfig(config) {
     super.updateConfig(config)
     this.config = config.simulation.steps.force ?? {}
+    this.parameters = this.config.parameters
   }
 
   initMediaProperties() {
@@ -38,9 +39,9 @@ export default class ForceSimulationStep extends BaseSimulationStep {
   }
 
   handleForcesConfig() {
-    this.forces.clear()
+    this.forces = []
     let force
-    this.config.forces?.forEach(({ type, enabled, ...config }) => {
+    this.config.forces?.forEach(({ type, enabled, ...config }, index) => {
       if (!enabled || !type) return
       force = forceFunctions[type]?.({
         cells: this.cells,
@@ -51,9 +52,13 @@ export default class ForceSimulationStep extends BaseSimulationStep {
         simulationStepConfig: this.config,
         simulationConfig: this.simulationConfig,
         globalConfig: this.globalConfig,
+        handleEnd:
+          index === this.config.forces.length - 1
+            ? this.handleEnd.bind(this)
+            : undefined,
       })
       if (!force) return
-      this.addForce(force)
+      this.forces.push(force)
     })
   }
 
@@ -66,57 +71,79 @@ export default class ForceSimulationStep extends BaseSimulationStep {
     super.setConfig(config)
   }
 
-  tick(iterations = 1) {
-    let i
-    let cell
-
-    // defaults
-    let {
-      alpha = 1,
-      alphaMin = 0.001,
-      alphaDecay = 1 - alphaMin ** 1 / 300,
-      alphaTarget = 0,
-      velocityDecay = 0.6,
-    } = this.config.parameters
-
+  tick() {
     if (this.mediaConfig.enabled) {
       this.mediaVersionLayerLoadRequests.forEach((set) => set.clear())
     }
 
-    for (let k = 0; k < iterations; ++k) {
-      alpha += (alphaTarget - alpha) * alphaDecay
-
-      this.forces.forEach((force) => {
-        force(alpha)
-      })
-
-      for (i = 0; i < this.numCells; ++i) {
-        cell = this.cells[i]
-
-        cell.tmpVx = undefined
-        cell.tmpVy = undefined
-
-        // if (isNumber(cell.fx) && isNumber(cell.fy)) {
-        //   handleCellPins(cell)
-        // }
-
-        if (cell.fx == null) cell.x += cell.vx *= 1 - velocityDecay
-        else {
-          cell.x = cell.fx
-          cell.vx = 0
-        }
-        if (cell.fy == null) cell.y += cell.vy *= 1 - velocityDecay
-        else {
-          cell.y = cell.fy
-          cell.vy = 0
-        }
-
-        this.handleCellMediaVersion(cell)
-      }
+    for (let i = 0; i < this.forces.length; i++) {
+      this.forces[i](this.parameters.alpha)
     }
 
     this.handleMediaVersionLayerLoadRequests()
   }
+
+  handleEnd(cell) {
+    cell.x += cell.vx *= 1 - this.parameters.velocityDecay
+    cell.y += cell.vy *= 1 - this.parameters.velocityDecay
+
+    cell.initialVx = cell.vx
+    cell.initialVy = cell.vy
+
+    this.handleCellMediaVersion(cell)
+  }
+
+  // tick(iterations = 1) {
+  //   let i
+  //   let cell
+  //
+  //   // defaults
+  //   let {
+  //     alpha = 1,
+  //     alphaMin = 0.001,
+  //     alphaDecay = 1 - alphaMin ** 1 / 300,
+  //     alphaTarget = 0,
+  //     velocityDecay = 0.6,
+  //   } = this.config.parameters
+  //
+  //   if (this.mediaConfig.enabled) {
+  //     this.mediaVersionLayerLoadRequests.forEach((set) => set.clear())
+  //   }
+  //
+  //   for (let k = 0; k < iterations; ++k) {
+  //     alpha += (alphaTarget - alpha) * alphaDecay
+  //
+  //     this.forces.forEach((force) => {
+  //       force(alpha)
+  //     })
+  //
+  //     for (i = 0; i < this.numCells; ++i) {
+  //       cell = this.cells[i]
+  //
+  //       // if (isNumber(cell.fx) && isNumber(cell.fy)) {
+  //       //   handleCellPins(cell)
+  //       // }
+  //
+  //       if (cell.fx == null) cell.x += cell.vx *= 1 - velocityDecay
+  //       else {
+  //         cell.x = cell.fx
+  //         cell.vx = 0
+  //       }
+  //       if (cell.fy == null) cell.y += cell.vy *= 1 - velocityDecay
+  //       else {
+  //         cell.y = cell.fy
+  //         cell.vy = 0
+  //       }
+  //
+  //       cell.initialVx = cell.vx
+  //       cell.initialVy = cell.vy
+  //
+  //       this.handleCellMediaVersion(cell)
+  //     }
+  //   }
+  //
+  //   this.handleMediaVersionLayerLoadRequests()
+  // }
 
   handleCellMediaVersion(cell) {
     if (!this.mediaConfig.enabled) return
@@ -187,19 +214,6 @@ export default class ForceSimulationStep extends BaseSimulationStep {
         cell.vx = cell.vy = 0
       }
     }
-  }
-
-  initializeForce(force) {
-    if (force.initialize) force.initialize(this.cells, RANDOM)
-    return force
-  }
-
-  addForce(force) {
-    this.forces.add(this.initializeForce(force))
-  }
-
-  removeForce(index) {
-    this.forces.delete(index)
   }
 
   update() {

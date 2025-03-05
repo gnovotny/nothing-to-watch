@@ -261,8 +261,8 @@ export class Controls extends EventTarget {
       y: undefined,
       index: undefined,
     })
-    this.cells.focusedIndex = undefined
-    this.dispatchEvent(new CellFocusedEvent(undefined))
+    // this.cells.focusedIndex = undefined
+    // this.dispatchEvent(new CellFocusedEvent(undefined))
   }
 
   disableFocus() {

@@ -71,7 +71,11 @@ export function AddCustomLinkDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size='icon' className='hidden md:inline-flex'>
+        <Button
+          size='icon'
+          className='hidden md:inline-flex'
+          title='Add new link'
+        >
           <Plus />
         </Button>
       </DialogTrigger>

@@ -23,13 +23,32 @@ export type UserConfig = {
 
 export const transformConfig = (
   config: typeof baseConfig,
-  userConfig: UserConfig,
+  state: VoroforceState,
 ) => {
+  const { userConfig, setUserConfig } = state
   const urlParams = new URLSearchParams(window.location.search)
-  const cellsOverride = urlParams.get('cells')
+  const cellsOverrideParam = urlParams.get('cells')
+  const customLinkBase64Param = urlParams.get('customLinkBase64')
 
-  config.cells = cellsOverride
-    ? Number.parseInt(cellsOverride)
+  if (customLinkBase64Param) {
+    try {
+      const customLink = JSON.parse(window.atob(customLinkBase64Param))
+      userConfig.customLinks = [...(userConfig.customLinks ?? [])]
+      const sameNameIndex = userConfig.customLinks.findIndex(
+        ({ name }) => name === customLink.name,
+      )
+      if (sameNameIndex !== -1) {
+        userConfig.customLinks[sameNameIndex] = customLink
+      } else {
+        userConfig.customLinks.push(customLink)
+      }
+      setUserConfig(userConfig)
+      window.history.replaceState({}, document.title, '/')
+    } catch (e) {}
+  }
+
+  config.cells = cellsOverrideParam
+    ? Number.parseInt(cellsOverrideParam)
     : (userConfig.cells ?? config.cells)
   if (userConfig.noPostEffects) {
     config.display.scene.post.enabled = false
@@ -38,7 +57,7 @@ export const transformConfig = (
 }
 
 export const getVoroforceConfigProps = (state: VoroforceState) => {
-  const { userConfig, playedIntro } = state
+  const { playedIntro } = state
   const isSmallScreen = matchMediaQuery(down('md')).matches
   const config = transformConfig(
     mergeConfigs(baseConfig, {
@@ -57,7 +76,7 @@ export const getVoroforceConfigProps = (state: VoroforceState) => {
           }
         : {}),
     }),
-    userConfig,
+    state,
   )
 
   const {

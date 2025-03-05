@@ -22,7 +22,7 @@ import { FilmRatingGauge } from '../shared/film-rating-gauge'
 
 import { Button } from '../../ui/button'
 import { AddCustomLinkDialog } from './add-custom-link-dialog'
-import { X } from 'lucide-react'
+import { Copy, X } from 'lucide-react'
 
 const FilmView = ({
   film,
@@ -125,12 +125,27 @@ const FilmView = ({
                 <Button
                   size='icon'
                   variant='unstyled'
+                  className='-bottom-2 -end-2 absolute inline-flex size-5 items-center justify-center rounded-full border-2 border-white bg-blue-500 font-bold text-white text-xs dark:border-gray-900'
+                  onClick={() => {
+                    void navigator?.clipboard?.writeText(
+                      `${window.location.href.split('?')[0]}?customLinkBase64=${window.btoa(JSON.stringify({ name, baseUrl, slug, property }))}`,
+                    )
+                  }}
+                  title='Copy to Clipboard'
+                >
+                  <Copy className='!size-3' />
+                </Button>
+
+                <Button
+                  size='icon'
+                  variant='unstyled'
                   className='-top-2 -end-2 absolute inline-flex size-5 items-center justify-center rounded-full border-2 border-white bg-red-500 font-bold text-white text-xs dark:border-gray-900'
                   onClick={() => {
                     userConfig.customLinks?.splice(index, 1)
                     userConfig.customLinks = [...(userConfig.customLinks ?? [])]
                     setUserConfig(userConfig)
                   }}
+                  title='Remove'
                 >
                   <X className='!size-3' />
                 </Button>

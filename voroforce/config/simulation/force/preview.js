@@ -8,11 +8,19 @@ export const forceSimulationStepPreviewConfig = {
     velocityDecayTransitionEnterMode: 0.85,
   },
   forces: [
+    // {
+    //   type: 'lattice',
+    //   enabled: true,
+    //   strength: 0.8,
+    //   yFactor: 3.5,
+    //   xFactor: 1,
+    //   maxLevelsFromCenter: 30,
+    //   maxRadius: 300,
+    // },
     {
       type: 'superF',
       enabled: true,
       push: {
-        enabled: true,
         // strength: 0.75,
         strength: 0.15,
         selector: 'focused',
@@ -33,18 +41,16 @@ export const forceSimulationStepPreviewConfig = {
           y: true,
           scaling: 0.25,
         },
-        skipYOnCenterCellRow: true,
+        skipYOnCenterCellRow: false,
       },
       lattice: {
-        enabled: true,
         strength: 0.8,
-        // yFactor: 1.5,
         yFactor: 3.5,
         xFactor: 1,
-        maxLevelsFromCenter: 25,
+        maxLevelsFromCenter: 30,
+        maxRadius: 300,
       },
       origin: {
-        enabled: true,
         strength: 0.8,
         yFactor: 1.5,
       },

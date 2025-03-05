@@ -59,17 +59,17 @@ export const latticeForce = ({
         // TODO NOT USING CURRENT VELOCITIES HAVE ANY DOWNSIDES?
         x =
           target.x +
-          (isNumber(target.tmpVx) ? target.tmpVx : target.vx) -
+          (isNumber(target.initialVx) ? target.initialVx : target.vx) -
           source.x -
-          (isNumber(source.tmpVx)
-            ? source.tmpVx
+          (isNumber(source.initialVx)
+            ? source.initialVx
             : source.vx) /* || jiggle(random)*/
         y =
           target.y +
-          (isNumber(target.tmpVy) ? target.tmpVy : target.vy) -
+          (isNumber(target.initialVy) ? target.initialVy : target.vy) -
           source.y -
-          (isNumber(source.tmpVy)
-            ? source.tmpVy
+          (isNumber(source.initialVy)
+            ? source.initialVy
             : source.vy) /* || jiggle(random)*/
         // x = target.x - source.x /* || jiggle(random)*/
         // y = target.y - source.y /* || jiggle(random)*/
@@ -80,8 +80,8 @@ export const latticeForce = ({
 
         target.vx -= x
         target.vy -= y
-        source.tmpVx = source.vx
-        source.tmpVy = source.vy
+        source.initialVx = source.vx
+        source.initialVy = source.vy
         source.vx += x
         source.vy += y
       }

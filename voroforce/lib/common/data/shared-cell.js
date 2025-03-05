@@ -43,6 +43,9 @@ export class SharedCell {
     this.targetMediaVersionIndex = 2 * this.index + 1
     this.weightIndex = this.index
     this.idIndex = this.index
+
+    this.initialVx = 0
+    this.initialVy = 0
   }
 
   set x(v) {

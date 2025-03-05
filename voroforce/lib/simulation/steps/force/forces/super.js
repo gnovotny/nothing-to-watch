@@ -44,12 +44,14 @@ export const superForce = ({
       yFactor: originYFactor = 1,
     } = {},
   },
+  handleEnd,
   globalConfig,
 }) => {
   const select = (cells) => cells[pushSelector]
 
   // biome-ignore lint/style/useSingleVarDeclarator: annoying
   let centerCell,
+    previousCenterCell,
     centerX,
     centerY,
     targetCenterX,
@@ -68,7 +70,13 @@ export const superForce = ({
     mediaV2LevelAdjacencyThreshold,
     colLevelAdjacency,
     rowLevelAdjacency,
-    maxLevelAdjacency
+    maxLevelAdjacency,
+    latticeCellWidth = globalConfig.lattice.cellWidth,
+    latticeCellHeight = globalConfig.lattice.cellHeight,
+    abs = Math.abs,
+    max = Math.max,
+    min = Math.min,
+    sqrt = Math.sqrt
 
   const mediaEnabled = globalConfig.media.enabled && pushManageMediaVersions
 
@@ -84,17 +92,14 @@ export const superForce = ({
     // console.log('mediaV2Threshold', mediaV2DistThreshold)
   }
 
-  function applyLattice(cell, target, alpha, strengthMod = 1) {
-    let x = target.x + target.vx - cell.x - cell.vx
-    let y = target.y + target.vy - cell.y - cell.vy
-    let l = Math.sqrt(x * x + y * y)
-    l =
-      ((l - globalConfig.lattice.cellWidth) / l) *
-      alpha *
-      latticeStrength *
-      strengthMod
-    x *= l * latticeXFactor * 0.5
-    y *= l * latticeYFactor * 0.5
+  function applyLatticeComponent(cell, target, alpha, size, strengthMod) {
+    x = target.x + target.initialVx - cell.x - cell.initialVx
+    y = target.y + target.initialVy - cell.y - cell.initialVy
+
+    l = sqrt(x * x + y * y)
+    l = ((l - size) / l) * alpha * latticeStrength * strengthMod * 0.5
+    x *= l * latticeXFactor
+    y *= l * latticeYFactor
 
     target.vx -= x
     target.vy -= y
@@ -108,9 +113,10 @@ export const superForce = ({
   }
 
   function force(alpha) {
-    // centerCell = select(cells) ?? lastKnownCenterCell
-    // lastKnownCenterCell = centerCell
-    centerCell = select(cells)
+    if (select(cells)?.index !== centerCell?.index) {
+      previousCenterCell = centerCell
+      centerCell = select(cells)
+    }
 
     // if (!centerCell) {
     //   // centerX = undefined
@@ -172,19 +178,19 @@ export const superForce = ({
       centerX = lerp(
         centerX,
         targetCenterX,
-        Math.min(1, Math.abs(targetCenterX - centerX) / 10),
+        min(1, abs(targetCenterX - centerX) / 10),
         // 0.1,
       )
 
       centerY = lerp(
         centerY,
         targetCenterY,
-        Math.min(1, Math.abs(targetCenterY - centerY) / 10),
+        min(1, abs(targetCenterY - centerY) / 10),
         // 0.1,
       )
 
       // TODO TMP
-      // centerX = centerCellX
+      centerX = centerCellX
       centerY = centerCellY
     }
 
@@ -195,9 +201,9 @@ export const superForce = ({
       cell = cells[i]
 
       if (centerCell) {
-        colLevelAdjacency = Math.abs(cell.col - centerCell.col)
-        rowLevelAdjacency = Math.abs(cell.row - centerCell.row)
-        maxLevelAdjacency = Math.max(colLevelAdjacency, rowLevelAdjacency)
+        colLevelAdjacency = abs(cell.col - centerCell.col)
+        rowLevelAdjacency = abs(cell.row - centerCell.row)
+        maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
 
         pointerFollowModX = 1
         pointerFollowModY = 1
@@ -219,6 +225,31 @@ export const superForce = ({
         // }
       }
 
+      if (latticeEnabled && centerCell) {
+        if (maxLevelAdjacency < latticeMaxLevelsFromCenter) {
+          if (cell.col > 0) {
+            applyLatticeComponent(
+              cell,
+              cells[i - 1],
+              alpha,
+              latticeCellWidth,
+              (latticeMaxLevelsFromCenter - maxLevelAdjacency) /
+                latticeMaxLevelsFromCenter,
+            )
+          }
+          if (cell.row > 0) {
+            applyLatticeComponent(
+              cell,
+              cells[i - globalConfig.lattice.cols],
+              alpha,
+              latticeCellHeight,
+              (latticeMaxLevelsFromCenter - maxLevelAdjacency) /
+                latticeMaxLevelsFromCenter,
+            )
+          }
+        }
+      }
+
       if (originEnabled) applyOrigin(cell, alpha)
 
       if (pushEnabled && centerCell) {
@@ -227,22 +258,22 @@ export const superForce = ({
 
         let diagonalMod = 1
         if (pushDiagonalFactor !== 1) {
-          const absX = Math.abs(x)
-          const absY = Math.abs(y)
+          const absX = abs(x)
+          const absY = abs(y)
 
           diagonalMod = mapRange(
             0,
             1,
             1,
             pushDiagonalFactor,
-            Math.min(absX, absY) / Math.max(absX, absY),
+            min(absX, absY) / max(absX, absY),
           )
         }
 
         l = x * x + y * y
 
         if (limit && l >= r * r) continue
-        l = Math.sqrt(l)
+        l = sqrt(l)
 
         if (mediaEnabled) {
           if (
@@ -255,7 +286,7 @@ export const superForce = ({
             l < mediaV1DistThreshold ||
             maxLevelAdjacency <= mediaV1LevelAdjacencyThreshold
           ) {
-            cell.targetMediaVersion = Math.max(cell.targetMediaVersion, 1)
+            cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
           }
         }
 
@@ -268,25 +299,17 @@ export const superForce = ({
         if (i !== centerCell.index) {
           cell.vx += x * vCommon * pushXFactor * pointerFollowModX
 
-          if (!pushSkipYOnCenterCellRow || cell.row !== centerCell.row) {
+          if (
+            !pushSkipYOnCenterCellRow ||
+            cell.row !== centerCell.row ||
+            previousCenterCell?.row !== centerCell.row
+          ) {
             cell.vy += y * vCommon * pushYFactor * pointerFollowModY
           }
         }
       }
 
-      if (latticeEnabled && centerCell) {
-        if (
-          colLevelAdjacency <= latticeMaxLevelsFromCenter ||
-          rowLevelAdjacency <= latticeMaxLevelsFromCenter
-        ) {
-          if (cell.col > 0) {
-            applyLattice(cell, cells[i - 1], alpha)
-          }
-          if (cell.row > 0) {
-            applyLattice(cell, cells[i - globalConfig.lattice.cols], alpha)
-          }
-        }
-      }
+      handleEnd?.(cell)
     }
   }
 

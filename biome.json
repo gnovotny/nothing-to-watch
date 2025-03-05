@@ -37,7 +37,8 @@
         "noForEach": "off"
       },
       "style": {
-        "useNodejsImportProtocol": "off"
+        "useNodejsImportProtocol": "off",
+        "useSingleVarDeclarator": "off"
       },
       "nursery": {
         "useSortedClasses": {
