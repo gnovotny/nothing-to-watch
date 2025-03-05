@@ -9,7 +9,7 @@ export const forceSimulationStepIntroConfig = {
     {
       type: 'origin',
       enabled: true,
-      strength: 0.1,
+      strength: 0.05,
     },
   ],
 }

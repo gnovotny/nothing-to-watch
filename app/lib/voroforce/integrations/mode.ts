@@ -109,7 +109,7 @@ const handleIntro = () => {
           dimensions.get('height') / 2 +
           (0.5 - Math.random()) * 0.05 * dimensions.get('height'),
       }
-    }, 2000)
+    }, 3000)
   }, 1000)
 }
 
