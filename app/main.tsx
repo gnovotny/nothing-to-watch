@@ -5,8 +5,12 @@ import { animateHtmlTitleSuffix } from './lib/utils/anim'
 import { createVoroforce } from './lib/voroforce'
 import './index.css'
 
-// biome-ignore lint/style/noNonNullAssertion: exists
-createVoroforce(document.getElementById('voroforce')!)
+try {
+  // biome-ignore lint/style/noNonNullAssertion: exists
+  createVoroforce(document.getElementById('voroforce')!)
+} catch (e) {
+  alert((e as Error).message)
+}
 
 // biome-ignore lint/style/noNonNullAssertion: exists
 createRoot(document.getElementById('root')!).render(

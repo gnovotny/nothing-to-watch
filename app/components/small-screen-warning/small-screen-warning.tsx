@@ -6,6 +6,7 @@ import { cn } from '../../lib/utils/tw'
 import { Button } from '../ui/button'
 import {
   Drawer,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
@@ -40,11 +41,10 @@ export const SmallScreenWarning = () => {
           <div className='not-landscape:w-full landscape:h-full'>
             <DrawerHeader>
               <DrawerTitle>Warning</DrawerTitle>
-              {/*<DrawerDescription></DrawerDescription>*/}
+              <DrawerDescription>
+                This website is best viewed on a larger device
+              </DrawerDescription>
             </DrawerHeader>
-            <div className='p-4 pb-0'>
-              This website is best viewed on a larger device
-            </div>
             <DrawerFooter>
               <Button variant='outline' onClick={() => setOpen(false)}>
                 Continue

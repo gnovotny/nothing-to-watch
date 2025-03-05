@@ -80,14 +80,14 @@ export function AddCustomLinkDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px] md:sm:max-w-[625px]'>
+        <DialogHeader>
+          <DialogTitle>Add custom link</DialogTitle>
+          <DialogDescription className='hidden'>
+            Add a custom link to a streaming service of your choice
+          </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-            <DialogHeader>
-              <DialogTitle>Add custom link</DialogTitle>
-              <DialogDescription className='hidden'>
-                Add a custom link to a streaming service of your choice
-              </DialogDescription>
-            </DialogHeader>
             <div className='grid gap-4 py-4'>
               <FormField
                 control={form.control}
