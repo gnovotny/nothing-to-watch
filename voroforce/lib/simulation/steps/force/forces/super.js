@@ -28,7 +28,7 @@ export const superForce = ({
       yFactor: pushYFactor = 1,
       diagonalFactor: pushDiagonalFactor = 1,
       manageMediaVersions: pushManageMediaVersions = true,
-      skipYOnCenterCellRow: pushSkipYOnCenterCellRow = false,
+      centerMagic: pushCenterMagic = false,
     } = {},
     lattice: {
       enabled: latticeEnabled = false,
@@ -300,7 +300,7 @@ export const superForce = ({
           cell.vx += x * vCommon * pushXFactor * pointerFollowModX
 
           if (
-            !pushSkipYOnCenterCellRow ||
+            !pushCenterMagic ||
             cell.row !== centerCell.row ||
             previousCenterCell?.row !== centerCell.row
           ) {

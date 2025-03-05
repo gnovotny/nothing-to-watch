@@ -28,7 +28,7 @@ export const forceSimulationStepSelectConfig = {
           y: true,
           scaling: 0.25,
         },
-        skipYOnCenterCellRow: true,
+        centerMagic: true,
       },
       lattice: {
         enabled: true,

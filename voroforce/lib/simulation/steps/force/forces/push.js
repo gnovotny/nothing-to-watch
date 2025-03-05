@@ -26,7 +26,7 @@ export const pushForce = ({
     yFactor = 1,
     diagonalFactor = 1,
     manageMediaVersions = true,
-    skipYOnCenterCellRow = false,
+    centerMagic = false,
     handleEnd,
   },
   globalConfig,
@@ -192,7 +192,7 @@ export const pushForce = ({
       cell.vx += x * vCommon * xFactor * pointerFollowModX
 
       if (
-        skipYOnCenterCellRow &&
+        centerMagic &&
         cell.row === centerCell.row &&
         previousCenterCell?.row === centerCell.row
       )

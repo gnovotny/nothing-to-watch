@@ -26,7 +26,7 @@ export const forceSimulationStepPreviewConfig = {
         selector: 'focused',
         // yFactor: 1.5,
         yFactor: 2.5,
-        xFactor: 0.8,
+        // xFactor: 0.8,
         // yFactor: 1,
         // diagonalFactor: 2.55,
         pointerFollow: {
@@ -41,7 +41,7 @@ export const forceSimulationStepPreviewConfig = {
           y: true,
           scaling: 0.25,
         },
-        skipYOnCenterCellRow: false,
+        centerMagic: true,
       },
       lattice: {
         strength: 0.8,
