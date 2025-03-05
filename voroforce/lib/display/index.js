@@ -52,8 +52,8 @@ export default class Display {
     this.renderer.update()
   }
 
-  getCellIndexByPointer(pointer) {
-    return this.scene.getCellIndexByPointer(pointer)
+  getCellIndicesByPointer(pointer) {
+    return this.scene.getCellIndicesByPointer(pointer)
   }
 
   dispose() {

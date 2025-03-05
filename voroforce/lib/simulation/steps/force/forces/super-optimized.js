@@ -76,7 +76,9 @@ export const superForce = ({
     max = Math.max,
     min = Math.min,
     sqrt = Math.sqrt,
-    cellsLen = cells.length
+    cellsLen = cells.length,
+    cellIdentityPushMod = 1,
+    centerCellPushFactor = 1
 
   const mediaEnabled = globalConfig.media.enabled && pushManageMediaVersions
 
@@ -92,7 +94,7 @@ export const superForce = ({
     // console.log('mediaV2Threshold', mediaV2DistThreshold)
   }
 
-  function applyLatticeComponent(cell, target, alpha, size, strengthMod) {
+  function applyLatticeLink(cell, target, alpha, size, strengthMod) {
     x = target.x + target.initialVx - cell.x - cell.initialVx
     y = target.y + target.initialVy - cell.y - cell.initialVy
 
@@ -137,47 +139,52 @@ export const superForce = ({
         targetCenterY = pointer.y
       }
 
-      const pointerFollowActive =
-        pushPointerFollow.enabled && pushPointerFollow.scaling && hasPointer
-
-      if (pointerFollowActive) {
-        if (pushPointerFollow.x)
-          centerX = lerp(centerX, pointer.x, pushPointerFollow.scaling)
-        if (pushPointerFollow.y)
-          centerY = lerp(centerY, pointer.y, pushPointerFollow.scaling)
-      }
-
-      const pointerFollowAltActive =
-        pushPointerFollowAlt.enabled &&
-        pushPointerFollowAlt.scaling &&
-        hasPointer
-
-      if (pointerFollowAltActive) {
-        if (pushPointerFollowAlt.x)
-          centerX = lerp(centerX, pointer.x, pushPointerFollowAlt.scaling)
-        if (pushPointerFollowAlt.y)
-          centerY = lerp(centerY, pointer.y, pushPointerFollowAlt.scaling)
-      }
-
       centerX = centerX ?? targetCenterX
       centerY = centerY ?? targetCenterY
       centerX = lerp(
         centerX,
         targetCenterX,
         min(1, abs(targetCenterX - centerX) / 10),
-        // 0.1,
       )
 
       centerY = lerp(
         centerY,
         targetCenterY,
         min(1, abs(targetCenterY - centerY) / 10),
-        // 0.1,
       )
 
-      // TODO TMP
-      // centerX = centerCellX
-      // centerY = centerCellY
+      const closestPointerPositionCenterCellNeighbor =
+        cells[centerCell.closestIndices[0]]
+
+      if (closestPointerPositionCenterCellNeighbor) {
+        const closestPointerPositionCenterCellNeighborX =
+          closestPointerPositionCenterCellNeighbor.x +
+          closestPointerPositionCenterCellNeighbor.vx
+        const closestPointerPositionCenterCellNeighborY =
+          closestPointerPositionCenterCellNeighbor.y +
+          closestPointerPositionCenterCellNeighbor.vy
+
+        x = centerX - centerCellX
+        y = centerY - centerCellY
+        const distCenterToCenterCell = sqrt(x * x + y * y)
+
+        x = centerX - closestPointerPositionCenterCellNeighborX
+        y = centerY - closestPointerPositionCenterCellNeighborY
+        const distCenterToCenterCellNeighbor = sqrt(x * x + y * y)
+
+        const distRatio =
+          distCenterToCenterCell / distCenterToCenterCellNeighbor
+
+        // console.log(
+        //   'distCenterToCenterCellNeighbor',
+        //   distCenterToCenterCellNeighbor,
+        // )
+        // console.log('distCenterToCenterCell', distCenterToCenterCell)
+
+        centerCellPushFactor = Math.min(distRatio, 1)
+      } else {
+        centerCellPushFactor = 0
+      }
     }
 
     if (centerCell) {
@@ -212,14 +219,14 @@ export const superForce = ({
               (latticeMaxLevelsFromCenter - maxLevelAdjacency) /
               latticeMaxLevelsFromCenter
 
-            applyLatticeComponent(
+            applyLatticeLink(
               cell,
               cells[i - 1],
               alpha,
               latticeCellWidth,
               latticeStrengthMod,
             )
-            applyLatticeComponent(
+            applyLatticeLink(
               cell,
               cells[i - globalConfig.lattice.cols],
               alpha,
@@ -268,64 +275,67 @@ export const superForce = ({
       cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
 
       if (centerCell) {
-        if (i !== centerCell.index) {
-          colLevelAdjacency = abs(cell.col - centerCell.col)
-          rowLevelAdjacency = abs(cell.row - centerCell.row)
-          maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
+        colLevelAdjacency = abs(cell.col - centerCell.col)
+        rowLevelAdjacency = abs(cell.row - centerCell.row)
+        maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
 
-          x = cell.x + cell.vx - centerX
-          y = cell.y + cell.vy - centerY
-          l = sqrt(x * x + y * y)
+        x = cell.x + cell.vx - centerX
+        y = cell.y + cell.vy - centerY
+        l = sqrt(x * x + y * y)
 
-          if (
-            l < mediaV2DistThreshold ||
-            maxLevelAdjacency <= mediaV2LevelAdjacencyThreshold
-          ) {
-            // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
-            cell.targetMediaVersion = 2
-          } else if (
-            l < mediaV1DistThreshold ||
-            maxLevelAdjacency <= mediaV1LevelAdjacencyThreshold
-          ) {
-            cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
-          }
-
-          if (l === 0) continue
-          l = ((pushRadius - l) / l) * pushStrength
-
-          const centerRow =
-            pushCenterMagic &&
-            cell.row === centerCell.row &&
-            previousCenterCell?.row === centerCell.row
-
-          const centerCol =
-            pushCenterMagic &&
-            cell.col === centerCell.col &&
-            previousCenterCell?.col === centerCell.col
-
-          let pushYMod = 1
-          let pushXMod = 1
-
-          if (centerCol && rowLevelAdjacency < 20) {
-            pushXMod = 1 - (20 - rowLevelAdjacency) / 20
-          }
-
-          if (centerRow && colLevelAdjacency < 40) {
-            pushYMod = 1 - (40 - colLevelAdjacency) / 40
-          }
-
-          // if (centerRow && colLevelAdjacency > 1 && colLevelAdjacency < 20) {
-          //   pushXMod += ((20 - colLevelAdjacency) / 20) * 0.3
-          // }
-
-          // if (colLevelAdjacency < 2 && rowLevelAdjacency < 2) {
-          //   pushXMod *= 1.2
-          //   pushYMod *= 1.2
-          // }
-
-          cell.vx += x * l * pushXFactor * pushXMod
-          cell.vy += y * l * pushYFactor * pushYMod
+        if (
+          l < mediaV2DistThreshold ||
+          maxLevelAdjacency <= mediaV2LevelAdjacencyThreshold
+        ) {
+          // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
+          cell.targetMediaVersion = 2
+        } else if (
+          l < mediaV1DistThreshold ||
+          maxLevelAdjacency <= mediaV1LevelAdjacencyThreshold
+        ) {
+          cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
         }
+
+        if (l === 0) continue
+        l = ((pushRadius - l) / l) * pushStrength
+
+        const centerRow =
+          pushCenterMagic &&
+          cell.row === centerCell.row &&
+          previousCenterCell?.row === centerCell.row
+
+        const centerCol =
+          pushCenterMagic &&
+          cell.col === centerCell.col &&
+          previousCenterCell?.col === centerCell.col
+
+        let pushYMod = 1
+        let pushXMod = 1
+
+        if (centerCol && rowLevelAdjacency < 20) {
+          pushXMod = 1 - (20 - rowLevelAdjacency) / 20
+        }
+
+        if (centerRow && colLevelAdjacency < 40) {
+          pushYMod = 1 - (40 - colLevelAdjacency) / 40
+        }
+
+        // if (centerRow && colLevelAdjacency > 1 && colLevelAdjacency < 20) {
+        //   pushXMod += ((20 - colLevelAdjacency) / 20) * 0.3
+        // }
+
+        // if (colLevelAdjacency < 2 && rowLevelAdjacency < 2) {
+        //   pushXMod *= 1.2
+        //   pushYMod *= 1.2
+        // }
+
+        cellIdentityPushMod = 1
+        if (i === centerCell.index) {
+          cellIdentityPushMod = centerCellPushFactor
+        }
+
+        cell.vx += x * l * pushXFactor * pushXMod * cellIdentityPushMod
+        cell.vy += y * l * pushYFactor * pushYMod * cellIdentityPushMod
       }
 
       handleEnd?.(cell)

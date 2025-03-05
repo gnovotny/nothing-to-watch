@@ -434,7 +434,7 @@ export default class BaseScene {
     })
   }
 
-  async getCellIndexByPointer(pointer) {
+  async getCellIndicesByPointer(pointer) {
     const rt = this.renderTargets?.[0]
     if (!rt) return
 
@@ -458,8 +458,11 @@ export default class BaseScene {
     )
 
     const index = data[0] - 1
+    const index2 = data[1] - 1
+    const index3 = data[2] - 1
+    const index4 = data[3] - 1
     if (index >= 0) {
-      return index
+      return [index, index2, index3, index4]
     }
   }
 

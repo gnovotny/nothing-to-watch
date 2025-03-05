@@ -144,7 +144,8 @@ export class Controls extends EventTarget {
     Object.assign(this.pointer, newXY)
     this.handlePointerMove()
 
-    this.display.getCellIndexByPointer(this.pointer).then((index) => {
+    this.display.getCellIndicesByPointer(this.pointer).then((indices) => {
+      const index = indices?.[0]
       if (index === undefined) {
         this.onPointerOut()
         return
@@ -159,6 +160,9 @@ export class Controls extends EventTarget {
           this.dispatchEvent(new CellFocusedEvent(this.cells.focused))
         }
       }
+
+      if (this.cells.focused)
+        this.cells.focused.closestIndices = [indices[1], indices[2], indices[3]]
     })
   }
 
