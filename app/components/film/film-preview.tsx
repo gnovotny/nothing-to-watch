@@ -26,17 +26,16 @@ const FilmPreviewMirrorItem = ({
         },
       )}
     >
-      <div
+      <FilmPoster
+        film={film}
         className={cn(
-          'max-w-[150px] shrink-0 basis-1/4 lg:max-w-[300px] lg:basis-1/4 ',
+          'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
           {
             'pointer-events-auto': active,
           },
         )}
         onPointerOver={onPointerOver}
-      >
-        <FilmPoster film={film} className='aspect-[2/3] w-full rounded-2xl' />
-      </div>
+      />
       <div
         className={cn(
           'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',
