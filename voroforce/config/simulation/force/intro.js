@@ -7,15 +7,9 @@ export const forceSimulationStepIntroConfig = {
   },
   forces: [
     {
-      type: 'superF',
+      type: 'origin',
       enabled: true,
-      push: {
-        enabled: false,
-      },
-      origin: {
-        enabled: true,
-        strength: 0.1,
-      },
+      strength: 0.1,
     },
   ],
 }

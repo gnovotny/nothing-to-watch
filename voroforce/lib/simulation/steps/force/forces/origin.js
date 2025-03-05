@@ -5,6 +5,7 @@ export const originForce = ({
   config: { strength = 0.1, center = false, xFactor = 1, yFactor = 1 },
   globalConfig,
   dimensions,
+  handleEnd,
 }) => {
   let originX = (cell) => cell.ix
   let originY = (cell) => cell.iy
@@ -19,6 +20,8 @@ export const originForce = ({
       cell = cells[i]
       cell.vx += (originX(cell) - cell.x) * strength * alpha * xFactor
       cell.vy += (originY(cell) - cell.y) * strength * alpha * yFactor
+
+      handleEnd?.(cell)
     }
   }
 

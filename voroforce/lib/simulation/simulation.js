@@ -25,4 +25,8 @@ export default class Simulation extends BaseSimulation {
     this.voronoiStep?.resize(dimensions)
     onResize?.()
   }
+
+  handleForceStepConfigUpdated() {
+    this.forceStep.setConfig(this.globalConfig)
+  }
 }

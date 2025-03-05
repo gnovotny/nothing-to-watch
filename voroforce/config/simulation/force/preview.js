@@ -29,18 +29,18 @@ export const forceSimulationStepPreviewConfig = {
         // xFactor: 0.8,
         // yFactor: 1,
         // diagonalFactor: 2.55,
-        pointerFollow: {
-          enabled: false,
-          x: true,
-          y: true,
-          scaling: 0.25,
-        },
-        pointerFollowAlt: {
-          enabled: false,
-          x: true,
-          y: true,
-          scaling: 0.25,
-        },
+        // pointerFollow: {
+        //   enabled: false,
+        //   x: true,
+        //   y: true,
+        //   scaling: 0.25,
+        // },
+        // pointerFollowAlt: {
+        //   enabled: false,
+        //   x: true,
+        //   y: true,
+        //   scaling: 0.25,
+        // },
         centerMagic: true,
       },
       lattice: {

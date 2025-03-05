@@ -36,7 +36,7 @@ export const forceSimulationStepSelectConfig = {
         // yFactor: 1.5,
         yFactor: 1.5,
         xFactor: 1,
-        maxLevelsFromCenter: 55,
+        maxLevelsFromCenter: 30,
         // xFactor: 2,
       },
       origin: {
