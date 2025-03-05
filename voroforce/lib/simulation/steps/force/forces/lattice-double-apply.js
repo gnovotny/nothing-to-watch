@@ -21,7 +21,6 @@ export const latticeForce = ({
     30
   let distances
 
-  // biome-ignore lint/style/useSingleVarDeclarator: annoying
   let centerCell,
     centerX,
     centerY,

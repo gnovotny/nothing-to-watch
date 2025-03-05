@@ -49,7 +49,6 @@ export const superForce = ({
 }) => {
   const select = (cells) => cells[pushSelector]
 
-  // biome-ignore lint/style/useSingleVarDeclarator: annoying
   let centerCell,
     previousCenterCell,
     centerX,

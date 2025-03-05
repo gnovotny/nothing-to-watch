@@ -6,9 +6,9 @@ import { Badge } from '../../ui/badge'
 import { FilmPoster } from '../shared/film-poster'
 import { FilmRatingGauge } from '../shared/film-rating-gauge'
 
+import { Copy, X } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { AddCustomLinkDialog } from './add-custom-link-dialog'
-import { Copy, X } from 'lucide-react'
 
 export const FilmView = ({
   film,

@@ -1,5 +1,5 @@
-import { easedMinLerp, MIN_LERP_EASING_TYPES } from './math'
 import type { VOROFORCE_MODES } from '../store'
+import { MIN_LERP_EASING_TYPES, easedMinLerp } from './math'
 
 export type BaseConfigUniform =
   | {

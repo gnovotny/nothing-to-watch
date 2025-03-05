@@ -8,9 +8,9 @@ import { handleLattice } from './common/lattice'
 import baseConfig from './config'
 import { Controls } from './controls/controls.js'
 import Display from './display'
+import Simulation from './simulation/simulation'
 import { isTouchDevice, mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
-import Simulation from './simulation/simulation'
 
 export class Voroforce {
   mediaEnabled = false

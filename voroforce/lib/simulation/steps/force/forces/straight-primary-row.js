@@ -9,7 +9,7 @@ export const straightPrimaryRowForce = ({
 }) => {
   const select = (cells) => cells[selector]
   console.log('aa')
-  // biome-ignore lint/style/useSingleVarDeclarator: annoying
+
   let centerCell,
     currentCenterCell,
     centerY,

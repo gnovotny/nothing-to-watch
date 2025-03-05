@@ -1,6 +1,6 @@
-import { mergeConfigs } from '√/lib'
 import baseConfig, { introModeLatticeConfig } from '√/config'
 import { forceSimulationStepIntroConfig } from '√/config/simulation/force/intro'
+import { mergeConfigs } from '√/lib'
 
 import { down, matchMediaQuery } from '../../utils/mq'
 

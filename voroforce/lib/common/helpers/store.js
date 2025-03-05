@@ -1,9 +1,9 @@
 import {
   SharedCell,
-  SharedData,
-  SharedPointer,
   SharedCellCollection,
+  SharedData,
   SharedLoadedMediaVersionLayersData,
+  SharedPointer,
 } from '../data'
 import { Dimensions } from './dimensions'
 

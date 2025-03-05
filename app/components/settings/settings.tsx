@@ -1,8 +1,10 @@
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { orientation } from '@/lib/utils/mq'
 import { Drawer as DrawerPrimitive } from 'vaul'
+import { useShallow } from 'zustand/react/shallow'
 import { cn } from '../../lib/utils/tw'
 import { useVoroforce } from '../../lib/voroforce'
+import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import {
   Drawer,
@@ -12,10 +14,8 @@ import {
   DrawerPortal,
   DrawerTitle,
 } from '../ui/drawer'
-import { useShallow } from 'zustand/react/shallow'
-import { Badge } from '../ui/badge'
-import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
+import { Switch } from '../ui/switch'
 
 const NUM_CELL_OPTIONS = [5000, 25000, 50000]
 

@@ -1,9 +1,9 @@
-import { store, VOROFORCE_MODES } from '../store'
 import { baseLatticeConfig, forceSimulationStepConfigs } from '√/config'
+import { VOROFORCE_MODES, store } from '../store'
 import {
+  type VoroforceCell,
   updateUniforms,
   updateUniformsByMode,
-  type VoroforceCell,
 } from '../utils'
 
 export const revealVoroforceContainer = () => {

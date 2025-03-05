@@ -13,7 +13,6 @@ export const moveCenterToPointForce = ({
   globalConfig,
 }) => {
   const select = (cells) => cells[selector]
-  // biome-ignore lint/style/useSingleVarDeclarator: annoying
   let centerCell,
     centerY,
     centerX,

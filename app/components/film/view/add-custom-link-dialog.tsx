@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../ui/dialog'
-import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -18,9 +18,11 @@ import {
   FormLabel,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useVoroforce } from '../../../lib/voroforce'
 import {
   Select,
   SelectContent,
@@ -29,8 +31,6 @@ import {
   SelectValue,
 } from '../../ui/select'
 import { Switch } from '../../ui/switch'
-import { useVoroforce } from '../../../lib/voroforce'
-import { useState } from 'react'
 
 const formSchema = z.object({
   name: z.string(),

@@ -1,5 +1,5 @@
-import { handleFilmViewInSelectMode } from './film-view'
 import { handleControls } from './controls'
+import { handleFilmViewInSelectMode } from './film-view'
 import { handleMode } from './mode'
 import { handleTicker } from './ticker'
 

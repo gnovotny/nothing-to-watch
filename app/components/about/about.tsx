@@ -1,6 +1,9 @@
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { orientation } from '@/lib/utils/mq'
+import { GithubIcon } from 'lucide-react'
 import { Drawer as DrawerPrimitive } from 'vaul'
+import { useShallow } from 'zustand/react/shallow'
+import config from '../../config'
 import { cn } from '../../lib/utils/tw'
 import { useVoroforce } from '../../lib/voroforce'
 import { Button } from '../ui/button'
@@ -12,9 +15,6 @@ import {
   DrawerPortal,
   DrawerTitle,
 } from '../ui/drawer'
-import { useShallow } from 'zustand/react/shallow'
-import config from '../../config'
-import { GithubIcon } from 'lucide-react'
 
 export const About = () => {
   const landscape = useMediaQuery(orientation('landscape'))

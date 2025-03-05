@@ -1,9 +1,9 @@
-import { createContext, use, useEffect, useState } from 'react'
+import { type ReactNode, createContext, use, useEffect, useState } from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
 
 type ThemeProviderProps = {
-  children: React.ReactNode
+  children: ReactNode
   defaultTheme?: Theme
   storageKey?: string
 }

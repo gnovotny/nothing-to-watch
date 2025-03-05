@@ -1,8 +1,8 @@
-import media from './media'
+import { mergeConfigs } from '../lib'
 import controls from './controls'
 import display from './display'
+import media from './media'
 import simulation from './simulation'
-import { mergeConfigs } from '../lib'
 
 export const baseLatticeConfig = {
   enabled: true,

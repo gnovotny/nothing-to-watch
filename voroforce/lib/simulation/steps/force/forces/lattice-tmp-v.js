@@ -1,5 +1,5 @@
-import constant from './utils/constant'
 import { isNumber } from '../../../../utils'
+import constant from './utils/constant'
 
 function index(d) {
   return d.index
@@ -27,7 +27,6 @@ export const latticeForce = ({
   },
   globalConfig,
 }) => {
-  // biome-ignore lint/style/useSingleVarDeclarator: annoying
   let strength = s ? constant(s) : defaultStrength,
     strengths,
     // distance = constant(d ?? globalConfig.lattice.size ?? 30),
@@ -92,7 +91,7 @@ export const latticeForce = ({
   function initialize() {
     if (!cells) return
 
-    // // biome-ignore lint/style/useSingleVarDeclarator: annoying
+    //
     // let i,
     //   n = cells.length,
     //   m = links.length,

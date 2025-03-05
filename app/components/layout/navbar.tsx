@@ -1,8 +1,8 @@
-import { Settings, Info } from 'lucide-react'
+import { Info, Settings } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { useVoroforce } from '../../lib/voroforce'
 import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
-import { useShallow } from 'zustand/react/shallow'
 
 export const Navbar = () => {
   const { settingsOpen, setSettingsOpen, aboutOpen, setAboutOpen } =
