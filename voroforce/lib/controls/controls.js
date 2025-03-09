@@ -55,8 +55,8 @@ export class Controls extends EventTarget {
     this.maxPointerSpeed =
       this.config.maxPointerSpeed * this.dimensions.get('diagonal')
 
-    this.maxPointerReactionRadius =
-      this.config.maxPointerReactionRadius * this.dimensions.get('diagonal')
+    this.pointerRadius =
+      this.config.pointerRadius * this.dimensions.get('diagonal')
   }
 
   handleFirstUpdate() {
@@ -85,7 +85,7 @@ export class Controls extends EventTarget {
 
   handleUpdate() {
     if (!this.targetPointer) return
-    let newXY = { x: this.targetPointer.x, y: this.targetPointer.y }
+    const newPointerData = { x: this.targetPointer.x, y: this.targetPointer.y }
 
     const currentTime = performance.now()
     let deltaTime = currentTime - this.prevTime
@@ -96,10 +96,11 @@ export class Controls extends EventTarget {
     }
 
     // Skip if this is the first move or if no time has passed
-    if (this.prevTime === 0 /* || deltaTime === 0*/) {
+    if (this.prevTime === 0 || deltaTime === 0) {
       this.prevX = this.targetPointer.x
       this.prevY = this.targetPointer.y
       this.prevTime = currentTime
+      newPointerData.speedScale = 0
       return
     }
 
@@ -107,21 +108,25 @@ export class Controls extends EventTarget {
     const deltaX = this.targetPointer.x - this.prevX
     const deltaY = this.targetPointer.y - this.prevY
 
-    // Calculate current speed (pixels per second)
+    // Calculate distance
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
     // Abort if outside of reaction radius
-    if (distance > this.maxPointerReactionRadius) {
+    if (distance > this.pointerRadius) {
+      newPointerData.speedScale = 0
       return
     }
+
+    const speedMod = distance ? 1 - distance / this.pointerRadius : 1
+    const dynamicMaxPointerSpeed = speedMod * this.maxPointerSpeed
 
     // Calculate current speed (pixels per second)
     const speed = distance / (deltaTime / 1000)
 
     // Apply speed limit if needed
-    if (speed > this.maxPointerSpeed) {
+    if (speed > dynamicMaxPointerSpeed) {
       // Scale factor to limit speed
-      const scale = this.maxPointerSpeed / speed
+      const scale = dynamicMaxPointerSpeed / speed
 
       // Apply scaled movement
       const limitedDeltaX = deltaX * scale
@@ -131,17 +136,21 @@ export class Controls extends EventTarget {
       const newX = this.prevX + limitedDeltaX
       const newY = this.prevY + limitedDeltaY
 
-      // Update your element's position with the limited coordinates
-      newXY = { x: newX, y: newY }
+      // Update position with the limited coordinates
+      newPointerData.x = newX
+      newPointerData.y = newY
     }
 
+    newPointerData.speedScale =
+      Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed
+
     // Update previous values for next event
-    this.prevX = newXY.x
-    this.prevY = newXY.y
+    this.prevX = newPointerData.x
+    this.prevY = newPointerData.y
 
     this.prevTime = currentTime
 
-    Object.assign(this.pointer, newXY)
+    Object.assign(this.pointer, newPointerData)
     this.handlePointerMove()
 
     this.display.getCellIndicesByPointer(this.pointer).then((indices) => {
@@ -161,8 +170,13 @@ export class Controls extends EventTarget {
         }
       }
 
+      // TODO TMP
       if (this.cells.focused)
         this.cells.focused.closestIndices = [indices[1], indices[2], indices[3]]
+
+      Object.assign(this.pointer, {
+        indices,
+      })
     })
   }
 
@@ -341,8 +355,7 @@ export class Controls extends EventTarget {
 
   resize(dimensions) {
     this.maxPointerSpeed = this.config.maxPointerSpeed * dimensions.diagonal
-    this.maxPointerReactionRadius =
-      this.config.maxPointerReactionRadius * dimensions.diagonal
+    this.pointerRadius = this.config.pointerRadius * dimensions.diagonal
   }
 
   dispose() {

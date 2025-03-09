@@ -5,7 +5,7 @@ const baseControlsConfig = {
     random: false,
   },
   maxPointerSpeed: 0.5, // percentage of diagonal per second (px/s)
-  maxPointerReactionRadius: 0.5, // percentage of diagonal
+  pointerRadius: 0.5, // percentage of diagonal
 }
 
 export default baseControlsConfig

@@ -26,4 +26,12 @@ export class SharedPointer {
   set index(value) {
     this.data[2] = value !== undefined ? value : -1
   }
+
+  get speedScale() {
+    return this.data[3]
+  }
+
+  set speedScale(value) {
+    this.data[3] = value
+  }
 }

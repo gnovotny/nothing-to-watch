@@ -129,6 +129,7 @@ float dot2(vec2 p) {
 }
 
 float dist(vec2 a, vec2 b) {
+//    return distance(a, b);
     return dot2(a - b);
 }
 
