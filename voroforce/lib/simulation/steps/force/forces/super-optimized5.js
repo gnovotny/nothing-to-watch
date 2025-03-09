@@ -281,7 +281,7 @@ export const superForce = ({
       const inverseDistRatio = 1 - distRatio
 
       if (distRatio > 1) {
-        console.log('distRatio', distRatio)
+        // console.log('distRatio', distRatio)
         // throw new Error('asdf')
       }
       centerCellPushFactor = Math.min(distRatio, 1)
