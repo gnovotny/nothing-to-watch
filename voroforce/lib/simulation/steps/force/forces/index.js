@@ -8,4 +8,5 @@ export { moveCenterToPointForce as moveCenterToPoint } from './move-center-to-po
 // export { superForce as superF } from './super-optimized2'
 // export { superForce as superF } from './super-optimized3'
 // export { superForce as superF } from './super-optimized4'
-export { superForce as superF } from './super-optimized5'
+// export { superForce as superF } from './super-optimized5'
+export { superForce as superF } from './super-optimized6'
