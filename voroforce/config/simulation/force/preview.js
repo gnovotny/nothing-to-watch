@@ -29,7 +29,7 @@ export const forceSimulationStepPreviewConfig = {
       },
       lattice: {
         strength: 0.8,
-        yFactor: 3.5,
+        yFactor: 3.75,
         xFactor: 1,
         maxLevelsFromPrimary: 30,
       },
