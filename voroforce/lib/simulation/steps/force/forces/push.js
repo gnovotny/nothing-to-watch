@@ -25,7 +25,7 @@ export const pushForce = ({
     xFactor = 1,
     yFactor = 1,
     diagonalFactor = 1,
-    manageMediaVersions = true,
+    requestMediaVersions = true,
     centerMagic = false,
     handleEnd,
   },
@@ -48,7 +48,7 @@ export const pushForce = ({
     y,
     l
 
-  const mediaEnabled = globalConfig.media.enabled && manageMediaVersions
+  const mediaEnabled = globalConfig.media.enabled && requestMediaVersions
 
   function force(alpha) {
     if (select(cells)?.index !== centerCell?.index) {

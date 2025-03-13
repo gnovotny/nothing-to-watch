@@ -7,7 +7,7 @@ export const superForce = ({
   pointer,
   config: {
     primarySelector = 'focused',
-    manageMediaVersions = true,
+    requestMediaVersions = true,
     push: {
       strength: _pushStrength = 1,
       pushStrength = _pushStrength * 0.5,
@@ -41,15 +41,32 @@ export const superForce = ({
     sqrt = Math.sqrt,
     cellsLen = cells.length,
     latticeCellWidth = globalConfig.lattice.cellWidth,
-    latticeCellHeight = globalConfig.lattice.cellHeight
+    latticeCellHeight = globalConfig.lattice.cellHeight,
+    manageMedia = globalConfig.media?.enabled && requestMediaVersions
 
-  let primaryCell,
-    newPrimaryCell,
-    previousPrimaryCell,
-    centerX,
+  let centerX,
     centerY,
+    primaryCell,
+    newPrimaryCell,
+    prevPrimaryCell,
     primaryCellX,
     primaryCellY,
+    cellTypePushXMod = 1,
+    cellTypePushYMod = 1,
+    primaryCellPushFactor = 0,
+    primaryCellPushFactorX = 0,
+    primaryCellPushFactorY = 0,
+    secondaryCell,
+    centerPullX = 0,
+    centerPullY = 0,
+    alignmentPushXMod = 1,
+    alignmentPushYMod = 1,
+    alignmentPushYModMod = 0,
+    startTime,
+    timestamp,
+    breathingPushMod = 1,
+    breathingCycleDuration = 6000,
+    breathingPushVariability = 0.05,
     cell,
     i,
     x,
@@ -61,37 +78,20 @@ export const superForce = ({
     mediaV2LevelAdjacencyThreshold,
     colLevelAdjacency,
     rowLevelAdjacency,
-    maxLevelAdjacency,
+    greatestDirLevelAdjacency,
     minLatticeRow,
     maxLatticeRow,
     minLatticeCol,
     maxLatticeCol,
     latticeRow,
     latticeCol,
-    latticeStrengthMod,
-    cellTypePushXMod = 1,
-    cellTypePushYMod = 1,
-    primaryCellPushFactor = 0,
-    primaryCellPushFactorX = 0,
-    primaryCellPushFactorY = 0,
-    closestPointerPositionPrimaryCellNeighbor,
-    centerPullX = 0,
-    centerPullY = 0,
-    alignmentPushXMod = 1,
-    alignmentPushYMod = 1,
-    alignmentPushYModMod = 0,
-    startTime,
-    timestamp,
-    breathingPushMod = 1
-
-  const manageMedia = globalConfig.media.enabled && manageMediaVersions
+    latticeStrengthMod
 
   if (manageMedia) {
-    const diagonal = dimensions.get('diagonal')
-    mediaV1DistThreshold = diagonal * 0.075
-    mediaV2DistThreshold = diagonal * 0.025
-    mediaV1LevelAdjacencyThreshold = 18
+    mediaV2DistThreshold = dimensions.get('diagonal') * 0.025
+    mediaV1DistThreshold = mediaV2DistThreshold * 3
     mediaV2LevelAdjacencyThreshold = 6
+    mediaV1LevelAdjacencyThreshold = mediaV2LevelAdjacencyThreshold * 3
   }
 
   function force(alpha) {
@@ -109,12 +109,13 @@ export const superForce = ({
       cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
 
       if (primaryCell) {
+        // center pull force
         cell.vx += centerPullX
         cell.vy += centerPullY
 
         colLevelAdjacency = abs(cell.col - primaryCell.col)
         rowLevelAdjacency = abs(cell.row - primaryCell.row)
-        maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
+        greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
 
         x = cell.x + cell.vx - centerX
         y = cell.y + cell.vy - centerY
@@ -124,36 +125,36 @@ export const superForce = ({
         if (manageMedia) {
           if (
             l < mediaV2DistThreshold ||
-            maxLevelAdjacency <= mediaV2LevelAdjacencyThreshold
+            greatestDirLevelAdjacency <= mediaV2LevelAdjacencyThreshold
           ) {
             // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
             cell.targetMediaVersion = 2
           } else if (
             l < mediaV1DistThreshold ||
-            maxLevelAdjacency <= mediaV1LevelAdjacencyThreshold
+            greatestDirLevelAdjacency <= mediaV1LevelAdjacencyThreshold
           ) {
             cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
           }
         }
 
         if (l === 0) continue
-        l = ((pushRadius - l) / l) * pushStrength * alpha
+        l = ((pushRadius - l) / l) * pushStrength * alpha * breathingPushMod
 
         x *= l
         y *= l
 
         cellTypePushXMod = 1
         cellTypePushYMod = 1
-
         if (i === primaryCell.index) {
           cellTypePushXMod = primaryCellPushFactorX
           cellTypePushYMod = primaryCellPushFactorY
         }
 
+        alignmentPushXMod = 1
         if (
           pushAlignmentMaxLevelsX > 0 &&
-          closestPointerPositionPrimaryCellNeighbor &&
-          previousPrimaryCell &&
+          secondaryCell &&
+          prevPrimaryCell &&
           rowLevelAdjacency === 0 &&
           colLevelAdjacency < pushAlignmentMaxLevelsX
         ) {
@@ -162,22 +163,11 @@ export const superForce = ({
             ((pushAlignmentMaxLevelsX - max(colLevelAdjacency, 1)) /
               pushAlignmentMaxLevelsX) *
               alignmentPushYModMod
-        } else {
-          alignmentPushXMod = 1
         }
 
-        cell.vx +=
-          x *
-          configPushXMod *
-          breathingPushMod *
-          cellTypePushXMod *
-          alignmentPushXMod
-        cell.vy +=
-          y *
-          configPushYMod *
-          breathingPushMod *
-          cellTypePushYMod *
-          alignmentPushYMod
+        // push force
+        cell.vx += x * configPushXMod * cellTypePushXMod * alignmentPushXMod
+        cell.vy += y * configPushYMod * cellTypePushYMod * alignmentPushYMod
       }
 
       handleEnd?.(cell)
@@ -189,20 +179,19 @@ export const superForce = ({
     if (!startTime) startTime = timestamp
 
     if (pushBreathing) {
-      // Calculate progress through a complete breathing cycle (e.g., 6 seconds per cycle)
-      const breathingCycleDuration = 6000 // 6 seconds
-      const elapsed = (timestamp - startTime) % breathingCycleDuration
-      const progress = elapsed / breathingCycleDuration
-
-      // Get the current lung/diaphragm expansion value
-      const expansion = diaphragmaticBreathing(progress)
-
-      breathingPushMod = 0.975 + expansion * 0.05
+      breathingPushMod =
+        1 -
+        breathingPushVariability +
+        diaphragmaticBreathing(
+          ((timestamp - startTime) % breathingCycleDuration) /
+            breathingCycleDuration,
+        ) *
+          breathingPushVariability
     }
 
     newPrimaryCell = primary(cells)
     if (newPrimaryCell?.index !== primaryCell?.index) {
-      previousPrimaryCell = primaryCell
+      prevPrimaryCell = primaryCell
       primaryCell = newPrimaryCell
     }
 
@@ -226,26 +215,20 @@ export const superForce = ({
     // }
     // closestCells[0].weight = 1
 
-    closestPointerPositionPrimaryCellNeighbor = cells[pointer.indices[1]]
+    secondaryCell = cells[pointer.indices[1]]
     // cells[primaryCell.closestIndices[0]]
 
     // if (pointer.indices[0] !== primaryCell.index) {
     //   throw new Error('asdf')
     // }
 
-    if (closestPointerPositionPrimaryCellNeighbor) {
+    if (secondaryCell) {
       x = centerX - primaryCellX
       y = centerY - primaryCellY
       const centerToPrimaryCellDist = sqrt(x * x + y * y)
 
-      x =
-        centerX -
-        (closestPointerPositionPrimaryCellNeighbor.x +
-          closestPointerPositionPrimaryCellNeighbor.vx)
-      y =
-        centerY -
-        (closestPointerPositionPrimaryCellNeighbor.y +
-          closestPointerPositionPrimaryCellNeighbor.vy)
+      x = centerX - (secondaryCell.x + secondaryCell.vx)
+      y = centerY - (secondaryCell.y + secondaryCell.vy)
       const centerToPrimaryCellNeighborDist = sqrt(x * x + y * y)
 
       const distRatio =
@@ -289,14 +272,14 @@ export const superForce = ({
       primaryCellPushFactor = 0
     }
 
-    alignmentPushYModMod = lerp(
-      alignmentPushYModMod,
-      primaryCell.row === closestPointerPositionPrimaryCellNeighbor?.row &&
-        primaryCell.row === previousPrimaryCell?.row
-        ? 1
-        : 0,
-      0.1,
-    )
+    if (
+      primaryCell.row === secondaryCell?.row &&
+      primaryCell.row === prevPrimaryCell?.row
+    ) {
+      alignmentPushYModMod = lerp(alignmentPushYModMod, 1, 0.025)
+    } else {
+      alignmentPushYModMod = 0
+    }
   }
 
   function latticeForcePass(alpha) {
@@ -324,9 +307,9 @@ export const superForce = ({
 
           colLevelAdjacency = abs(cell.col - primaryCell.col)
           rowLevelAdjacency = abs(cell.row - primaryCell.row)
-          maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
+          greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
           latticeStrengthMod =
-            (latticeMaxLevelsFromPrimary - maxLevelAdjacency) /
+            (latticeMaxLevelsFromPrimary - greatestDirLevelAdjacency) /
             latticeMaxLevelsFromPrimary
 
           // left

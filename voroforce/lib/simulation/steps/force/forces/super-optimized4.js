@@ -82,7 +82,7 @@ export const superForce = ({
       xFactor: pushXFactor = 1,
       yFactor: pushYFactor = 1,
       diagonalFactor: pushDiagonalFactor = 1,
-      manageMediaVersions: pushManageMediaVersions = true,
+      requestMediaVersions: pushRequestMediaVersions = true,
       centerMagic: pushCenterMagic = false,
     } = {},
     lattice: {
@@ -148,7 +148,7 @@ export const superForce = ({
     addX = 0,
     addY = 0
 
-  const mediaEnabled = globalConfig.media.enabled && pushManageMediaVersions
+  const mediaEnabled = globalConfig.media.enabled && pushRequestMediaVersions
 
   if (mediaEnabled) {
     const diagonal = dimensions.get('diagonal')
@@ -342,8 +342,6 @@ export const superForce = ({
 
         cellTypePushModX = 1
         cellTypePushModY = 1
-
-
 
         if (i === centerCell.index) {
           cellTypePushModX = centerCellPushFactorX

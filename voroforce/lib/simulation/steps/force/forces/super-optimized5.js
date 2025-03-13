@@ -1,4 +1,4 @@
-import {isNumber, lerp} from '../../../../utils'
+import { isNumber, lerp } from '../../../../utils'
 
 /**
  * Calculates weights for neighboring points based on their distance from a center point.
@@ -82,7 +82,7 @@ export const superForce = ({
       xFactor: pushXFactor = 1,
       yFactor: pushYFactor = 1,
       diagonalFactor: pushDiagonalFactor = 1,
-      manageMediaVersions: pushManageMediaVersions = true,
+      requestMediaVersions: pushRequestMediaVersions = true,
       centerMagic: pushCenterMagic = false,
     } = {},
     lattice: {
@@ -148,7 +148,7 @@ export const superForce = ({
     addX = 0,
     addY = 0
 
-  const mediaEnabled = globalConfig.media.enabled && pushManageMediaVersions
+  const mediaEnabled = globalConfig.media.enabled && pushRequestMediaVersions
 
   if (mediaEnabled) {
     const diagonal = dimensions.get('diagonal')
@@ -252,9 +252,8 @@ export const superForce = ({
       // closestCells[0].weight = 1
     }
 
-    closestPointerPositionCenterCellNeighbor =
-      cells[pointer.indices[1]]
-      // cells[centerCell.closestIndices[0]]
+    closestPointerPositionCenterCellNeighbor = cells[pointer.indices[1]]
+    // cells[centerCell.closestIndices[0]]
 
     // if (pointer.indices[0] !== centerCell.index) {
     //   throw new Error('asdf')
@@ -297,8 +296,7 @@ export const superForce = ({
       closestPointerPositionCenterCellNeighborPushFactorX =
         closestPointerPositionCenterCellNeighborPushFactor
       closestPointerPositionCenterCellNeighborPushFactorY =
-          closestPointerPositionCenterCellNeighborPushFactor
-
+        closestPointerPositionCenterCellNeighborPushFactor
 
       addX = lerp(addX, (centerX - centerCell.x) * inverseDistRatio, 0.0015)
 
@@ -374,8 +372,6 @@ export const superForce = ({
         cellTypePushModX = 1
         cellTypePushModY = 1
 
-
-
         if (i === centerCell.index) {
           // console.log('centerCellPushFactor',centerCellPushFactor)
           cellTypePushModX = centerCellPushFactorX
@@ -396,20 +392,27 @@ export const superForce = ({
         //   cellTypePushModY = w
         // }
 
-
         let pushYMod = 1
-        let pushXMod = 1
+        const pushXMod = 1
 
-        if (/*i !== centerCell.index && */closestPointerPositionCenterCellNeighbor && previousCenterCell) {
+        if (
+          /*i !== centerCell.index && */ closestPointerPositionCenterCellNeighbor &&
+          previousCenterCell
+        ) {
           // if (colLevelAdjacency === 0 && rowLevelAdjacency < 20) {
           //   pushXMod = 1 - ((20 - rowLevelAdjacency) / 20)
           //   // x = (cell.x + cell.vx - centerCellX) * pushStrength
           // }
           //
-          if (centerCell.row === closestPointerPositionCenterCellNeighbor.row && centerCell.row === previousCenterCell.row && rowLevelAdjacency === 0 && colLevelAdjacency < 20) {
-          // if (centerCell.row === closestPointerPositionCenterCellNeighbor.row && rowLevelAdjacency === 0 && colLevelAdjacency < 40) {
-          // if (centerCell.row === previousCenterCell.row && rowLevelAdjacency === 0 && colLevelAdjacency < 40) {
-            pushYMod = 1 - ((20 - max(colLevelAdjacency, 1)) / 20)
+          if (
+            centerCell.row === closestPointerPositionCenterCellNeighbor.row &&
+            centerCell.row === previousCenterCell.row &&
+            rowLevelAdjacency === 0 &&
+            colLevelAdjacency < 20
+          ) {
+            // if (centerCell.row === closestPointerPositionCenterCellNeighbor.row && rowLevelAdjacency === 0 && colLevelAdjacency < 40) {
+            // if (centerCell.row === previousCenterCell.row && rowLevelAdjacency === 0 && colLevelAdjacency < 40) {
+            pushYMod = 1 - (20 - max(colLevelAdjacency, 1)) / 20
 
             // y = (cell.y + cell.vy - centerCellY) * pushStrength
 

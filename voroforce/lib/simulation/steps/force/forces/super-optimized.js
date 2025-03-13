@@ -25,7 +25,7 @@ export const superForce = ({
       xFactor: pushXFactor = 1,
       yFactor: pushYFactor = 1,
       diagonalFactor: pushDiagonalFactor = 1,
-      manageMediaVersions: pushManageMediaVersions = true,
+      requestMediaVersions: pushRequestMediaVersions = true,
       centerMagic: pushCenterMagic = false,
     } = {},
     lattice: {
@@ -89,7 +89,7 @@ export const superForce = ({
     closestPointerPositionCenterCellNeighborPushFactorX = 1,
     closestPointerPositionCenterCellNeighborPushFactorY = 1
 
-  const mediaEnabled = globalConfig.media.enabled && pushManageMediaVersions
+  const mediaEnabled = globalConfig.media.enabled && pushRequestMediaVersions
 
   if (mediaEnabled) {
     const diagonal = dimensions.get('diagonal')
