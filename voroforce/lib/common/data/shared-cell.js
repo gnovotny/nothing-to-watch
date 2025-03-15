@@ -46,6 +46,10 @@ export class SharedCell {
 
     this.initialVx = 0
     this.initialVy = 0
+
+    // if (!this.weight) {
+    //   this.weight = 1
+    // }
   }
 
   set x(v) {

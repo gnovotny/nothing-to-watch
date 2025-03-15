@@ -9,6 +9,8 @@ export const forceSimulationStepSelectConfig = {
     {
       type: 'superF',
       enabled: true,
+      requestMediaVersions: true,
+      manageWeights: true,
       push: {
         strength: 0.1,
         selector: 'focused',

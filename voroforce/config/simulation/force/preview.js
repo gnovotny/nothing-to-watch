@@ -20,6 +20,8 @@ export const forceSimulationStepPreviewConfig = {
     {
       type: 'superF',
       enabled: true,
+      requestMediaVersions: true,
+      manageWeights: true,
       push: {
         strength: 0.15,
         selector: 'focused',

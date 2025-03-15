@@ -1,8 +1,5 @@
 import BaseSimulationStep from '../common/base-simulation-step'
-import {
-  LATTICE_DIRECTIONS,
-  getNeighborIndexByLatticeOffset,
-} from './utils/lattice'
+import {} from './utils/lattice'
 import { easedMinLerp } from './utils/math'
 
 export default class VoronoiSimulationStep extends BaseSimulationStep {
@@ -126,10 +123,11 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
           rightIndex !== undefined
             ? this.cells[rightIndex].x
             : this.cells[leftIndex].x
-        const avgXDist =
-          Math.abs(focusedCell.x - cellLeftNeighborX) +
-          Math.abs(focusedCell.x - cellRightNeighborX)
-        const wMod = avgXDist / cellWidth
+        // const avgXDist =
+        //   Math.abs(focusedCell.x - cellLeftNeighborX) +
+        //   Math.abs(focusedCell.x - cellRightNeighborX)
+        // const wMod = avgXDist / cellWidth
+        const wMod = 1
         const focusedWeight = baseFocusedWeight * wMod
         // console.log('wMod', wMod)
         // console.log('focusedWeight', focusedWeight)
@@ -151,11 +149,11 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
           rightIndex !== undefined
             ? this.cells[rightIndex].x
             : this.cells[leftIndex].x
-        const avgXDist =
-          Math.abs(this.cells[key].x - cellLeftNeighborX) +
-          Math.abs(this.cells[key].x - cellRightNeighborX)
-        const wMod = avgXDist / cellWidth
-
+        // const avgXDist =
+        //   Math.abs(this.cells[key].x - cellLeftNeighborX) +
+        //   Math.abs(this.cells[key].x - cellRightNeighborX)
+        // const wMod = avgXDist / cellWidth
+        const wMod = 1
         const focusedDirectXNeighborWeight =
           baseFocusedDirectXNeighborWeight * wMod
         if (value !== focusedDirectXNeighborWeight) {
@@ -172,112 +170,12 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
           this.activeWeightsMap.delete(key)
         } else {
           // const newValue = Math.max(0, lerp(value, 0, 0.1))
-          const newValue = easedMinLerp(value, 0, 0.025)
+          const newValue = easedMinLerp(value, 0, 0.075)
           item.value = newValue
           this.cellWeights[key] = newValue
         }
       }
     })
-  }
-
-  updateNeighborsOld() {
-    let cell
-    let currentDataIndex
-    let neighbors
-
-    currentDataIndex = this.numCells * 2
-
-    for (let i = 0; i < this.numCells; i++) {
-      cell = this.cells[i]
-      neighbors = []
-
-      // populate first-level neighbors in a separate loop for adjacency and clockwise order
-      LATTICE_DIRECTIONS.forEach(([dx, dy]) => {
-        const neighborLatticeCol = cell.col + dx
-        const neighborLatticeRow = cell.row + dy
-
-        const neighborIndex = getNeighborIndexByLatticeOffset(
-          neighborLatticeCol,
-          neighborLatticeRow,
-          this.globalConfig.lattice,
-        )
-        if (neighborIndex >= 0) {
-          if (!neighbors.includes(neighborIndex)) {
-            neighbors.push(neighborIndex)
-          }
-        }
-      })
-
-      if (this.neighborLevels > 1) {
-        LATTICE_DIRECTIONS.forEach(([dx, dy]) => {
-          const neighborLatticeCol = cell.col + dx
-          const neighborLatticeRow = cell.row + dy
-
-          const neighborIndex = getNeighborIndexByLatticeOffset(
-            neighborLatticeCol,
-            neighborLatticeRow,
-            this.globalConfig.lattice,
-          )
-          if (neighborIndex >= 0) {
-            const cell = this.cells[neighborIndex]
-            LATTICE_DIRECTIONS.forEach(([dx, dy]) => {
-              const neighborLatticeCol = cell.col + dx
-              const neighborLatticeRow = cell.row + dy
-
-              const neighborNeighborIndex = getNeighborIndexByLatticeOffset(
-                neighborLatticeCol,
-                neighborLatticeRow,
-                this.globalConfig.lattice,
-              )
-              if (neighborNeighborIndex >= 0) {
-                if (this.neighborLevels > 2) {
-                  const cell = this.cells[neighborNeighborIndex]
-                  LATTICE_DIRECTIONS.forEach(([dx, dy]) => {
-                    const neighborLatticeCol = cell.col + dx
-                    const neighborLatticeRow = cell.row + dy
-
-                    const neighborNeighborIndex =
-                      getNeighborIndexByLatticeOffset(
-                        neighborLatticeCol,
-                        neighborLatticeRow,
-                        this.globalConfig.lattice,
-                      )
-                    if (neighborNeighborIndex >= 0) {
-                      if (
-                        neighborNeighborIndex !== i &&
-                        !neighbors.includes(neighborNeighborIndex)
-                      ) {
-                        neighbors.push(neighborNeighborIndex)
-                      }
-                    }
-                  })
-                }
-
-                if (
-                  neighborNeighborIndex !== i &&
-                  !neighbors.includes(neighborNeighborIndex)
-                ) {
-                  neighbors.push(neighborNeighborIndex)
-                }
-              }
-            })
-          }
-        })
-      }
-
-      try {
-        this.cellNeighbors[i * 2] = currentDataIndex
-        this.cellNeighbors.set(neighbors, currentDataIndex)
-        this.cellNeighbors[i * 2 + 1] = neighbors.length
-        currentDataIndex += neighbors.length
-      } catch (e) {
-        console.log('currentDataIndex', currentDataIndex)
-        console.log('neighbors.length', neighbors.length)
-        console.log('i', i)
-        console.log('neighbors', neighbors)
-        throw e
-      }
-    }
   }
 
   updateNeighbors() {
@@ -346,18 +244,10 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
       cell = this.cells[i]
       neighbors = getGridNeighbors(i, cols, rows, this.neighborLevels)
 
-      try {
-        this.cellNeighbors[i * 2] = currentDataIndex
-        this.cellNeighbors.set(neighbors, currentDataIndex)
-        this.cellNeighbors[i * 2 + 1] = neighbors.length
-        currentDataIndex += neighbors.length
-      } catch (e) {
-        console.log('currentDataIndex', currentDataIndex)
-        console.log('neighbors.length', neighbors.length)
-        console.log('i', i)
-        console.log('neighbors', neighbors)
-        throw e
-      }
+      this.cellNeighbors[i * 2] = currentDataIndex
+      this.cellNeighbors.set(neighbors, currentDataIndex)
+      this.cellNeighbors[i * 2 + 1] = neighbors.length
+      currentDataIndex += neighbors.length
     }
   }
 }

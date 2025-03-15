@@ -55,8 +55,9 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 //#define ROUNDNESS 0.01
 //#define ROUNDNESS 0.0
 #define EARLY_EXIT_OPTIMIZATION 0
-#define WEIGHT_MOD 80.
+#define WEIGHT_MOD 2000.
 #define WEIGHT_MOD_MEDIA 30.
+#define WEIGHT_Y_SCALE 1.5
 
 struct Data {
     uvec4 indices;
@@ -280,15 +281,11 @@ vec3 randomColor(uint seed) {
 //}
 
 
-float weightedDist(vec2 p1, vec2 p2, float weight) {
+float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
     vec2 v = p1 - p2;
 
-//    v.y *= 1.5; // Apply additional y weight
-    if (weight != 0.) {
-        v.x *= 1.5; // Apply additional x weight
-//        v.x += sign(v.x)*1.9*abs(weight); // Apply additional x weight
-//        v.y += sign(v.y)*1.*abs(weight); // Apply additional x weight
-    }
+    float scaleX = 1. + texWeight * (WEIGHT_Y_SCALE-1.);
+    v.x *= scaleX; // Apply additional x weight
     float dist = dot(v, v); // Squared distance
 //    float dist = length(v); //  distance
 
@@ -531,7 +528,7 @@ void sortClosest(
 
     //    float dist = length(center - coords);
 //    float dist = dist(center, coords);
-    float dist = weightedDist(center, coords, weight);
+    float dist = weightedDist(center, coords, texWeight, weight);
 
     if (dist < distances[0]) {
         distances = vec4(dist, distances.xyz);
@@ -694,17 +691,20 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         vec2 neighborCellCoords = getCellCoords(neighborIndex);
         float neighborTexWeight = weightTexData(neighborIndex);
         float neighborWeight = weightMod * neighborTexWeight;
+        float texWeightDiff = neighborTexWeight - texWeight;
 
         vec2 mr = cellCoords - p;
 //        mr.x *= 1.5;
         vec2 r = neighborCellCoords - p;
 //        r.x *= 1.5;
         vec2 dr = r - mr;
-        if ((neighborWeight - weight) != 0.) {
-            mr.x *= 1.5;
-            r.x *= 1.5;
-            dr.x *= 1.5;
-        }
+//        if (texWeightDiff < 0.) discard;
+        float scaleX = 1. + max(texWeightDiff * (WEIGHT_Y_SCALE-1.), 0.);
+//        if ((neighborWeight - weight) != 0.) {
+            mr.x *= scaleX;
+            r.x *= scaleX;
+            dr.x *= scaleX;
+//        }
 //        dr.x *= 1.5;
 //        float d = dot2(dr);
         float d = weightedDistEdge(r, mr, 0.);

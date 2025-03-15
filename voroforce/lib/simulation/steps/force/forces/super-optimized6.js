@@ -8,6 +8,7 @@ export const superForce = ({
   config: {
     primarySelector = 'focused',
     requestMediaVersions = true,
+    manageWeights = false,
     push: {
       strength: _pushStrength = 1,
       pushStrength = _pushStrength * 0.5,
@@ -92,6 +93,9 @@ export const superForce = ({
     mediaV1DistThreshold = mediaV2DistThreshold * 3
     mediaV2LevelAdjacencyThreshold = 6
     mediaV1LevelAdjacencyThreshold = mediaV2LevelAdjacencyThreshold * 3
+  }
+
+  if (manageWeights) {
   }
 
   function force(alpha) {
