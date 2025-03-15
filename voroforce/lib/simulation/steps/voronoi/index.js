@@ -1,9 +1,9 @@
-import { lerp } from '../../../utils'
 import BaseSimulationStep from '../common/base-simulation-step'
 import {
   LATTICE_DIRECTIONS,
   getNeighborIndexByLatticeOffset,
 } from './utils/lattice'
+import { easedMinLerp } from './utils/math'
 
 export default class VoronoiSimulationStep extends BaseSimulationStep {
   neighborsNeedUpdate = true
@@ -134,21 +134,9 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
         // console.log('wMod', wMod)
         // console.log('focusedWeight', focusedWeight)
         if (value !== focusedWeight) {
-          const newValue = Math.max(
-            0,
-            lerp(
-              value,
-              focusedWeight,
-              Math.min(1, Math.abs(focusedWeight - value) / 10),
-            ),
-          )
+          const newValue = easedMinLerp(value, focusedWeight, 0.025)
           item.value = newValue
           this.cellWeights[key] = newValue
-          if (newValue > 1000) {
-            console.log('wMod', wMod)
-            console.log('focusedWeight', focusedWeight)
-            console.log('newValue', newValue)
-          }
         }
       } else if (
         baseFocusedDirectXNeighborWeight &&
@@ -171,13 +159,10 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
         const focusedDirectXNeighborWeight =
           baseFocusedDirectXNeighborWeight * wMod
         if (value !== focusedDirectXNeighborWeight) {
-          const newValue = Math.max(
-            0,
-            lerp(
-              value,
-              focusedDirectXNeighborWeight,
-              Math.min(1, Math.abs(focusedDirectXNeighborWeight - value) / 10),
-            ),
+          const newValue = easedMinLerp(
+            value,
+            focusedDirectXNeighborWeight,
+            0.025,
           )
           item.value = newValue
           this.cellWeights[key] = newValue
@@ -186,7 +171,8 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
         if (value === 0) {
           this.activeWeightsMap.delete(key)
         } else {
-          const newValue = Math.max(0, lerp(value, 0, 0.1))
+          // const newValue = Math.max(0, lerp(value, 0, 0.1))
+          const newValue = easedMinLerp(value, 0, 0.025)
           item.value = newValue
           this.cellWeights[key] = newValue
         }

@@ -1,4 +1,6 @@
-import mainFrag from './main.frag'
+// import mainFrag from './main.frag'
+// import mainFrag from './main-weighted.frag'
+import mainFrag from './main-weighted2.frag'
 import postFrag from './post.frag'
 
 export default {
@@ -51,7 +53,7 @@ export default {
       },
     },
     post: {
-      enabled: true,
+      enabled: false,
       fragmentShader: postFrag,
       uniforms: {
         fAlphaStrength: {

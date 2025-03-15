@@ -13,6 +13,7 @@ export const FilmPoster = ({
   className?: string
 }) => {
   const [hidden, setHidden] = useState(true)
+  return null
   return (
     <img
       src={`${config.posterBaseUrl}${film.poster}`}
