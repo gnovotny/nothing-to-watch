@@ -55,9 +55,8 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 //#define ROUNDNESS 0.01
 //#define ROUNDNESS 0.0
 #define EARLY_EXIT_OPTIMIZATION 0
-#define WEIGHT_MOD 2000.
+#define WEIGHT_MOD 10.
 #define WEIGHT_MOD_MEDIA 30.
-#define WEIGHT_Y_SCALE 1.5
 
 struct Data {
     uvec4 indices;
@@ -178,191 +177,9 @@ vec3 randomColor(uint seed) {
     return vec3(r, g, b);
 }
 
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-////    return dist(p1, p2);
-//    return dist(p1, p2) - weight;
-//}
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-//    vec2 v = p1 - p2;
-//    v.y += weight * 0.01;
-//    return dot2(v);
-//
-//    return dist(p1, p2) - weight;
-//}
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-////    return dot2(p1 - p2);
-//    vec2 v = p1 - p2;
-//    // Apply additive weight to x-component only
-//    float addWeight = weight; // Example additive weight value
-//    float signY = sign(v.y);
-//    float signX = sign(v.x);
-//    float adjustedY = v.y - signY * addWeight * 1.5;
-//    float adjustedX = v.x;
-////    float adjustedX = v.x - signX * addWeight;
-//
-//    // Create a new vector with the weighted x-component
-//    vec2 weightedV = vec2(adjustedX, adjustedY);
-//
-//    // Use dot product for distance calculation
-//    float distSquared = dot(weightedV, weightedV);
-//    float dist = sqrt(distSquared);
-//    return distSquared;
-////    return min(distSquared, dot2(p1 - p2));
-////    return min(distSquared, dot2(p1 - p2) - weight);
-//}
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-//
-//    float signY = sign(p1.y);
-//    float stretchY = 1. + weight*100.;
-//    vec2 scaledP1 = vec2(p1.x, p1.y / stretchY);
-////    return (length(scaledP1)) * stretchY;
-//    return dist(scaledP1, p2) * stretchY;
-//
-//
-//    vec2 v = p1 - p2;
-//    v.y += weight * 0.01;
-//    return dot2(v);
-//
-//    return dist(p1, p2);
-//}
-
-//float weightedDistEdge(vec2 p1, vec2 p2, float weight) {
-//    //    return dot2(p1 - p2);
-//    vec2 v = p1 - p2;
-//    // Apply additive weight to x-component only
-//    float addWeight = sqrt(weight); // Example additive weight value
-//    float signY = sign(v.y);
-//    float signX = sign(v.x);
-//    float adjustedY = v.y + signY * addWeight * 1.;
-//    float adjustedX = v.x;
-//    //    float adjustedX = v.x + signX * addWeight;
-//
-//    // Create a new vector with the weighted x-component
-//    vec2 weightedV = vec2(adjustedX, adjustedY);
-//
-//    // Use dot product for distance calculation
-//    float distSquared = dot(weightedV, weightedV);
-//    float dist = sqrt(distSquared);
-//    //    return distSquared;
-//    return max(distSquared, dot2(p1 - p2) + weight);
-//}
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-//    vec2 v = p1 - p2;
-//    // Square the components
-//    float xSquared = v.x * v.x;
-//    float ySquared = v.y * v.y;
-//
-//    // Add weight to x-component after squaring
-//    float yAddWeight = (weight); // Example weight
-//    float weightedDistSquared = xSquared + (ySquared - yAddWeight);
-////    float weightedDistSquared = (xSquared + yAddWeight) + ySquared;
-//    float weightedDist = sqrt(weightedDistSquared);
-////    return weightedDist;
-////    return min(weightedDistSquared, dot2(p1 - p2));
-//    return weightedDistSquared;
-//}
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-//    vec2 v = p1 - p2;
-//
-//    // Apply weight to x-component only
-//    float yWeight = 1. - sqrt(weight) * 3.; // Example weight value
-//    v.y *= yWeight;
-//
-//    // Use dot product for weighted distance (squared)
-//    float weightedDistSquared = dot(v, v);
-//    float weightedDist = sqrt(weightedDistSquared);
-////    return weightedDist;
-//    return weightedDistSquared;
-//}
-
-
-float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
-    vec2 v = p1 - p2;
-
-//    float scaleX = 1. + texWeight * (WEIGHT_Y_SCALE-1.);
-    float scaleX = WEIGHT_Y_SCALE;
-    v.x *= scaleX; // Apply additional x weight
-    float dist = dot(v, v); // Squared distance
-//    float dist = length(v); //  distance
-
-    // Apply point weight (using squared distance for efficiency)
-    dist = dist - weight;
-//    dist = dist - sqrt(weight);
-
-    return dist;
+float weightedDist(vec2 p1, vec2 p2, float weight) {
+    return dist(p1, p2) - weight;
 }
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-//    vec2 v = p1 - p2;
-////    v.x -= sign(v.x)*weight*1.5;
-////    v.y -= sign(v.y)*weight;
-//    v.x *= 1.5;
-//    // Square the components
-//    float xSquared = v.x * v.x;
-//    float ySquared = v.y * v.y;
-//
-//    // Add weight to x-component after squaring
-////    float yAddWeight = (weight); // Example weight
-//    float yAddWeight = 0.;
-////    float xAddWeight = (weight*1.5); // Example weight
-//    float xAddWeight = 0.;
-//    float weightedDistSquared = (xSquared - xAddWeight) + (ySquared - yAddWeight);
-////    float weightedDistSquared = (xSquared + yAddWeight) + ySquared;
-//    float weightedDist = sqrt(weightedDistSquared);
-////    return weightedDist;
-////    return min(weightedDistSquared, dot2(p1 - p2));
-////    return weightedDistSquared;
-//
-//
-//
-//    return weightedDistSquared - weight;
-//}
-
-float weightedDistEdge(vec2 p1, vec2 p2, float weight) {
-    vec2 v = p1 - p2;
-
-//    v.y *= 1.5; // Apply additional y weight
-//    if (weight != 0.) {
-//        v.x *= 1.5; // Apply additional x weight
-//        v.x += sign(v.x)*1.9*abs(weight); // Apply additional x weight
-//        v.y += sign(v.y)*1.*abs(weight); // Apply additional x weight
-//    }
-    float dist = dot(v, v); // Squared distance
-//    float dist = length(v); //  distance
-
-    // Apply point weight (using squared distance for efficiency)
-    dist = dist - weight;
-//    dist = dist - sqrt(weight);
-
-    return dist;
-}
-
-//float weightedDist(vec2 p1, vec2 p2, float weight) {
-//    vec2 v = p1 - p2;
-////    v.y -= sqrt(weight);
-//    vec2 diff = v;
-//    vec2 scaledDiff = vec2(v.x, v.y / (1.0 + weight));
-//
-//    float dx = v.x;
-//    float dy = v.y;
-////    float dist = sqrt(dx * dx + dy * dy / ((1.0 + weight) * (1.0 + weight)));
-////    float dist = diff.x * diff.x + pow(diff.y, 2.0) * (1.0 - weight * 0.0005);
-//    float dist = diff.x * diff.x + diff.y * diff.y / (1.0 + weight * 50.);
-//
-////    float dist = dot(v, v); // Squared distance
-////        float dist = length(scaledDiff); //  distance
-//
-//    // Apply point weight (using squared distance for efficiency)
-////    dist = dist - weight;
-//    //    dist = dist - sqrt(weight);
-//
-//    return dist;
-//}
 
 bool indexIsUndefined(uint id) {
     return id == uint(-1);
@@ -473,7 +290,7 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
         rotateMediaTileUv(mediaTileUv, index);
     #endif
 
-    #if DEBUG_MEDIA_BBOXES == 1  // highlight bbox overflow in red
+    #if DEBUG_MEDIA_BBOXES == 1  // highlight bbox limits
         if (mediaTileUv.x < 0.01 || mediaTileUv.x > 0.99 || mediaTileUv.y < 0.01 || mediaTileUv.y > 0.99) {
             return vec3(1.,0.,0.);
         }
@@ -518,18 +335,8 @@ void sortClosest(
         return;
     }
 
-//    vec2 coords = getRawCellCoords(index);
-    vec2 coords = getCellCoords(index);
-
-    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
-    float texWeight = weightTexData(index);
-//    float weight = weightMod * texWeight * 100000.;
-    float weight = weightMod * texWeight;
-//        if (weight > 1.) discard;
-
-    //    float dist = length(center - coords);
-//    float dist = dist(center, coords);
-    float dist = weightedDist(center, coords, texWeight, weight);
+    vec2 coords = getRawCellCoords(index);
+    float dist = length(center - coords);
 
     if (dist < distances[0]) {
         distances = vec4(dist, distances.xyz);
@@ -569,7 +376,7 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     vec2 midPointsSum = vec2(0.0);
     float mediaWeight;
     //    float mediaWeightMod = WEIGHT_MOD_MEDIA * getResolutionMod();
-    float mediaWeightMod =  weightMod * 3.55;
+    float mediaWeightMod =  weightMod * 3.;
 
 
     uint closestIndex = prevIndices.x;
@@ -621,7 +428,6 @@ Data updateData(vec2 p, uvec4 prevIndices) {
 
         highQuality = true;
     vec2 fragCoord = gl_FragCoord.xy;
-//    vec2 fragCoord = p;
 
     uvec4 indices = uvec4(-1);
     vec4 bestDistances = vec4(FLOAT_INF);
@@ -639,17 +445,17 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     //    }
 
     if (highQuality) {
-        fetchAndSortClosest(bestDistances, indices, fragCoord, p);
+        fetchAndSortClosest(bestDistances, indices, fragCoord, fragCoord);
 //        uint seed = uint(fragCoord.x) + uint(fragCoord.y);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
 
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 1., 0.) * rad, p);
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0., 1.) * rad , p);
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2(-1., 0.) * rad, p);
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0.,-1.) * rad, p);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 1., 0.) * rad, fragCoord);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0., 1.) * rad , fragCoord);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2(-1., 0.) * rad, fragCoord);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0.,-1.) * rad, fragCoord);
 
 
         //        rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
@@ -657,14 +463,14 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         //            sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
         //        }
     } else {
-        sortClosest(bestDistances, indices, closestIndex, p);
+        sortClosest(bestDistances, indices, closestIndex, fragCoord);
     }
 
     uint neighborsPosition = neighborsTexData(indices.x*2u);
     uint neighborsLength = neighborsTexData(indices.x*2u+1u);
     for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
         uint neighborIndex = neighborsTexData(neighborsPosition+i);
-        sortClosest(bestDistances, indices, neighborIndex, p);
+        sortClosest(bestDistances, indices, neighborIndex, fragCoord);
 
         if (bMediaEnabled && i < min(neighborsLength, MAX_NEIGHBOR_ITERATIONS_LEVEL_1)) {
             vec2 neighborNdcCoords = getNormalizedCellCoords(neighborIndex);
@@ -681,47 +487,33 @@ Data updateData(vec2 p, uvec4 prevIndices) {
 
     closestIndex = indices.x;
 
+
     vec2 cellCoords = getCellCoords(closestIndex);
     vec2 minEdgeDists = vec2(0.1);
 
-    float texWeight = weightTexData(closestIndex);
-    float weight = weightMod * texWeight;
+
 
     for (uint i = 1u; i < 4u; i++) {
-        uint neighborIndex = indices[i];
-        vec2 neighborCellCoords = getCellCoords(neighborIndex);
-        float neighborTexWeight = weightTexData(neighborIndex);
-        float neighborWeight = weightMod * neighborTexWeight;
-        float texWeightDiff = neighborTexWeight - texWeight;
+        uint neighborId = indices[i];
+        vec2 neighborCellCoords = getCellCoords(neighborId);
 
         vec2 mr = cellCoords - p;
-//        mr.x *= 1.5;
         vec2 r = neighborCellCoords - p;
-//        r.x *= 1.5;
         vec2 dr = r - mr;
-//        if (texWeightDiff < 0.) discard;
-//        float scaleX = 1. + max(texWeightDiff * (WEIGHT_Y_SCALE-1.), 0.);
-        float scaleX = WEIGHT_Y_SCALE;
-//        if ((neighborWeight - weight) != 0.) {
-            mr.x *= scaleX;
-            r.x *= scaleX;
-            dr.x *= scaleX;
-//        }
-//        dr.x *= 1.5;
-//        float d = dot2(dr);
-        float d = weightedDistEdge(r, mr, 0.);
-//        float d2 = d;
-//        float d2 = d + weight - neighborWeight;
-//        float d2 = weightedDistEdge(r, mr, weight - neighborWeight);
-        float d2 = weightedDistEdge(r, mr, neighborWeight - weight);
+        float d = dot2(dr);
+        float d2 = d;
 
         float mf = d2 / (2.*d);
-        float newLen = dot( mix(mr,r,mf), dr*(1./sqrt(d)) );
-//        minEdgeDists.x = smin( minEdgeDists.x, newLen, ROUNDNESS );
-        //        minEdgeDists.x = smin2( minEdgeDists.x, newLen, ROUNDNESS );
+        float newLen = dot( mix(mr.xy,r,mf), dr*(1./sqrt(d)) );
+        //                    minEdgeDist = smin( minEdgeDist, newLen, ROUNDNESS );
+        //        minEdgeDist = smin2( minEdgeDist, newLen, ROUNDNESS );
         minEdgeDists.x = smin2(minEdgeDists.x, newLen, (newLen*.5 + .5)*fRoundnessMod*ROUNDNESS);
         minEdgeDists.y = min(minEdgeDists.y, newLen);
+
     }
+
+
+
 
     if (highQuality || bMediaEnabled) {
 //        if (bMediaEnabled) {

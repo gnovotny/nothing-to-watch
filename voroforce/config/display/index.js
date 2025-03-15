@@ -1,6 +1,6 @@
-// import mainFrag from './main.frag'
+import mainFrag from './main.frag'
 // import mainFrag from './main-weighted.frag'
-import mainFrag from './main-weighted2.frag'
+// import mainFrag from './main-weighted2.frag'
 import postFrag from './post.frag'
 
 export default {
@@ -27,11 +27,11 @@ export default {
           },
         },
         fEdgeMod: {
-          value: 1,
+          value: 3,
           animatable: true,
           modes: {
             default: {
-              value: 1,
+              value: 3,
             },
             select: {
               value: 5,
@@ -39,11 +39,11 @@ export default {
           },
         },
         fEdgeSmoothnessMod: {
-          value: 1,
+          value: 3,
           animatable: true,
           modes: {
             default: {
-              value: 1,
+              value: 3,
             },
             select: {
               value: 3,
