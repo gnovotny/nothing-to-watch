@@ -50,8 +50,8 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 //#define Y_SCALE 4.5
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
-//#define ROUNDNESS 0.03
-#define ROUNDNESS 0.02
+#define ROUNDNESS 0.03
+//#define ROUNDNESS 0.02
 //#define ROUNDNESS 0.01
 //#define ROUNDNESS 0.0
 #define EARLY_EXIT_OPTIMIZATION 0
@@ -59,6 +59,7 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define WEIGHT_OFFSET_SCALE_MEDIA 30.
 #define BASE_X_DIST_SCALE 1.
 #define WEIGHTED_X_DIST_SCALE 1.5
+#define MEDIA_ASPECT 1.5
 
 struct Data {
     uvec4 indices;
@@ -716,21 +717,6 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     float texWeight = weightTexData(closestIndex);
     float weight = weightMod * texWeight;
 
-    float scaleX = getXDistScale(texWeight);
-    float texWeightDiff = 0.;
-    if (texWeight == 0.) {
-        for (uint i = 1u; i < 4u; i++) {
-            uint neighborIndex = indices[i];
-            float neighborTexWeight = weightTexData(neighborIndex);
-            float neighborWeight = weightMod * neighborTexWeight;
-            //        texWeightDiff = min(texWeightDiff, -(neighborTexWeight - texWeight));
-            texWeightDiff = neighborTexWeight - texWeight;
-
-            scaleX = max(scaleX, getXDistScale(neighborTexWeight - texWeight));
-        }
-    }
-
-
     for (uint i = 1u; i < 4u; i++) {
         uint neighborIndex = indices[i];
         vec2 neighborCellCoords = getCellCoords(neighborIndex);
@@ -739,44 +725,19 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         float texWeightDiff = neighborTexWeight - texWeight;
 
         vec2 mr = cellCoords - p;
-        //        mr.x *= 1.5;
         vec2 r = neighborCellCoords - p;
-        //        r.x *= 1.5;
         vec2 dr = r - mr;
-        //        if (texWeightDiff < 0.) discard;
-        //        float scaleX = 1. + max(texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.), 0.);
-//        float scaleX = getXDistScale(abs(neighborTexWeight - texWeight));
+
         float scaleX = getXDistScale(max(neighborTexWeight, texWeight));
-
-        if (scaleX > 1.) {
-//            scaleX *= 1.05;
-//            discard;
-        } else if (scaleX < 1.) {
-//            discard;
-        }
-
-//        if (indices.x == 25026u) {
-//            scaleX = 1.5;
-//        }
-        //        float scaleX = WEIGHT_Y_SCALE;
-        //        if ((neighborWeight - weight) != 0.) {
         mr.x *= scaleX;
         r.x *= scaleX;
         dr.x *= scaleX;
-        //        }
-        //        dr.x *= 1.5;
-        //        float d = dot2(dr);
+
         float d = weightedDistEdge(r, mr, 0.);
-        //        float d2 = d;
-        //        float d2 = d + weight - neighborWeight;
-        //        float d2 = weightedDistEdge(r, mr, weight - neighborWeight);
         float d2 = weightedDistEdge(r, mr, neighborWeight - weight);
 
         float mf = d2 / (2.*d);
         float newLen = dot( mix(mr,r,mf), dr*(1./sqrt(d)) );
-        //        minEdgeDists.x = smin( minEdgeDists.x, newLen, ROUNDNESS );
-        //        minEdgeDists.x = smin2( minEdgeDists.x, newLen, ROUNDNESS );
-
 
 
         //        // simplified variant without weights
@@ -785,6 +746,8 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         //        newLen = dot(direction,p-mid);
 
 
+        //        minEdgeDists.x = smin( minEdgeDists.x, newLen, ROUNDNESS );
+        //        minEdgeDists.x = smin2( minEdgeDists.x, newLen, ROUNDNESS );
         minEdgeDists.x = smin2(minEdgeDists.x, newLen, (newLen*.5 + .5)*fRoundnessMod*ROUNDNESS);
         minEdgeDists.y = min(minEdgeDists.y, newLen);
     }
@@ -846,10 +809,10 @@ Data updateData(vec2 p, uvec4 prevIndices) {
             //        mediaBbox.xy = avgCenter - vec2(bbX,bbY)*0.5;
             //        mediaBbox.zw = avgCenter + vec2(bbX,bbY)*0.5;
 
-            float bbMax = max(bbX, bbY/1.5);
+            float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
-            mediaBbox.xy = avgCenter - vec2(bbMax/aspect,bbMax*1.5)*0.5;
-            mediaBbox.zw = avgCenter + vec2(bbMax/aspect,bbMax*1.5)*0.5;
+            mediaBbox.xy = avgCenter - vec2(bbMax/aspect,bbMax*MEDIA_ASPECT)*0.5;
+            mediaBbox.zw = avgCenter + vec2(bbMax/aspect,bbMax*MEDIA_ASPECT)*0.5;
         }
     }
 
