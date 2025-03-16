@@ -180,8 +180,8 @@ vec3 randomColor(uint seed) {
 }
 
 float getXDistScale(float weight) {
-//    return BASE_X_DIST_SCALE;
-    return WEIGHTED_X_DIST_SCALE;
+    //    return BASE_X_DIST_SCALE;
+//    return WEIGHTED_X_DIST_SCALE;
     return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-1.);
 }
 
@@ -292,7 +292,7 @@ float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
     vec2 v = p1 - p2;
 
     float scaleX = getXDistScale(texWeight);
-//    float scaleX = WEIGHT_Y_SCALE;
+    //    float scaleX = WEIGHT_Y_SCALE;
     v.x *= scaleX; // Apply additional x weight
     float dist = dot(v, v); // Squared distance
     //    float dist = length(v); //  distance
@@ -332,6 +332,9 @@ float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
 
 float weightedDistEdge(vec2 p1, vec2 p2, float weight) {
     vec2 v = p1 - p2;
+
+    float scaleX = getXDistScale(weight);
+    v.x *= scaleX; // Apply additional x weight
 
     //    v.y *= 1.5; // Apply additional y weight
     //    if (weight != 0.) {
@@ -519,7 +522,8 @@ void sortClosest(
 inout vec4 distances,
 inout uvec4 indices,
 uint index,
-vec2 center
+vec2 center,
+float prevMaxWeight
 ) {
     if (indexIsUndefined(index) || any(equal(indices, uvec4(index)))) {
         return;
@@ -530,9 +534,12 @@ vec2 center
 
     float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
     float texWeight = weightTexData(index);
+
     //    float weight = weightMod * texWeight * 100000.;
     float weight = weightMod * texWeight;
     //        if (weight > 1.) discard;
+
+//    texWeight = texWeight > 0. ? texWeight : prevMaxWeight;
 
     //    float dist = length(center - coords);
     //    float dist = dist(center, coords);
@@ -559,15 +566,23 @@ uvec4 fetchClosest(vec2 position, sampler2D voroBuffer) {
     return floatBitsToUint(c) - 1u;
 }
 
-void fetchAndSortClosest( inout vec4 distances, inout uvec4 idList, in vec2 samplePoint, in vec2 cellCenter ) {
+void fetchAndSortClosest( inout vec4 distances, inout uvec4 idList, in vec2 samplePoint, in vec2 cellCenter, float prevMaxWeight ) {
     uvec4 indices = fetchClosest(samplePoint, uVoroIndexBufferTexture);
 
     for (int i = 0; i < 4; i++) {
-        sortClosest(distances, idList, indices[i], cellCenter);
+        sortClosest(distances, idList, indices[i], cellCenter, prevMaxWeight);
     }
 }
 
 Data updateData(vec2 p, uvec4 prevIndices) {
+
+//    float prevMaxWeight = 0.;
+//    for (uint i = 0u; i < 4u; i++) {
+//        prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices[i]));
+//    }
+
+    float prevMaxWeight = weightTexData(prevIndices.x);
+
     bool debugFlag = false;
     float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
 
@@ -633,8 +648,8 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     uvec4 indices = uvec4(-1);
     vec4 bestDistances = vec4(FLOAT_INF);
 
-//        float rad = 4.0;
-//    float rad = 1.0;
+    //        float rad = 4.0;
+    //    float rad = 1.0;
     float rad = 16.0;
     //    float rad = 32.0;
 
@@ -647,32 +662,32 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     //    }
 
     if (highQuality) {
-        fetchAndSortClosest(bestDistances, indices, fragCoord, p);
+        fetchAndSortClosest(bestDistances, indices, fragCoord, p, prevMaxWeight);
         //        uint seed = uint(fragCoord.x) + uint(fragCoord.y);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
 
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 1., 0.) * rad, p);
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0., 1.) * rad , p);
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2(-1., 0.) * rad, p);
-        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0.,-1.) * rad, p);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 1., 0.) * rad, p, prevMaxWeight);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0., 1.) * rad , p, prevMaxWeight);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2(-1., 0.) * rad, p, prevMaxWeight);
+        fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0.,-1.) * rad, p, prevMaxWeight);
 
 
-//                rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
-//                for (int i = 0; i < 16; i++) {
-//                    sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
-//                }
+        //                rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
+        //                for (int i = 0; i < 16; i++) {
+        //                    sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
+        //                }
     } else {
-        sortClosest(bestDistances, indices, closestIndex, p);
+        sortClosest(bestDistances, indices, closestIndex, p, prevMaxWeight);
     }
 
     uint neighborsPosition = neighborsTexData(indices.x*2u);
     uint neighborsLength = neighborsTexData(indices.x*2u+1u);
     for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
         uint neighborIndex = neighborsTexData(neighborsPosition+i);
-        sortClosest(bestDistances, indices, neighborIndex, p);
+        sortClosest(bestDistances, indices, neighborIndex, p, prevMaxWeight);
 
         if (bMediaEnabled && i < min(neighborsLength, MAX_NEIGHBOR_ITERATIONS_LEVEL_1)) {
             vec2 neighborNdcCoords = getNormalizedCellCoords(neighborIndex);
@@ -693,7 +708,22 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     vec2 minEdgeDists = vec2(0.1);
 
     float texWeight = weightTexData(closestIndex);
-    float weight = weightMod * texWeight;
+    float weight = weightMod * 1.;
+
+    float scaleX = getXDistScale(texWeight);
+    float texWeightDiff = 0.;
+//    if (texWeight == 0.) {
+//        for (uint i = 1u; i < 4u; i++) {
+//            uint neighborIndex = indices[i];
+//            float neighborTexWeight = weightTexData(neighborIndex);
+//            float neighborWeight = weightMod * neighborTexWeight;
+//            //        texWeightDiff = min(texWeightDiff, -(neighborTexWeight - texWeight));
+//            texWeightDiff = neighborTexWeight - texWeight;
+//
+//            scaleX = max(scaleX, getXDistScale(neighborTexWeight - texWeight));
+//        }
+//    }
+
 
     for (uint i = 1u; i < 4u; i++) {
         uint neighborIndex = indices[i];
@@ -708,10 +738,22 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         //        r.x *= 1.5;
         vec2 dr = r - mr;
         //        if (texWeightDiff < 0.) discard;
-//        float scaleX = 1. + max(texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.), 0.);
-                float scaleX = getXDistScale(neighborTexWeight - texWeight);
+        //        float scaleX = 1. + max(texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.), 0.);
+//        float scaleX = getXDistScale(abs(neighborTexWeight - texWeight));
+//        float scaleX = getXDistScale(max(neighborTexWeight, texWeight));
+        float scaleX = getXDistScale(1.);
 
-//        float scaleX = WEIGHT_Y_SCALE;
+        if (scaleX > 1.) {
+//            scaleX *= 1.05;
+//            discard;
+        } else if (scaleX < 1.) {
+//            discard;
+        }
+
+//        if (indices.x == 25026u) {
+//            scaleX = 1.5;
+//        }
+        //        float scaleX = WEIGHT_Y_SCALE;
         //        if ((neighborWeight - weight) != 0.) {
         mr.x *= scaleX;
         r.x *= scaleX;
@@ -723,19 +765,19 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         //        float d2 = d;
         //        float d2 = d + weight - neighborWeight;
         //        float d2 = weightedDistEdge(r, mr, weight - neighborWeight);
-        float d2 = weightedDistEdge(r, mr, neighborWeight - weight);
+        float d2 = weightedDistEdge(r, mr, -weight);
 
         float mf = d2 / (2.*d);
-        float newLen = dot( mix(mr,r,mf), dr*(1./sqrt(d)) );
+        float newLen = dot( mix(mr,r,mf), dr*(1./sqrt(d)) ) * (1.-(abs(1.)*.95));
         //        minEdgeDists.x = smin( minEdgeDists.x, newLen, ROUNDNESS );
         //        minEdgeDists.x = smin2( minEdgeDists.x, newLen, ROUNDNESS );
 
 
 
-//        // simplified variant without weights
-//        vec2 mid = (neighborCellCoords+cellCoords)*0.5;
-//        vec2 direction = normalize(cellCoords - neighborCellCoords); // Unit direction vector
-//        newLen = dot(direction,p-mid);
+        //        // simplified variant without weights
+        //        vec2 mid = (neighborCellCoords+cellCoords)*0.5;
+        //        vec2 direction = normalize(cellCoords - neighborCellCoords); // Unit direction vector
+        //        newLen = dot(direction,p-mid);
 
 
         minEdgeDists.x = smin2(minEdgeDists.x, newLen, (newLen*.5 + .5)*fRoundnessMod*ROUNDNESS);
@@ -842,9 +884,15 @@ void main() {
 
     Data data = getData();
     uvec4 indices = data.indices;
+    vec3 c;
+    if (indices.x == 25026u) {
+        c = vec3(1.,0.,0.);
+    } else {
+        c = randomColor(indices.x);
+//            c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
+//        c = mix(randomColor(indices.x), randomColor(indices.y), 0.5);
+    }
 
-//    vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
-    vec3 c = mix(randomColor(indices.x), randomColor(indices.w), 0.5);
 
     //    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
 
@@ -859,11 +907,14 @@ void main() {
     float edge1 = .005 * fEdgeSmoothnessMod;
     float edge2 = .001 * fEdgeMod;
 
+//if (indices.x == 25026u) {
     c = mix(
     c,
     vec3(0.),
     smoothstep(edge1, edge2, data.minEdgeDists.x)
     );
+//}
+
 
     float a = 1.;
     //    a = mix(

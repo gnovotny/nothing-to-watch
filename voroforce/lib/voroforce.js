@@ -66,12 +66,12 @@ export class Voroforce {
   initHelpers() {
     this.dimensions = new Dimensions(this.container)
     this.ticker = new Ticker()
-    if (this.mediaEnabled) {
-      this.loader = new Loader(
-        this.sharedLoadedMediaVersionLayersData,
-        this.config,
-      )
-    }
+    // if (this.mediaEnabled) {
+    this.loader = new Loader(
+      this.sharedLoadedMediaVersionLayersData,
+      this.config,
+    )
+    // }
   }
 
   initData() {

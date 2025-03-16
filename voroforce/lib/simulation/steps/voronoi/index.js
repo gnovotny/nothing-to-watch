@@ -28,7 +28,7 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
     super.refresh()
     this.neighborLevels = this.config.latticeNeighborLevels ?? 1
     this.neighborsNeedUpdate = true
-    this.weightsNeedUpdate = this.globalConfig.cellWeightsTexture?.enabled
+    // this.weightsNeedUpdate = this.globalConfig.cellWeightsTexture?.enabled
   }
 
   update() {
@@ -47,7 +47,7 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
     // alpha += (alphaTarget - alpha) * alphaDecay
 
     // if (this.weightsNeedUpdate) {
-    this.updateWeights(/*alpha, velocityDecay*/)
+    // this.updateWeights(/*alpha, velocityDecay*/)
     // }
 
     super.update()

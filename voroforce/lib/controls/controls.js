@@ -161,6 +161,8 @@ export class Controls extends EventTarget {
       }
       if (!this.targetPointer) return
 
+      // console.log('index', index)
+
       // if (this.cells.focusedIndex !== index) {
       if (this.cells.realFocusedIndex !== index) {
         this.cells.realFocusedIndex = index

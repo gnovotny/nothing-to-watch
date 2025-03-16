@@ -58,7 +58,7 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define WEIGHT_MOD 2000.
 #define WEIGHT_MOD_MEDIA 30.
 #define BASE_X_DIST_SCALE 1.
-#define WEIGHTED_X_DIST_SCALE 1.5
+#define WEIGHTED_X_DIST_SCALE 2.5
 
 struct Data {
     uvec4 indices;
@@ -180,8 +180,8 @@ vec3 randomColor(uint seed) {
 }
 
 float getXDistScale(float weight) {
-//    return BASE_X_DIST_SCALE;
-    return WEIGHTED_X_DIST_SCALE;
+    //    return BASE_X_DIST_SCALE;
+//        return WEIGHTED_X_DIST_SCALE;
     return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-1.);
 }
 
@@ -292,7 +292,7 @@ float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
     vec2 v = p1 - p2;
 
     float scaleX = getXDistScale(texWeight);
-//    float scaleX = WEIGHT_Y_SCALE;
+    //    float scaleX = WEIGHT_Y_SCALE;
     v.x *= scaleX; // Apply additional x weight
     float dist = dot(v, v); // Squared distance
     //    float dist = length(v); //  distance
@@ -330,8 +330,12 @@ float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
 //    return weightedDistSquared - weight;
 //}
 
-float weightedDistEdge(vec2 p1, vec2 p2, float weight) {
+float weightedDistEdge(vec2 p1, vec2 p2, float texWeight, float weight) {
     vec2 v = p1 - p2;
+
+//    float scaleX = getXDistScale(texWeight);
+//    //    float scaleX = WEIGHT_Y_SCALE;
+//    v.x *= scaleX; // Apply additional x weight
 
     //    v.y *= 1.5; // Apply additional y weight
     //    if (weight != 0.) {
@@ -633,8 +637,8 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     uvec4 indices = uvec4(-1);
     vec4 bestDistances = vec4(FLOAT_INF);
 
-//        float rad = 4.0;
-//    float rad = 1.0;
+    //        float rad = 4.0;
+    //    float rad = 1.0;
     float rad = 16.0;
     //    float rad = 32.0;
 
@@ -660,10 +664,10 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0.,-1.) * rad, p);
 
 
-//                rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
-//                for (int i = 0; i < 16; i++) {
-//                    sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
-//                }
+        //                rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
+        //                for (int i = 0; i < 16; i++) {
+        //                    sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
+        //                }
     } else {
         sortClosest(bestDistances, indices, closestIndex, p);
     }
@@ -695,12 +699,38 @@ Data updateData(vec2 p, uvec4 prevIndices) {
     float texWeight = weightTexData(closestIndex);
     float weight = weightMod * texWeight;
 
+    float scaleX = 1.;
+    float texWeightDiff = 0.;
+    for (uint i = 1u; i < 4u; i++) {
+        uint neighborIndex = indices[i];
+        float neighborTexWeight = weightTexData(neighborIndex);
+        float neighborWeight = weightMod * neighborTexWeight;
+//        texWeightDiff = min(texWeightDiff, -(neighborTexWeight - texWeight));
+        texWeightDiff = neighborTexWeight - texWeight;
+
+        if (neighborTexWeight > 0.) {
+            scaleX = BASE_X_DIST_SCALE + 0.25*((neighborTexWeight) * (WEIGHTED_X_DIST_SCALE-1.));
+        } else if (texWeight > 0.) {
+            scaleX = BASE_X_DIST_SCALE + texWeight * (WEIGHTED_X_DIST_SCALE-1.);
+        }
+    }
+
+//    scaleX = getXDistScale(texWeightDiff);
+//    scaleX = BASE_X_DIST_SCALE + texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.);
+
+
     for (uint i = 1u; i < 4u; i++) {
         uint neighborIndex = indices[i];
         vec2 neighborCellCoords = getCellCoords(neighborIndex);
         float neighborTexWeight = weightTexData(neighborIndex);
         float neighborWeight = weightMod * neighborTexWeight;
-        float texWeightDiff = neighborTexWeight - texWeight;
+//        float texWeightDiff = neighborTexWeight - texWeight;
+
+        if (neighborTexWeight > 0.) {
+            scaleX = BASE_X_DIST_SCALE + 0.25*((neighborTexWeight) * (WEIGHTED_X_DIST_SCALE-1.));
+        } else if (texWeight > 0.) {
+            scaleX = BASE_X_DIST_SCALE + 0.1*(texWeight * (WEIGHTED_X_DIST_SCALE-1.));
+        }
 
         vec2 mr = cellCoords - p;
         //        mr.x *= 1.5;
@@ -708,22 +738,31 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         //        r.x *= 1.5;
         vec2 dr = r - mr;
         //        if (texWeightDiff < 0.) discard;
-//        float scaleX = 1. + max(texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.), 0.);
-                float scaleX = getXDistScale(neighborTexWeight - texWeight);
+        //        float scaleX = 1. + max(texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.), 0.);
+//        float scaleX = getXDistScale(neighborTexWeight - texWeight);
 
-//        float scaleX = WEIGHT_Y_SCALE;
+//        mr.x *= scaleX;
+//        r.x *= scaleX;
+//        dr.x *= scaleX;
+
+
+
+        //        float scaleX = WEIGHT_Y_SCALE;
         //        if ((neighborWeight - weight) != 0.) {
-        mr.x *= scaleX;
-        r.x *= scaleX;
-        dr.x *= scaleX;
+
         //        }
         //        dr.x *= 1.5;
         //        float d = dot2(dr);
-        float d = weightedDistEdge(r, mr, 0.);
+        float d = weightedDistEdge(r, mr, texWeightDiff, 0.);
+        mr.x *= scaleX;
+        r.x *= scaleX;
+        dr.x *= scaleX;
         //        float d2 = d;
         //        float d2 = d + weight - neighborWeight;
         //        float d2 = weightedDistEdge(r, mr, weight - neighborWeight);
-        float d2 = weightedDistEdge(r, mr, neighborWeight - weight);
+        float d2 = weightedDistEdge(r, mr, texWeightDiff, neighborWeight - weight);
+
+
 
         float mf = d2 / (2.*d);
         float newLen = dot( mix(mr,r,mf), dr*(1./sqrt(d)) );
@@ -732,10 +771,10 @@ Data updateData(vec2 p, uvec4 prevIndices) {
 
 
 
-//        // simplified variant without weights
-//        vec2 mid = (neighborCellCoords+cellCoords)*0.5;
-//        vec2 direction = normalize(cellCoords - neighborCellCoords); // Unit direction vector
-//        newLen = dot(direction,p-mid);
+        //        // simplified variant without weights
+        //        vec2 mid = (neighborCellCoords+cellCoords)*0.5;
+        //        vec2 direction = normalize(cellCoords - neighborCellCoords); // Unit direction vector
+        //        newLen = dot(direction,p-mid);
 
 
         minEdgeDists.x = smin2(minEdgeDists.x, newLen, (newLen*.5 + .5)*fRoundnessMod*ROUNDNESS);
@@ -843,7 +882,7 @@ void main() {
     Data data = getData();
     uvec4 indices = data.indices;
 
-//    vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
+    //    vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
     vec3 c = mix(randomColor(indices.x), randomColor(indices.w), 0.5);
 
     //    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);

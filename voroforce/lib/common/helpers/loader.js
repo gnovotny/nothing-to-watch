@@ -10,7 +10,7 @@ export class Loader extends EventTarget {
     super()
 
     this.sharedLoadedMediaVersionLayersData =
-      sharedLoadedMediaVersionLayersData.sharedLoadedMediaVersionLayersData
+      sharedLoadedMediaVersionLayersData?.sharedLoadedMediaVersionLayersData
     this.config = config.media
 
     this.loadedIndex = 0
@@ -61,7 +61,7 @@ export class Loader extends EventTarget {
     const baseUrl = this.config.baseUrl
     const config = this.config.versions[versionIndex]
 
-    const src = `${baseUrl}${config.layerSrcFormat.replace(
+    const src = `${config.layerSrcFormat.startsWith('/') ? baseUrl : ''}${config.layerSrcFormat.replace(
       '{INDEX}',
       `${config.layerIndexStart + layerIndex}`,
     )}`

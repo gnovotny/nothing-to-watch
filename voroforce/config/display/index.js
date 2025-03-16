@@ -1,4 +1,10 @@
-import mainFrag from './main.frag'
+// import mainFrag from './main.frag'
+// import mainFrag from './main-test.frag'
+// import mainFrag from './main-test2.frag'
+// import mainFrag from './main-test3.frag'
+import mainFrag from './main-test33.frag'
+// import mainFrag from './main-test4-cool.frag'
+// import mainFrag from './main-test6.frag'
 // import mainFrag from './main-weighted.frag'
 // import mainFrag from './main-weighted2.frag'
 import postFrag from './post.frag'
@@ -27,11 +33,11 @@ export default {
           },
         },
         fEdgeMod: {
-          value: 3,
+          value: 1,
           animatable: true,
           modes: {
             default: {
-              value: 3,
+              value: 1,
             },
             select: {
               value: 5,
@@ -39,11 +45,11 @@ export default {
           },
         },
         fEdgeSmoothnessMod: {
-          value: 3,
+          value: 1.5,
           animatable: true,
           modes: {
             default: {
-              value: 3,
+              value: 1.5,
             },
             select: {
               value: 3,
@@ -53,7 +59,7 @@ export default {
       },
     },
     post: {
-      enabled: false,
+      enabled: true,
       fragmentShader: postFrag,
       uniforms: {
         fAlphaStrength: {
@@ -90,6 +96,7 @@ export default {
     },
   },
   renderer: {
+    // antialias: true,
     scissor: {
       enabled: true,
       offset: {

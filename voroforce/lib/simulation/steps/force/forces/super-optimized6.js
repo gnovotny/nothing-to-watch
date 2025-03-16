@@ -1,5 +1,6 @@
 import { clamp, lerp } from '../../../../utils'
 import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
+import { easedMinLerp } from './utils/math'
 
 export const superForce = ({
   cells,
@@ -95,9 +96,6 @@ export const superForce = ({
     mediaV1LevelAdjacencyThreshold = mediaV2LevelAdjacencyThreshold * 3
   }
 
-  if (manageWeights) {
-  }
-
   function force(alpha) {
     forceSetup(alpha)
     if (primaryCell) latticeForcePass(alpha) // lattice pass must run in isolation
@@ -132,7 +130,7 @@ export const superForce = ({
             greatestDirLevelAdjacency <= mediaV2LevelAdjacencyThreshold
           ) {
             // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
-            cell.targetMediaVersion = 2
+            cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
           } else if (
             l < mediaV1DistThreshold ||
             greatestDirLevelAdjacency <= mediaV1LevelAdjacencyThreshold
@@ -172,6 +170,15 @@ export const superForce = ({
         // push force
         cell.vx += x * configPushXMod * cellTypePushXMod * alignmentPushXMod
         cell.vy += y * configPushYMod * cellTypePushYMod * alignmentPushYMod
+      }
+
+      // if (i === primaryCell?.index) {
+      //   console.log('cell.weight', cell.weight)
+      //   // cell.weight = easedMinLerp(cell.weight, 0, 0.075)
+      // }
+
+      if (manageWeights && cell.weight !== 0 && i !== primaryCell?.index) {
+        cell.weight = easedMinLerp(cell.weight, 0, 0.3)
       }
 
       handleEnd?.(cell)
@@ -239,6 +246,13 @@ export const superForce = ({
         centerToPrimaryCellDist / centerToPrimaryCellNeighborDist
 
       const inverseDistRatio = 1 - distRatio
+
+      // primaryCell.weight = Math.max(inverseDistRatio, 0)
+      primaryCell.weight = easedMinLerp(
+        primaryCell.weight,
+        Math.min(inverseDistRatio, 1),
+        0.025,
+      )
 
       if (distRatio > 1) {
         // console.log('distRatio', distRatio)
