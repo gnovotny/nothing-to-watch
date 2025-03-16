@@ -55,8 +55,8 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 //#define ROUNDNESS 0.01
 //#define ROUNDNESS 0.0
 #define EARLY_EXIT_OPTIMIZATION 0
-#define WEIGHT_MOD 4000.
-#define WEIGHT_MOD_MEDIA 30.
+#define WEIGHT_OFFSET_SCALE 4000.
+#define WEIGHT_OFFSET_SCALE_MEDIA 30.
 #define BASE_X_DIST_SCALE 1.
 #define WEIGHTED_X_DIST_SCALE 1.5
 
@@ -532,7 +532,7 @@ float prevMaxWeight
     //    vec2 coords = getRawCellCoords(index);
     vec2 coords = getCellCoords(index);
 
-    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
+    float weightMod = WEIGHT_OFFSET_SCALE * getResolutionMod() * 1./float(iNumCells);
     float texWeight = weightTexData(index);
 
     //    float weight = weightMod * texWeight * 100000.;
@@ -590,13 +590,13 @@ Data updateData(vec2 p, uvec4 prevIndices) {
 //    }
 
     bool debugFlag = false;
-    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
+    float weightMod = WEIGHT_OFFSET_SCALE * getResolutionMod() * 1./float(iNumCells);
 
     vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
     vec2 cellNdcCoords;
     vec2 midPointsSum = vec2(0.0);
     float mediaWeight;
-    //    float mediaWeightMod = WEIGHT_MOD_MEDIA * getResolutionMod();
+    //    float mediaWeightMod = WEIGHT_OFFSET_SCALE_MEDIA * getResolutionMod();
     float mediaWeightMod =  weightMod * 3.55;
 
 
@@ -898,7 +898,7 @@ void main() {
 //    }
 
 
-    //    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
+    //    float weightMod = WEIGHT_OFFSET_SCALE * getResolutionMod() * 1./float(iNumCells);
 
     //    float w = data.weight * weightMod;
 

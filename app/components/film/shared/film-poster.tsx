@@ -13,11 +13,12 @@ export const FilmPoster = ({
   className?: string
 }) => {
   const [hidden, setHidden] = useState(true)
-  return null
+  // return null
   return (
     <img
       src={`${config.posterBaseUrl}${film.poster}`}
-      alt=''
+      crossOrigin='anonymous'
+      alt={film.title}
       className={cn('', className, {
         '!w-0 !h-0 !aspect-none !basis-0': hidden,
       })}
