@@ -62,8 +62,8 @@ export type VoroforceState = {
   }
 }
 
-const playedIntro = Boolean(localStorage.getItem('playedIntro'))
-// const playedIntro = false
+// const playedIntro = Boolean(localStorage.getItem('playedIntro'))
+const playedIntro = false
 
 export const store = create(
   subscribeWithSelector<VoroforceState>(

@@ -167,8 +167,28 @@ export const superForce = ({
               alignmentPushYModMod
         }
 
+        let eyeShapePushXMod = 1
+        const maxColLevels = 4000
+        const maxRowLevels = 6
+        if (
+          i !== primaryCell.index &&
+          rowLevelAdjacency < maxRowLevels &&
+          colLevelAdjacency < maxColLevels
+        ) {
+          eyeShapePushXMod =
+            1 +
+            200 *
+              (max(colLevelAdjacency, 1) / maxColLevels) *
+              (1 - max(rowLevelAdjacency, 1) / maxRowLevels)
+        }
+
         // push force
-        cell.vx += x * configPushXMod * cellTypePushXMod * alignmentPushXMod
+        cell.vx +=
+          x *
+          configPushXMod *
+          cellTypePushXMod *
+          alignmentPushXMod *
+          eyeShapePushXMod
         cell.vy += y * configPushYMod * cellTypePushYMod * alignmentPushYMod
       }
 

@@ -139,11 +139,12 @@ void main(){
     // TEXTURE AND COLORING.
     //
     // Texture sample with fake height information added.
-    vec3 tx = texture(iChannel0, (p + n.xy*.125)*.25).xyz;
+//    vec3 tx = texture(iChannel0, (p + n.xy*.125)*.25).xyz;
+    vec3 tx = texture(iChannel0, (p + n.xy*.125)).xyz;
 //    vec3 tx = vec3(0.2);
 //    vec3 tx = vec3(1.);
     tx *= tx; // sRGB to linear.
-    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
+//    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
 
     // Object color. Initialize to the texture value.
     vec3 oCol = tx;
