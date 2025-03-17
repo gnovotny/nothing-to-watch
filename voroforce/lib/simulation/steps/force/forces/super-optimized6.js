@@ -168,7 +168,10 @@ export const superForce = ({
         }
 
         let eyeShapePushXMod = 1
-        const maxColLevels = 4000
+        // const mod = 200
+        // const maxColLevels = 4000
+        const mod = 3
+        const maxColLevels = 200
         const maxRowLevels = 6
         if (
           i !== primaryCell.index &&
@@ -177,9 +180,9 @@ export const superForce = ({
         ) {
           eyeShapePushXMod =
             1 +
-            200 *
-              (max(colLevelAdjacency, 1) / maxColLevels) *
-              (1 - max(rowLevelAdjacency, 1) / maxRowLevels)
+            mod *
+              ((colLevelAdjacency + 1) / maxColLevels) *
+              (1 - (rowLevelAdjacency + 1) / maxRowLevels)
         }
 
         // push force
@@ -266,12 +269,23 @@ export const superForce = ({
         centerToPrimaryCellDist / centerToPrimaryCellNeighborDist
 
       const inverseDistRatio = 1 - distRatio
+      const clampedSquareRootInverseDistRatio = clamp(
+        0,
+        1,
+        inverseDistRatio ** 2,
+      )
 
-      // primaryCell.weight = Math.max(inverseDistRatio, 0)
+      // console.log(
+      //   'clampedSquaredInverseDistRatio',
+      //   clampedSquareRootInverseDistRatio,
+      // )
+
+      const newWeight =
+        clampedSquareRootInverseDistRatio * breathingPushMod ** 2
       primaryCell.weight = easedMinLerp(
         primaryCell.weight,
-        Math.min(inverseDistRatio, 1),
-        0.025,
+        newWeight,
+        newWeight > primaryCell.weight ? 0.025 : 0.075,
       )
 
       if (distRatio > 1) {
