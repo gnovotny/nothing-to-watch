@@ -1,5 +1,5 @@
-import { isNumber } from '../../../../utils'
-import constant from './utils/constant'
+import { isNumber } from '../../../../../utils'
+import constant from '../utils/constant'
 
 function index(d) {
   return d.index

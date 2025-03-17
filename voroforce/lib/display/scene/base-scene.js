@@ -367,6 +367,7 @@ export default class BaseScene {
       fRoundnessMod: { value: 1 },
       fEdgeMod: { value: 1 },
       fEdgeSmoothnessMod: { value: 1 },
+      fBgColor: { value: [0, 0, 0] },
     }
     return {
       ...this.initBaseUniforms(),

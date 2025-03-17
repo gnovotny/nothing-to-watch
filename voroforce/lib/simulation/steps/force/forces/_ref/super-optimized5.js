@@ -1,4 +1,4 @@
-import { isNumber, lerp } from '../../../../utils'
+import { isNumber, lerp } from '../../../../../utils'
 
 /**
  * Calculates weights for neighboring points based on their distance from a center point.

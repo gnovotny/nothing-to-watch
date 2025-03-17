@@ -1,12 +1,4 @@
-// import mainFrag from './main.frag'
-// import mainFrag from './main-test.frag'
-// import mainFrag from './main-test2.frag'
-// import mainFrag from './main-test3.frag'
-import mainFrag from './main-test33.frag'
-// import mainFrag from './main-test4-cool.frag'
-// import mainFrag from './main-test6.frag'
-// import mainFrag from './main-weighted.frag'
-// import mainFrag from './main-weighted2.frag'
+import mainFrag from './main.frag'
 import postFrag from './post.frag'
 
 export default {

@@ -1,4 +1,4 @@
-import { isNumber, lerp } from '../../../../utils'
+import { isNumber, lerp } from '../../../../../utils'
 
 export const superForce = ({
   cells,
@@ -87,7 +87,9 @@ export const superForce = ({
     closestPointerPositionCenterCellNeighborY,
     closestPointerPositionCenterCellNeighborPushFactor = 1,
     closestPointerPositionCenterCellNeighborPushFactorX = 1,
-    closestPointerPositionCenterCellNeighborPushFactorY = 1
+    closestPointerPositionCenterCellNeighborPushFactorY = 1,
+    addX = 0,
+    addY = 0
 
   const mediaEnabled = globalConfig.media.enabled && pushRequestMediaVersions
 
@@ -187,21 +189,23 @@ export const superForce = ({
       targetCenterY = pointer.y
     }
 
-    centerX = centerX ?? targetCenterX
-    centerY = centerY ?? targetCenterY
+    centerX = isNumber(centerX) ? centerX : targetCenterX
+    centerY = isNumber(centerY) ? centerY : targetCenterY
     centerX = lerp(
       centerX,
       targetCenterX,
-      // min(1, abs(targetCenterX - centerX) / 10),
-      pointer.speedScale,
+      min(1, abs(targetCenterX - centerX) / 10),
+      // pointer.speedScale,
     )
 
     centerY = lerp(
       centerY,
       targetCenterY,
-      // min(1, abs(targetCenterY - centerY) / 10),
-      pointer.speedScale,
+      min(1, abs(targetCenterY - centerY) / 10),
+      // pointer.speedScale,
     )
+
+    // console.log('pointer.speedScale', pointer.speedScale)
 
     // console.log(
     //   '(1 - pointer.speedScale) * 0.1',
@@ -247,12 +251,24 @@ export const superForce = ({
       const distRatio = centerToCenterCellDist / centerToCenterCellNeighborDist
 
       const inverseDistRatio = 1 - distRatio
-      const addX = (centerX - centerCell.x) * inverseDistRatio * alpha
-      const addY = (centerY - centerCell.y) * inverseDistRatio * alpha
-      centerCell.vx += addX
-      centerCell.vy += addY
 
-      // console.log('addX', inverseDistRatio)
+      // addX = -(centerX - centerCell.x) * inverseDistRatio * alpha
+      // addY = -(centerY - centerCell.y) * inverseDistRatio * alpha
+
+      // if (inverseDistRatio > 0.5) {
+      addX = lerp(addX, (centerX - centerCell.x) * inverseDistRatio * alpha, 1)
+
+      addY = lerp(addY, (centerY - centerCell.y) * inverseDistRatio * alpha, 1)
+      // } else {
+      //   addX = 0
+      //   addY = 0
+      // }
+
+      // centerCell.vx += addX
+      // centerCell.vy += addY
+
+      // console.log('addX', addX)
+      // console.log('inverseDistRatio', inverseDistRatio)
 
       // console.log('distRatio', distRatio)
       centerCellPushFactor = Math.min(distRatio, 1)
@@ -260,6 +276,13 @@ export const superForce = ({
       centerCellPushFactorY = centerCellPushFactor
       // centerCellPushFactorX = centerCellPushFactor / pushXFactor
       // centerCellPushFactorY = centerCellPushFactor / pushYFactor
+
+      closestPointerPositionCenterCellNeighborPushFactor =
+        1 - centerCellPushFactor
+      closestPointerPositionCenterCellNeighborPushFactorX =
+        closestPointerPositionCenterCellNeighborPushFactor
+      closestPointerPositionCenterCellNeighborPushFactorY =
+        1 - centerCellPushFactor
 
       const inverseCenterCellPushFactor = 1 - centerCellPushFactor
       // console.log('inverseCenterCellPushFactor', inverseCenterCellPushFactor)
@@ -388,6 +411,13 @@ export const superForce = ({
       cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
 
       if (centerCell) {
+        // if (i !== centerCell.index) {
+        cell.vx += addX
+        cell.vy += addY
+        // }
+      }
+
+      if (centerCell) {
         colLevelAdjacency = abs(cell.col - centerCell.col)
         rowLevelAdjacency = abs(cell.row - centerCell.row)
         maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
@@ -429,24 +459,24 @@ export const superForce = ({
         const pushYMod = 1
         const pushXMod = 1
 
-        if (i !== centerCell.index) {
-          if (centerCol && rowLevelAdjacency < 2) {
-            // pushXMod = 1 - sqrt((20 - rowLevelAdjacency) / 20)
-            x = (cell.x + cell.vx - centerCellX) * pushStrength
-          }
-          //
-          if (centerRow && colLevelAdjacency < 2) {
-            // pushYMod = 1 - sqrt((40 - colLevelAdjacency) / 40)
-
-            y = (cell.y + cell.vy - centerCellY) * pushStrength
-
-            // console.log('asdf', 1 / (colLevelAdjacency ?? 1))
-
-            // if (colLevelAdjacency < 2) {
-            //   console.log('pushYMod', pushYMod)
-            // }
-          }
-        }
+        // if (i !== centerCell.index) {
+        //   if (centerCol && rowLevelAdjacency < 2) {
+        //     // pushXMod = 1 - sqrt((20 - rowLevelAdjacency) / 20)
+        //     x = (cell.x + cell.vx - centerCellX) * pushStrength
+        //   }
+        //   //
+        //   if (centerRow && colLevelAdjacency < 2) {
+        //     // pushYMod = 1 - sqrt((40 - colLevelAdjacency) / 40)
+        //
+        //     y = (cell.y + cell.vy - centerCellY) * pushStrength
+        //
+        //     // console.log('asdf', 1 / (colLevelAdjacency ?? 1))
+        //
+        //     // if (colLevelAdjacency < 2) {
+        //     //   console.log('pushYMod', pushYMod)
+        //     // }
+        //   }
+        // }
 
         // if (centerRow && colLevelAdjacency > 1 && colLevelAdjacency < 20) {
         //   pushXMod += ((20 - colLevelAdjacency) / 20) * 0.3
@@ -462,14 +492,15 @@ export const superForce = ({
         if (i === centerCell.index) {
           cellTypePushModX = centerCellPushFactorX
           cellTypePushModY = centerCellPushFactorY
-
           // cellTypePushModX = 0
           // cellTypePushModY = 0
         }
-        if (i === closestPointerPositionCenterCellNeighbor?.index) {
-          // cellTypePushModX = closestPointerPositionCenterCellNeighborPushFactorX
-          // cellTypePushModY = closestPointerPositionCenterCellNeighborPushFactorY
-        }
+        // if (i === closestPointerPositionCenterCellNeighbor?.index) {
+        //   cellTypePushModX = closestPointerPositionCenterCellNeighborPushFactorX
+        //   cellTypePushModY = closestPointerPositionCenterCellNeighborPushFactorY
+        //
+        //   // console.log('cellTypePushModY', cellTypePushModY)
+        // }
 
         // if (
         //   i !== centerCell.index &&

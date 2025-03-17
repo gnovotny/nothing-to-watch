@@ -1,5 +1,5 @@
-import constant from './utils/constant'
-import jiggle from './utils/jiggle'
+import constant from '../utils/constant'
+import jiggle from '../utils/jiggle'
 
 function index(d) {
   return d.index

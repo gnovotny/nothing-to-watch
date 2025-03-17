@@ -57,7 +57,8 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define EARLY_EXIT_OPTIMIZATION 0
 #define WEIGHT_MOD 2000.
 #define WEIGHT_MOD_MEDIA 30.
-#define WEIGHT_Y_SCALE 1.5
+#define BASE_X_DIST_SCALE 1.
+#define WEIGHTED_X_DIST_SCALE 1.5
 
 struct Data {
     uvec4 indices;
@@ -161,7 +162,7 @@ float dot2(vec2 p) {
 }
 
 float dist(vec2 a, vec2 b) {
-//    return distance(a, b);
+    //    return distance(a, b);
     return dot2(a - b);
 }
 
@@ -176,6 +177,12 @@ vec3 randomColor(uint seed) {
     float g = randomColorChannel(seed + 1u);
     float b = randomColorChannel(seed + 2u);
     return vec3(r, g, b);
+}
+
+float getXDistScale(float weight) {
+//    return BASE_X_DIST_SCALE;
+    return WEIGHTED_X_DIST_SCALE;
+    return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-1.);
 }
 
 //float weightedDist(vec2 p1, vec2 p2, float weight) {
@@ -284,15 +291,15 @@ vec3 randomColor(uint seed) {
 float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
     vec2 v = p1 - p2;
 
-//    float scaleX = 1. + texWeight * (WEIGHT_Y_SCALE-1.);
-    float scaleX = WEIGHT_Y_SCALE;
+    float scaleX = getXDistScale(texWeight);
+//    float scaleX = WEIGHT_Y_SCALE;
     v.x *= scaleX; // Apply additional x weight
     float dist = dot(v, v); // Squared distance
-//    float dist = length(v); //  distance
+    //    float dist = length(v); //  distance
 
     // Apply point weight (using squared distance for efficiency)
     dist = dist - weight;
-//    dist = dist - sqrt(weight);
+    //    dist = dist - sqrt(weight);
 
     return dist;
 }
@@ -326,18 +333,18 @@ float weightedDist(vec2 p1, vec2 p2, float texWeight, float weight) {
 float weightedDistEdge(vec2 p1, vec2 p2, float weight) {
     vec2 v = p1 - p2;
 
-//    v.y *= 1.5; // Apply additional y weight
-//    if (weight != 0.) {
-//        v.x *= 1.5; // Apply additional x weight
-//        v.x += sign(v.x)*1.9*abs(weight); // Apply additional x weight
-//        v.y += sign(v.y)*1.*abs(weight); // Apply additional x weight
-//    }
+    //    v.y *= 1.5; // Apply additional y weight
+    //    if (weight != 0.) {
+    //        v.x *= 1.5; // Apply additional x weight
+    //        v.x += sign(v.x)*1.9*abs(weight); // Apply additional x weight
+    //        v.y += sign(v.y)*1.*abs(weight); // Apply additional x weight
+    //    }
     float dist = dot(v, v); // Squared distance
-//    float dist = length(v); //  distance
+    //    float dist = length(v); //  distance
 
     // Apply point weight (using squared distance for efficiency)
     dist = dist - weight;
-//    dist = dist - sqrt(weight);
+    //    dist = dist - sqrt(weight);
 
     return dist;
 }
@@ -437,7 +444,7 @@ float getResolutionMod() {
 float calculateOrientation(vec2 left, vec2 right) {
     vec2 localX = normalize(right - left);
     float angle = atan(localX.y, localX.x);
-//    return angle + 1.5708;
+    //    return angle + 1.5708;
     return angle;
 }
 
@@ -454,8 +461,8 @@ void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index) {
     float cosAngle = cos(angle);
     float sinAngle = sin(angle);
     vec2 rotatedUv = vec2(
-        pos.x * cosAngle - pos.y * sinAngle,
-        pos.x * sinAngle + pos.y * cosAngle
+    pos.x * cosAngle - pos.y * sinAngle,
+    pos.x * sinAngle + pos.y * cosAngle
     );
 
     // uncenter origin
@@ -470,15 +477,15 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
     mediaTileUv.y = 1. - mediaTileUv.y;
 
     #if MEDIA_UV_ROTATE_FACTOR != 0
-        rotateMediaTileUv(mediaTileUv, index);
+    rotateMediaTileUv(mediaTileUv, index);
     #endif
 
     #if DEBUG_MEDIA_BBOXES == 1  // highlight bbox overflow in red
-        if (mediaTileUv.x < 0.01 || mediaTileUv.x > 0.99 || mediaTileUv.y < 0.01 || mediaTileUv.y > 0.99) {
-            return vec3(1.,0.,0.);
-        }
+    if (mediaTileUv.x < 0.01 || mediaTileUv.x > 0.99 || mediaTileUv.y < 0.01 || mediaTileUv.y > 0.99) {
+        return vec3(1.,0.,0.);
+    }
     # else  // obscure bbox inaccuracies and prevent tile bleeding
-        mediaTileUv = vec2(clamp(mediaTileUv.x, 0.01, 0.99), clamp(mediaTileUv.y, 0.01, 0.99));
+    mediaTileUv = vec2(clamp(mediaTileUv.x, 0.01, 0.99), clamp(mediaTileUv.y, 0.01, 0.99));
     #endif
 
     int iMediaVersion = int(mediaVersionTexData(index).x);
@@ -509,26 +516,26 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
 }
 
 void sortClosest(
-    inout vec4 distances,
-    inout uvec4 indices,
-    uint index,
-    vec2 center
+inout vec4 distances,
+inout uvec4 indices,
+uint index,
+vec2 center
 ) {
     if (indexIsUndefined(index) || any(equal(indices, uvec4(index)))) {
         return;
     }
 
-//    vec2 coords = getRawCellCoords(index);
+    //    vec2 coords = getRawCellCoords(index);
     vec2 coords = getCellCoords(index);
 
     float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
     float texWeight = weightTexData(index);
-//    float weight = weightMod * texWeight * 100000.;
+    //    float weight = weightMod * texWeight * 100000.;
     float weight = weightMod * texWeight;
-//        if (weight > 1.) discard;
+    //        if (weight > 1.) discard;
 
     //    float dist = length(center - coords);
-//    float dist = dist(center, coords);
+    //    float dist = dist(center, coords);
     float dist = weightedDist(center, coords, texWeight, weight);
 
     if (dist < distances[0]) {
@@ -591,42 +598,43 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
     }
 
-//    if (bForceMaxQuality) {
-//        highQuality = true;
-//        maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
-//    } else {
-//        float distToFocusedCell = 0.;
-//        if (iFocusedIndex != -1) {
-//            if (closestIndex != uint(iFocusedIndex)) {
-//                vec2 focusedCellCoords = getCellCoords(uint(iFocusedIndex));
-//                vec2 cellCoords = getCellCoords(closestIndex);
-//                distToFocusedCell = dist(cellCoords, focusedCellCoords);
-//
-//                if (distToFocusedCell < 0.5) {
-//                    highQuality = true;
-//                    maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
-//                    //                discard;
-//                } else if (distToFocusedCell < 0.75) {
-//                    maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_2;
-//                }
-//            } else {
-//                highQuality = true;
-//                maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
-//            }
-//
-//            //        avgXNeighborDist = (dist(focusedCellCoords, getCellCoords(neighborsTexData(neighborsTexData(iFocusedIndex*2)+3))) + dist(focusedCellCoords, getCellCoords(neighborsTexData(neighborsTexData(iFocusedIndex*2)+7)))) * 0.5;
-//        }
-//    }
+    //    if (bForceMaxQuality) {
+    //        highQuality = true;
+    //        maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
+    //    } else {
+    //        float distToFocusedCell = 0.;
+    //        if (iFocusedIndex != -1) {
+    //            if (closestIndex != uint(iFocusedIndex)) {
+    //                vec2 focusedCellCoords = getCellCoords(uint(iFocusedIndex));
+    //                vec2 cellCoords = getCellCoords(closestIndex);
+    //                distToFocusedCell = dist(cellCoords, focusedCellCoords);
+    //
+    //                if (distToFocusedCell < 0.5) {
+    //                    highQuality = true;
+    //                    maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
+    //                    //                discard;
+    //                } else if (distToFocusedCell < 0.75) {
+    //                    maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_2;
+    //                }
+    //            } else {
+    //                highQuality = true;
+    //                maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
+    //            }
+    //
+    //            //        avgXNeighborDist = (dist(focusedCellCoords, getCellCoords(neighborsTexData(neighborsTexData(iFocusedIndex*2)+3))) + dist(focusedCellCoords, getCellCoords(neighborsTexData(neighborsTexData(iFocusedIndex*2)+7)))) * 0.5;
+    //        }
+    //    }
 
 
-        highQuality = true;
+    highQuality = true;
     vec2 fragCoord = gl_FragCoord.xy;
-//    vec2 fragCoord = p;
+    //    vec2 fragCoord = p;
 
     uvec4 indices = uvec4(-1);
     vec4 bestDistances = vec4(FLOAT_INF);
 
-    //    float rad = 4.0;
+//        float rad = 4.0;
+//    float rad = 1.0;
     float rad = 16.0;
     //    float rad = 32.0;
 
@@ -640,7 +648,7 @@ Data updateData(vec2 p, uvec4 prevIndices) {
 
     if (highQuality) {
         fetchAndSortClosest(bestDistances, indices, fragCoord, p);
-//        uint seed = uint(fragCoord.x) + uint(fragCoord.y);
+        //        uint seed = uint(fragCoord.x) + uint(fragCoord.y);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
         //        fetchAndSortClosest(bestDistances, indices, fragCoord + randomDir(seed) * rad, fragCoord);
@@ -652,10 +660,10 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         fetchAndSortClosest(bestDistances, indices, fragCoord + vec2( 0.,-1.) * rad, p);
 
 
-        //        rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
-        //        for (int i = 0; i < 16; i++) {
-        //            sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
-        //        }
+//                rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
+//                for (int i = 0; i < 16; i++) {
+//                    sortClosest(bestDistances, indices, wrap1d(nextUint()), fragCoord);
+//                }
     } else {
         sortClosest(bestDistances, indices, closestIndex, p);
     }
@@ -695,75 +703,86 @@ Data updateData(vec2 p, uvec4 prevIndices) {
         float texWeightDiff = neighborTexWeight - texWeight;
 
         vec2 mr = cellCoords - p;
-//        mr.x *= 1.5;
+        //        mr.x *= 1.5;
         vec2 r = neighborCellCoords - p;
-//        r.x *= 1.5;
+        //        r.x *= 1.5;
         vec2 dr = r - mr;
-//        if (texWeightDiff < 0.) discard;
-//        float scaleX = 1. + max(texWeightDiff * (WEIGHT_Y_SCALE-1.), 0.);
-        float scaleX = WEIGHT_Y_SCALE;
-//        if ((neighborWeight - weight) != 0.) {
-            mr.x *= scaleX;
-            r.x *= scaleX;
-            dr.x *= scaleX;
-//        }
-//        dr.x *= 1.5;
-//        float d = dot2(dr);
+        //        if (texWeightDiff < 0.) discard;
+//        float scaleX = 1. + max(texWeightDiff * (WEIGHTED_X_DIST_SCALE-1.), 0.);
+                float scaleX = getXDistScale(neighborTexWeight - texWeight);
+
+//        float scaleX = WEIGHT_Y_SCALE;
+        //        if ((neighborWeight - weight) != 0.) {
+        mr.x *= scaleX;
+        r.x *= scaleX;
+        dr.x *= scaleX;
+        //        }
+        //        dr.x *= 1.5;
+        //        float d = dot2(dr);
         float d = weightedDistEdge(r, mr, 0.);
-//        float d2 = d;
-//        float d2 = d + weight - neighborWeight;
-//        float d2 = weightedDistEdge(r, mr, weight - neighborWeight);
+        //        float d2 = d;
+        //        float d2 = d + weight - neighborWeight;
+        //        float d2 = weightedDistEdge(r, mr, weight - neighborWeight);
         float d2 = weightedDistEdge(r, mr, neighborWeight - weight);
 
         float mf = d2 / (2.*d);
         float newLen = dot( mix(mr,r,mf), dr*(1./sqrt(d)) );
-//        minEdgeDists.x = smin( minEdgeDists.x, newLen, ROUNDNESS );
+        //        minEdgeDists.x = smin( minEdgeDists.x, newLen, ROUNDNESS );
         //        minEdgeDists.x = smin2( minEdgeDists.x, newLen, ROUNDNESS );
+
+
+
+//        // simplified variant without weights
+//        vec2 mid = (neighborCellCoords+cellCoords)*0.5;
+//        vec2 direction = normalize(cellCoords - neighborCellCoords); // Unit direction vector
+//        newLen = dot(direction,p-mid);
+
+
         minEdgeDists.x = smin2(minEdgeDists.x, newLen, (newLen*.5 + .5)*fRoundnessMod*ROUNDNESS);
         minEdgeDists.y = min(minEdgeDists.y, newLen);
     }
 
     if (highQuality || bMediaEnabled) {
-//        if (bMediaEnabled) {
-//            cellNdcCoords = getNormalizedCellCoords(closestIndex);
-//            mediaWeight = mediaWeightMod * weightTexData(closestIndex);
-//        }
-//        uint neighborsPosition = neighborsTexData(closestIndex*2u);
-//        uint neighborsLength = neighborsTexData(closestIndex*2u+1u);
-//        for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
-//            uint neighborId = neighborsTexData(neighborsPosition+i);
-//            vec2 neighborCellCoords = getCellCoords(neighborId);
-//
-//
-//            if (bMediaEnabled && i < min(neighborsLength, MAX_NEIGHBOR_ITERATIONS_LEVEL_1)) {
-//                vec2 neighborNdcCoords = getNormalizedCellCoords(neighborId);
-//
-//                float neighborMediaWeight = mediaWeightMod * weightTexData(neighborId);
-//
-//                vec2 mediaMidNdcPoint = mix(cellNdcCoords, neighborNdcCoords, 0.5 + (mediaWeight - neighborMediaWeight) );
-//                midPointsSum += mediaMidNdcPoint;
-//
-//                mediaBbox.xy = min(mediaBbox.xy, mediaMidNdcPoint);
-//                mediaBbox.zw = max(mediaBbox.zw, mediaMidNdcPoint);
-//            }
-//
-//            if (!highQuality) continue;
-//            if (neighborId == closestIndex || neighborId == indices.y || neighborId == indices.z || neighborId == indices.w) continue;
-//
-//            vec2 mr = cellCoords - p;
-//            vec2 r = neighborCellCoords - p;
-//            vec2 dr = r - mr;
-//            float d = dot2(dr);
-//            float d2 = d;
-//
-//            float mf = d2 / (2.*d);
-//            float newLen = dot( mix(mr.xy,r,mf), dr*(1./sqrt(d)) );
-//            //            minEdgeDist = smin( minEdgeDist, newLen, ROUNDNESS );
-//            //        minEdgeDist = smin2( minEdgeDist, newLen, ROUNDNESS );
-//            minEdgeDist = smin2(minEdgeDist, newLen, (newLen*.5 + .5)*ROUNDNESS);
-//            //            minEdgeDist = min( minEdgeDist, newLen );
-//
-//        }
+        //        if (bMediaEnabled) {
+        //            cellNdcCoords = getNormalizedCellCoords(closestIndex);
+        //            mediaWeight = mediaWeightMod * weightTexData(closestIndex);
+        //        }
+        //        uint neighborsPosition = neighborsTexData(closestIndex*2u);
+        //        uint neighborsLength = neighborsTexData(closestIndex*2u+1u);
+        //        for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
+        //            uint neighborId = neighborsTexData(neighborsPosition+i);
+        //            vec2 neighborCellCoords = getCellCoords(neighborId);
+        //
+        //
+        //            if (bMediaEnabled && i < min(neighborsLength, MAX_NEIGHBOR_ITERATIONS_LEVEL_1)) {
+        //                vec2 neighborNdcCoords = getNormalizedCellCoords(neighborId);
+        //
+        //                float neighborMediaWeight = mediaWeightMod * weightTexData(neighborId);
+        //
+        //                vec2 mediaMidNdcPoint = mix(cellNdcCoords, neighborNdcCoords, 0.5 + (mediaWeight - neighborMediaWeight) );
+        //                midPointsSum += mediaMidNdcPoint;
+        //
+        //                mediaBbox.xy = min(mediaBbox.xy, mediaMidNdcPoint);
+        //                mediaBbox.zw = max(mediaBbox.zw, mediaMidNdcPoint);
+        //            }
+        //
+        //            if (!highQuality) continue;
+        //            if (neighborId == closestIndex || neighborId == indices.y || neighborId == indices.z || neighborId == indices.w) continue;
+        //
+        //            vec2 mr = cellCoords - p;
+        //            vec2 r = neighborCellCoords - p;
+        //            vec2 dr = r - mr;
+        //            float d = dot2(dr);
+        //            float d2 = d;
+        //
+        //            float mf = d2 / (2.*d);
+        //            float newLen = dot( mix(mr.xy,r,mf), dr*(1./sqrt(d)) );
+        //            //            minEdgeDist = smin( minEdgeDist, newLen, ROUNDNESS );
+        //            //        minEdgeDist = smin2( minEdgeDist, newLen, ROUNDNESS );
+        //            minEdgeDist = smin2(minEdgeDist, newLen, (newLen*.5 + .5)*ROUNDNESS);
+        //            //            minEdgeDist = min( minEdgeDist, newLen );
+        //
+        //        }
 
         if (bMediaEnabled) {
 
@@ -824,39 +843,40 @@ void main() {
     Data data = getData();
     uvec4 indices = data.indices;
 
-    vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
+//    vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
+    vec3 c = mix(randomColor(indices.x), randomColor(indices.w), 0.5);
 
-//    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
+    //    float weightMod = WEIGHT_MOD * getResolutionMod() * 1./float(iNumCells);
 
-//    float w = data.weight * weightMod;
+    //    float w = data.weight * weightMod;
 
 
-//    float mod = (data.mediaBbox.z - data.mediaBbox.x) * 50.;
+    //    float mod = (data.mediaBbox.z - data.mediaBbox.x) * 50.;
     //    float mod = 1.;
-//    float edgeMod = 0.75;
+    //    float edgeMod = 0.75;
 
 
     float edge1 = .005 * fEdgeSmoothnessMod;
     float edge2 = .001 * fEdgeMod;
 
     c = mix(
-        c,
-        vec3(0.),
-        smoothstep(edge1, edge2, data.minEdgeDists.x)
+    c,
+    vec3(0.),
+    smoothstep(edge1, edge2, data.minEdgeDists.x)
     );
 
     float a = 1.;
-//    a = mix(
-//        1.,
-//        0.,
-//        smoothstep(edge1, edge2, data.minEdgeDists.x)
-//    );
+    //    a = mix(
+    //        1.,
+    //        0.,
+    //        smoothstep(edge1, edge2, data.minEdgeDists.x)
+    //    );
 
     voroIndexBufferColor = uintBitsToFloat(indices + 1u);
-//    outputColor = vec4(c, 1.);
+    //    outputColor = vec4(c, 1.);
     outputColor = vec4(c, a);
 
-//    voroEdgeBufferColor = a;
-//    voroEdgeBufferColor = mix(a, 0.0, 1.0 -(abs(data.minEdgeDist) - 0.) * 7.25);
+    //    voroEdgeBufferColor = a;
+    //    voroEdgeBufferColor = mix(a, 0.0, 1.0 -(abs(data.minEdgeDist) - 0.) * 7.25);
     voroEdgeBufferColor = vec2(data.minEdgeDists.x,data.minEdgeDists.y);
 }

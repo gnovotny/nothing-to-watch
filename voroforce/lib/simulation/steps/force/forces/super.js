@@ -1,44 +1,32 @@
-import { isNumber, lerp, mapRange } from '../../../../utils'
+import { clamp, lerp } from '../../../../utils'
+import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
+import { easedMinLerp } from './utils/math'
 
 export const superForce = ({
   cells,
   dimensions,
   pointer,
   config: {
+    primarySelector = 'focused',
+    requestMediaVersions = true,
+    manageWeights = false,
     push: {
-      enabled: pushEnabled = false,
-      strength: pushStrength = 1,
-      strengthScaling: pushStrengthScaling = 0.1,
-      selector: pushSelector = 'focused',
-      pointerFollow: pushPointerFollow = {
-        enabled: false,
-        scaling: 0.25,
-        y: true,
-        x: true,
-      },
-      pointerFollowAlt: pushPointerFollowAlt = {
-        enabled: false,
-        scaling: 0.25,
-        y: true,
-        x: true,
-      },
-      radius: pushRadius = () => dimensions.get('diagonal'),
-      radiusScaling: pushRadiusScaling = 1,
-      xFactor: pushXFactor = 1,
-      yFactor: pushYFactor = 1,
-      diagonalFactor: pushDiagonalFactor = 1,
-      requestMediaVersions: pushRequestMediaVersions = true,
-      centerMagic: pushCenterMagic = false,
+      strength: _pushStrength = 1,
+      pushStrength = _pushStrength * 0.5,
+      radius: pushRadius = dimensions.get('diagonal'),
+      xFactor: configPushXMod = 1,
+      yFactor: configPushYMod = 1,
+      breathing: pushBreathing = false,
+      alignmentMaxLevelsX: pushAlignmentMaxLevelsX = 0,
+      alignmentMaxLevelsY: pushAlignmentMaxLevelsY = 0,
     } = {},
     lattice: {
-      enabled: latticeEnabled = false,
       strength: latticeStrength = 0.8,
       xFactor: latticeXFactor = 1,
       yFactor: latticeYFactor = 1,
-      maxLevelsFromCenter: latticeMaxLevelsFromCenter = 4,
+      maxLevelsFromPrimary: latticeMaxLevelsFromPrimary = 30,
     } = {},
     origin: {
-      enabled: originEnabled = false,
       strength: originStrength = 0.8,
       xFactor: originXFactor = 1,
       yFactor: originYFactor = 1,
@@ -47,19 +35,42 @@ export const superForce = ({
   handleEnd,
   globalConfig,
 }) => {
-  const select = (cells) => cells[pushSelector]
+  const primary = (cells) => cells[primarySelector]
 
-  let centerCell,
-    previousCenterCell,
-    centerX,
+  const abs = Math.abs,
+    max = Math.max,
+    min = Math.min,
+    sqrt = Math.sqrt,
+    cellsLen = cells.length,
+    latticeCellWidth = globalConfig.lattice.cellWidth,
+    latticeCellHeight = globalConfig.lattice.cellHeight,
+    manageMedia = globalConfig.media?.enabled && requestMediaVersions
+
+  let centerX,
     centerY,
-    targetCenterX,
-    targetCenterY,
-    centerCellX,
-    centerCellY,
-    r,
-    i,
+    primaryCell,
+    newPrimaryCell,
+    prevPrimaryCell,
+    primaryCellX,
+    primaryCellY,
+    cellTypePushXMod = 1,
+    cellTypePushYMod = 1,
+    primaryCellPushFactor = 0,
+    primaryCellPushFactorX = 0,
+    primaryCellPushFactorY = 0,
+    secondaryCell,
+    centerPullX = 0,
+    centerPullY = 0,
+    alignmentPushXMod = 1,
+    alignmentPushYMod = 1,
+    alignmentPushYModMod = 0,
+    startTime,
+    timestamp,
+    breathingPushMod = 1,
+    breathingCycleDuration = 6000,
+    breathingPushVariability = 0.05,
     cell,
+    i,
     x,
     y,
     l,
@@ -69,29 +80,313 @@ export const superForce = ({
     mediaV2LevelAdjacencyThreshold,
     colLevelAdjacency,
     rowLevelAdjacency,
-    maxLevelAdjacency,
-    latticeCellWidth = globalConfig.lattice.cellWidth,
-    latticeCellHeight = globalConfig.lattice.cellHeight,
-    abs = Math.abs,
-    max = Math.max,
-    min = Math.min,
-    sqrt = Math.sqrt
+    greatestDirLevelAdjacency,
+    minLatticeRow,
+    maxLatticeRow,
+    minLatticeCol,
+    maxLatticeCol,
+    latticeRow,
+    latticeCol,
+    latticeStrengthMod
 
-  const mediaEnabled = globalConfig.media.enabled && pushRequestMediaVersions
-
-  if (mediaEnabled) {
-    const diagonal = dimensions.get('diagonal')
-    mediaV1DistThreshold = diagonal * 0.075
-    mediaV2DistThreshold = diagonal * 0.025
-
-    mediaV1LevelAdjacencyThreshold = 18
+  if (manageMedia) {
+    mediaV2DistThreshold = dimensions.get('diagonal') * 0.025
+    mediaV1DistThreshold = mediaV2DistThreshold * 3
     mediaV2LevelAdjacencyThreshold = 6
-
-    // console.log('mediaV1Threshold', mediaV1DistThreshold)
-    // console.log('mediaV2Threshold', mediaV2DistThreshold)
+    mediaV1LevelAdjacencyThreshold = mediaV2LevelAdjacencyThreshold * 3
   }
 
-  function applyLatticeComponent(cell, target, alpha, size, strengthMod) {
+  function force(alpha) {
+    forceSetup(alpha)
+    if (primaryCell) latticeForcePass(alpha) // lattice pass must run in isolation
+    mainForcePass(alpha)
+  }
+
+  function mainForcePass(alpha) {
+    for (i = 0; i < cells.length; ++i) {
+      cell = cells[i]
+
+      // origin force
+      cell.vx += (cell.ix - cell.x) * originStrength * alpha * originXFactor
+      cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
+
+      if (primaryCell) {
+        // center pull force
+        cell.vx += centerPullX
+        cell.vy += centerPullY
+
+        colLevelAdjacency = abs(cell.col - primaryCell.col)
+        rowLevelAdjacency = abs(cell.row - primaryCell.row)
+        greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
+
+        x = cell.x + cell.vx - centerX
+        y = cell.y + cell.vy - centerY
+        l = sqrt(x * x + y * y)
+
+        // media loading logic, might move it at some point
+        if (manageMedia) {
+          if (
+            l < mediaV2DistThreshold ||
+            greatestDirLevelAdjacency <= mediaV2LevelAdjacencyThreshold
+          ) {
+            // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
+            cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
+          } else if (
+            l < mediaV1DistThreshold ||
+            greatestDirLevelAdjacency <= mediaV1LevelAdjacencyThreshold
+          ) {
+            cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
+          }
+        }
+
+        if (l === 0) continue
+        l = ((pushRadius - l) / l) * pushStrength * alpha * breathingPushMod
+
+        x *= l
+        y *= l
+
+        cellTypePushXMod = 1
+        cellTypePushYMod = 1
+        if (i === primaryCell.index) {
+          cellTypePushXMod = primaryCellPushFactorX
+          cellTypePushYMod = primaryCellPushFactorY
+        }
+
+        alignmentPushXMod = 1
+        if (
+          pushAlignmentMaxLevelsX > 0 &&
+          secondaryCell &&
+          prevPrimaryCell &&
+          rowLevelAdjacency === 0 &&
+          colLevelAdjacency < pushAlignmentMaxLevelsX
+        ) {
+          alignmentPushYMod =
+            1 -
+            ((pushAlignmentMaxLevelsX - max(colLevelAdjacency, 1)) /
+              pushAlignmentMaxLevelsX) *
+              alignmentPushYModMod
+        }
+
+        let eyeShapePushXMod = 1
+        // const mod = 200
+        // const maxColLevels = 4000
+        const mod = 3
+        const maxColLevels = 200
+        const maxRowLevels = 6
+        if (
+          i !== primaryCell.index &&
+          rowLevelAdjacency < maxRowLevels &&
+          colLevelAdjacency < maxColLevels
+        ) {
+          eyeShapePushXMod =
+            1 +
+            mod *
+              ((colLevelAdjacency + 1) / maxColLevels) *
+              (1 - (rowLevelAdjacency + 1) / maxRowLevels)
+        }
+
+        // push force
+        cell.vx +=
+          x *
+          configPushXMod *
+          cellTypePushXMod *
+          alignmentPushXMod *
+          eyeShapePushXMod
+        cell.vy += y * configPushYMod * cellTypePushYMod * alignmentPushYMod
+      }
+
+      // if (i === primaryCell?.index) {
+      //   console.log('cell.weight', cell.weight)
+      //   // cell.weight = easedMinLerp(cell.weight, 0, 0.075)
+      // }
+
+      if (manageWeights && cell.weight !== 0 && i !== primaryCell?.index) {
+        cell.weight = easedMinLerp(cell.weight, 0, 0.3)
+      }
+
+      handleEnd?.(cell)
+    }
+  }
+
+  function forceSetup(alpha) {
+    timestamp = Date.now()
+    if (!startTime) startTime = timestamp
+
+    if (pushBreathing) {
+      breathingPushMod =
+        1 -
+        breathingPushVariability +
+        diaphragmaticBreathing(
+          ((timestamp - startTime) % breathingCycleDuration) /
+            breathingCycleDuration,
+        ) *
+          breathingPushVariability
+    }
+
+    newPrimaryCell = primary(cells)
+    if (newPrimaryCell?.index !== primaryCell?.index) {
+      prevPrimaryCell = primaryCell
+      primaryCell = newPrimaryCell
+    }
+
+    if (!primaryCell) return
+
+    if (manageMedia) {
+      primaryCell.targetMediaVersion = 2
+    }
+
+    primaryCellX = primaryCell.x + primaryCell.vx
+    primaryCellY = primaryCell.y + primaryCell.vy
+    // primaryCell.weight = 1
+
+    centerX = pointer?.x ?? primaryCellX
+    centerY = pointer?.y ?? primaryCellY
+
+    // const closestCells = pointer.indices.filter((index) => isNumber(index) && index >= 0).map((i) => cells[i])
+    // if (closestCells.length > 0) {
+    //   calculatePointWeights(pointer, [closestCells[1],closestCells[2],closestCells[3]])
+    //
+    // }
+    // closestCells[0].weight = 1
+
+    secondaryCell = cells[pointer.indices[1]]
+    // cells[primaryCell.closestIndices[0]]
+
+    // if (pointer.indices[0] !== primaryCell.index) {
+    //   throw new Error('asdf')
+    // }
+
+    if (secondaryCell) {
+      x = centerX - primaryCellX
+      y = centerY - primaryCellY
+      const centerToPrimaryCellDist = sqrt(x * x + y * y)
+
+      x = centerX - (secondaryCell.x + secondaryCell.vx)
+      y = centerY - (secondaryCell.y + secondaryCell.vy)
+      const centerToPrimaryCellNeighborDist = sqrt(x * x + y * y)
+
+      const distRatio =
+        centerToPrimaryCellDist / centerToPrimaryCellNeighborDist
+
+      const inverseDistRatio = 1 - distRatio
+      const clampedSquareRootInverseDistRatio = clamp(
+        0,
+        1,
+        inverseDistRatio ** 2,
+      )
+
+      // console.log(
+      //   'clampedSquaredInverseDistRatio',
+      //   clampedSquareRootInverseDistRatio,
+      // )
+
+      const newWeight =
+        clampedSquareRootInverseDistRatio * breathingPushMod ** 2
+      primaryCell.weight = easedMinLerp(
+        primaryCell.weight,
+        newWeight,
+        newWeight > primaryCell.weight ? 0.025 : 0.075,
+      )
+
+      if (distRatio > 1) {
+        // console.log('distRatio', distRatio)
+        // throw new Error('asdf')
+      }
+      primaryCellPushFactor = Math.min(distRatio, 1)
+      primaryCellPushFactorX = primaryCellPushFactor
+      primaryCellPushFactorY = primaryCellPushFactor
+
+      centerPullX = clamp(
+        -1,
+        1,
+        lerp(
+          centerPullX,
+          (centerX - primaryCellX) * inverseDistRatio,
+          min(1, abs(centerX - primaryCellX) * 0.0001),
+        ),
+      )
+
+      centerPullY = clamp(
+        -1,
+        1,
+        lerp(
+          centerPullY,
+          (centerY - primaryCellY) * inverseDistRatio,
+          min(1, abs(centerY - primaryCellY) * 0.0001),
+        ),
+      )
+
+      primaryCell.x += centerPullX
+      primaryCell.y += centerPullY
+      primaryCellX = primaryCell.x + primaryCell.vx
+      primaryCellY = primaryCell.y + primaryCell.vy
+    } else {
+      primaryCellPushFactor = 0
+    }
+
+    if (
+      primaryCell.row === secondaryCell?.row &&
+      primaryCell.row === prevPrimaryCell?.row
+    ) {
+      alignmentPushYModMod = lerp(alignmentPushYModMod, 1, 0.025)
+    } else {
+      alignmentPushYModMod = 0
+    }
+  }
+
+  function latticeForcePass(alpha) {
+    minLatticeRow = max(primaryCell.row - latticeMaxLevelsFromPrimary, 1)
+    maxLatticeRow = min(
+      primaryCell.row + latticeMaxLevelsFromPrimary,
+      globalConfig.lattice.rows,
+    )
+    minLatticeCol = max(primaryCell.col - latticeMaxLevelsFromPrimary, 1)
+    maxLatticeCol = min(
+      primaryCell.col + latticeMaxLevelsFromPrimary,
+      globalConfig.lattice.cols,
+    )
+
+    // much faster than looping through all cells
+    for (latticeCol = minLatticeCol; latticeCol < maxLatticeCol; latticeCol++) {
+      for (
+        latticeRow = minLatticeRow;
+        latticeRow < maxLatticeRow;
+        latticeRow++
+      ) {
+        i = latticeRow * globalConfig.lattice.cols + latticeCol
+        if (i < cellsLen) {
+          cell = cells[i]
+
+          colLevelAdjacency = abs(cell.col - primaryCell.col)
+          rowLevelAdjacency = abs(cell.row - primaryCell.row)
+          greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
+          latticeStrengthMod =
+            (latticeMaxLevelsFromPrimary - greatestDirLevelAdjacency) /
+            latticeMaxLevelsFromPrimary
+
+          // left
+          latticeLinkForce(
+            cell,
+            cells[i - 1],
+            alpha,
+            latticeCellWidth,
+            latticeStrengthMod,
+          )
+
+          // top
+          latticeLinkForce(
+            cell,
+            cells[i - globalConfig.lattice.cols],
+            alpha,
+            latticeCellHeight,
+            latticeStrengthMod,
+          )
+        }
+      }
+    }
+  }
+
+  function latticeLinkForce(cell, target, alpha, size, strengthMod) {
     x = target.x + target.initialVx - cell.x - cell.initialVx
     y = target.y + target.initialVy - cell.y - cell.initialVy
 
@@ -104,212 +399,6 @@ export const superForce = ({
     target.vy -= y
     cell.vx += x
     cell.vy += y
-  }
-
-  function applyOrigin(cell, alpha) {
-    cell.vx += (cell.ix - cell.x) * originStrength * alpha * originXFactor
-    cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
-  }
-
-  function force(alpha) {
-    if (select(cells)?.index !== centerCell?.index) {
-      previousCenterCell = centerCell
-      centerCell = select(cells)
-    }
-
-    // if (!centerCell) {
-    //   // centerX = undefined
-    //   // centerY = undefined
-    //   // targetCenterX = undefined
-    //   // targetCenterY = undefined
-    //   return
-    // }
-
-    const limit = false
-
-    if (centerCell) {
-      if (mediaEnabled) {
-        centerCell.targetMediaVersion = 2
-      }
-
-      r = +pushRadius(centerCell, centerCell.index, cells) * pushRadiusScaling
-
-      centerCellX = centerCell.x + centerCell.vx
-      centerCellY = centerCell.y + centerCell.vy
-
-      targetCenterX = centerCellX
-      targetCenterY = centerCellY
-
-      const hasPointer = isNumber(pointer?.x) && isNumber(pointer?.y)
-
-      if (hasPointer) {
-        // targetCenterX = targetCenterX - (targetCenterX - pointer.x)
-        // targetCenterY = targetCenterY - (targetCenterY - pointer.y)
-
-        targetCenterX = pointer.x
-        targetCenterY = pointer.y
-      }
-
-      const pointerFollowActive =
-        pushPointerFollow.enabled && pushPointerFollow.scaling && hasPointer
-
-      if (pointerFollowActive) {
-        if (pushPointerFollow.x)
-          centerX = lerp(centerX, pointer.x, pushPointerFollow.scaling)
-        if (pushPointerFollow.y)
-          centerY = lerp(centerY, pointer.y, pushPointerFollow.scaling)
-      }
-
-      const pointerFollowAltActive =
-        pushPointerFollowAlt.enabled &&
-        pushPointerFollowAlt.scaling &&
-        hasPointer
-
-      if (pointerFollowAltActive) {
-        if (pushPointerFollowAlt.x)
-          centerX = lerp(centerX, pointer.x, pushPointerFollowAlt.scaling)
-        if (pushPointerFollowAlt.y)
-          centerY = lerp(centerY, pointer.y, pushPointerFollowAlt.scaling)
-      }
-
-      centerX = centerX ?? targetCenterX
-      centerY = centerY ?? targetCenterY
-      centerX = lerp(
-        centerX,
-        targetCenterX,
-        min(1, abs(targetCenterX - centerX) / 10),
-        // 0.1,
-      )
-
-      centerY = lerp(
-        centerY,
-        targetCenterY,
-        min(1, abs(targetCenterY - centerY) / 10),
-        // 0.1,
-      )
-
-      // TODO TMP
-      centerX = centerCellX
-      centerY = centerCellY
-    }
-
-    let pointerFollowModX = 1
-    let pointerFollowModY = 1
-
-    for (i = 0; i < cells.length; ++i) {
-      cell = cells[i]
-
-      if (centerCell) {
-        colLevelAdjacency = abs(cell.col - centerCell.col)
-        rowLevelAdjacency = abs(cell.row - centerCell.row)
-        maxLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
-
-        pointerFollowModX = 1
-        pointerFollowModY = 1
-        // if (i === centerCell.index) {
-        //   continue
-        // }
-        // if (i === centerCell.index) {
-        //   // if (!pointerFollowAltActive) {
-        //   //   continue
-        //   // } else {
-        //   //   pointerFollowMod = 0.25
-        //   // }
-        //
-        //   const midX = (cell.x + cell.vx + centerCellX) * 0.5
-        //   const midY = (cell.x + cell.vx + centerCellY) * 0.5
-        //
-        //   pointerFollowModX = mapRange(centerCellX, midX, 0, 1, centerX)
-        //   pointerFollowModY = mapRange(centerCellY, midY, 0, 1, centerY)
-        // }
-      }
-
-      if (latticeEnabled && centerCell) {
-        if (maxLevelAdjacency < latticeMaxLevelsFromCenter) {
-          if (cell.col > 0) {
-            applyLatticeComponent(
-              cell,
-              cells[i - 1],
-              alpha,
-              latticeCellWidth,
-              (latticeMaxLevelsFromCenter - maxLevelAdjacency) /
-                latticeMaxLevelsFromCenter,
-            )
-          }
-          if (cell.row > 0) {
-            applyLatticeComponent(
-              cell,
-              cells[i - globalConfig.lattice.cols],
-              alpha,
-              latticeCellHeight,
-              (latticeMaxLevelsFromCenter - maxLevelAdjacency) /
-                latticeMaxLevelsFromCenter,
-            )
-          }
-        }
-      }
-
-      if (originEnabled) applyOrigin(cell, alpha)
-
-      if (pushEnabled && centerCell) {
-        x = cell.x + cell.vx - centerX
-        y = cell.y + cell.vy - centerY
-
-        let diagonalMod = 1
-        if (pushDiagonalFactor !== 1) {
-          const absX = abs(x)
-          const absY = abs(y)
-
-          diagonalMod = mapRange(
-            0,
-            1,
-            1,
-            pushDiagonalFactor,
-            min(absX, absY) / max(absX, absY),
-          )
-        }
-
-        l = x * x + y * y
-
-        if (limit && l >= r * r) continue
-        l = sqrt(l)
-
-        if (mediaEnabled) {
-          if (
-            l < mediaV2DistThreshold ||
-            maxLevelAdjacency <= mediaV2LevelAdjacencyThreshold
-          ) {
-            // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
-            cell.targetMediaVersion = 2
-          } else if (
-            l < mediaV1DistThreshold ||
-            maxLevelAdjacency <= mediaV1LevelAdjacencyThreshold
-          ) {
-            cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
-          }
-        }
-
-        if (l === 0) continue
-        l = (r - l) / l
-        // l = ((r - l) / l) * alpha
-
-        const vCommon = l * (pushStrength * pushStrengthScaling) * diagonalMod
-
-        if (i !== centerCell.index) {
-          cell.vx += x * vCommon * pushXFactor * pointerFollowModX
-
-          if (
-            !pushCenterMagic ||
-            cell.row !== centerCell.row ||
-            previousCenterCell?.row !== centerCell.row
-          ) {
-            cell.vy += y * vCommon * pushYFactor * pointerFollowModY
-          }
-        }
-      }
-
-      handleEnd?.(cell)
-    }
   }
 
   return force

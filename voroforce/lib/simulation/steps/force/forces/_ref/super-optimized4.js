@@ -1,4 +1,4 @@
-import { isNumber } from '../../../../utils'
+import { isNumber } from '../../../../../utils'
 
 /**
  * Calculates weights for neighboring points based on their distance from a center point.

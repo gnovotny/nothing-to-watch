@@ -1,4 +1,4 @@
-import { isNumber, lerp } from '../../../../utils'
+import { isNumber, lerp } from '../../../../../utils'
 
 export const superForce = ({
   cells,
@@ -256,9 +256,9 @@ export const superForce = ({
       // addY = -(centerY - centerCell.y) * inverseDistRatio * alpha
 
       // if (inverseDistRatio > 0.5) {
-      addX = lerp(addX, (centerX - centerCell.x) * inverseDistRatio * alpha, 1)
+      addX = lerp(addX, (centerX - centerCell.x) * inverseDistRatio, 1)
 
-      addY = lerp(addY, (centerY - centerCell.y) * inverseDistRatio * alpha, 1)
+      addY = lerp(addY, (centerY - centerCell.y) * inverseDistRatio, 1)
       // } else {
       //   addX = 0
       //   addY = 0
@@ -266,6 +266,11 @@ export const superForce = ({
 
       // centerCell.vx += addX
       // centerCell.vy += addY
+
+      centerCell.x += addX
+      centerCell.y += addY
+      centerCellX = centerCell.x
+      centerCellY = centerCell.y
 
       // console.log('addX', addX)
       // console.log('inverseDistRatio', inverseDistRatio)
@@ -410,12 +415,12 @@ export const superForce = ({
       cell.vx += (cell.ix - cell.x) * originStrength * alpha * originXFactor
       cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
 
-      if (centerCell) {
-        // if (i !== centerCell.index) {
-        cell.vx += addX
-        cell.vy += addY
-        // }
-      }
+      // if (centerCell) {
+      //   // if (i !== centerCell.index) {
+      //   cell.vx += addX
+      //   cell.vy += addY
+      //   // }
+      // }
 
       if (centerCell) {
         colLevelAdjacency = abs(cell.col - centerCell.col)
@@ -490,10 +495,10 @@ export const superForce = ({
         cellTypePushModX = 1
         cellTypePushModY = 1
         if (i === centerCell.index) {
-          cellTypePushModX = centerCellPushFactorX
-          cellTypePushModY = centerCellPushFactorY
-          // cellTypePushModX = 0
-          // cellTypePushModY = 0
+          // cellTypePushModX = centerCellPushFactorX
+          // cellTypePushModY = centerCellPushFactorY
+          cellTypePushModX = 0
+          cellTypePushModY = 0
         }
         // if (i === closestPointerPositionCenterCellNeighbor?.index) {
         //   cellTypePushModX = closestPointerPositionCenterCellNeighborPushFactorX
