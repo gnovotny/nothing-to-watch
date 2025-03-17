@@ -295,17 +295,17 @@ export default class BaseScene {
       uMediaV0Texture: { value: this.mediaTextures[0] },
       uMediaV1Texture: { value: this.mediaTextures[1] },
       uMediaV2Texture: { value: this.mediaTextures[2] },
-      i3NumMediaVersionCols: {
+      iNumMediaVersionCols: {
         value: this.globalConfig.media.versions?.map(({ cols }) => cols) ?? [
           0, 0, 0,
         ],
       },
-      i3NumMediaVersionRows: {
+      iNumMediaVersionRows: {
         value: this.globalConfig.media.versions?.map(({ rows }) => rows) ?? [
           0, 0, 0,
         ],
       },
-      i3NumMediaVersionLayers: {
+      iNumMediaVersionLayers: {
         value: this.globalConfig.media.versions?.map(
           ({ layers }) => layers,
         ) ?? [0, 0, 0],
@@ -367,7 +367,7 @@ export default class BaseScene {
       fRoundnessMod: { value: 1 },
       fEdgeMod: { value: 1 },
       fEdgeSmoothnessMod: { value: 1 },
-      fBgColor: { value: [0, 0, 0] },
+      fBaseColor: { value: [0, 0, 0] },
     }
     return {
       ...this.initBaseUniforms(),

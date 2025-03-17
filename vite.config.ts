@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     glsl({
-      compress: true,
+      compress: false,
     }),
   ],
   build: {
