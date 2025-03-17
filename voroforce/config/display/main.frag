@@ -50,9 +50,7 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
-//#define ROUNDNESS 0.09
-//#define ROUNDNESS 0.02
-#define ROUNDNESS 0.01
+#define ROUNDNESS 0.015
 #define EDGE_1 .005
 #define EDGE_2 .001
 #define WEIGHTED_DIST 1

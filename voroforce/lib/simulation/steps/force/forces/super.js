@@ -103,7 +103,7 @@ export const superForce = ({
   }
 
   function mainForcePass(alpha) {
-    for (i = 0; i < cells.length; ++i) {
+    for (i = 0; i < cellsLen; ++i) {
       cell = cells[i]
 
       // origin force
@@ -250,7 +250,6 @@ export const superForce = ({
     // closestCells[0].weight = 1
 
     secondaryCell = cells[pointer.indices[1]]
-    // cells[primaryCell.closestIndices[0]]
 
     // if (pointer.indices[0] !== primaryCell.index) {
     //   throw new Error('asdf')

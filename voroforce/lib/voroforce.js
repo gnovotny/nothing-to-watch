@@ -8,9 +8,9 @@ import { handleLattice } from './common/lattice'
 import baseConfig from './config'
 import { Controls } from './controls/controls.js'
 import Display from './display'
-import Simulation from './simulation/simulation'
 import { isTouchDevice, mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
+import { MultiThreadedSimulation } from './simulation'
 
 export class Voroforce {
   mediaEnabled = false
@@ -45,7 +45,8 @@ export class Voroforce {
     const mTConfig = this.config.multiThreading
     if (!mTConfig?.enabled) return
 
-    this.multiThreading = false // hardcoded
+    // this.multiThreading = false // hardcoded
+    this.multiThreading = true // hardcoded
     this.renderInParallel = mTConfig.renderInParallel
   }
 
@@ -55,8 +56,8 @@ export class Voroforce {
 
   initComponents() {
     // hardcoded
-    // this.simulation = new MultiThreadedSimulation(this.store, {
-    this.simulation = new Simulation(this.store, {
+    this.simulation = new MultiThreadedSimulation(this.store, {
+      // this.simulation = new Simulation(this.store, {
       onUpdated: this.onSimulationUpdated.bind(this),
     })
     this.display = new Display(this.store)

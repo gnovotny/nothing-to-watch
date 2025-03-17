@@ -161,9 +161,10 @@ export class Controls extends EventTarget {
       }
       if (!this.targetPointer) return
 
-      // console.log('index', index)
+      Object.assign(this.pointer, {
+        indices,
+      })
 
-      // if (this.cells.focusedIndex !== index) {
       if (this.cells.realFocusedIndex !== index) {
         this.cells.realFocusedIndex = index
         if (!this.focusDisabled) {
@@ -171,14 +172,6 @@ export class Controls extends EventTarget {
           this.dispatchEvent(new CellFocusedEvent(this.cells.focused))
         }
       }
-
-      // TODO TMP
-      if (this.cells.focused)
-        this.cells.focused.closestIndices = [indices[1], indices[2], indices[3]]
-
-      Object.assign(this.pointer, {
-        indices,
-      })
     })
   }
 
