@@ -123,16 +123,18 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
           const cell = cells[cellIndex]
           if (cell) {
             result.push([row, col])
+            currentCellId++
+            currentSubgrid = Math.floor(currentCellId / SUBGRID_SIZE)
+            currentSubgridIndex = Math.floor(currentCellId % SUBGRID_SIZE)
+            if (!cell.id) {
+              cell.id = currentCellId
+              cell.subgrid = currentSubgrid // for json and media v2 layers
+              cell.subgridIndex = currentSubgridIndex
+            }
 
-            cell.id = currentCellId++
-            currentSubgrid = Math.floor(cell.id / SUBGRID_SIZE)
-            currentSubgridIndex = Math.floor(cell.id % SUBGRID_SIZE)
-            cell.subgrid = currentSubgrid // for json and media v2 layers
-            cell.subgridIndex = currentSubgridIndex
-
-            if (currentSubgrid < autoTargetMediaVersion2SubgridCount) {
+            if (cell.subgrid < autoTargetMediaVersion2SubgridCount) {
               cell.targetMediaVersion = 2
-            } else if (currentSubgrid < autoTargetMediaVersion1SubgridCount) {
+            } else if (cell.subgrid < autoTargetMediaVersion1SubgridCount) {
               cell.targetMediaVersion = 1
             }
 

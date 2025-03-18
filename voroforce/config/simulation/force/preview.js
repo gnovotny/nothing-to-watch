@@ -18,7 +18,7 @@ export const forceSimulationStepPreviewConfig = {
     //   maxRadius: 300,
     // },
     {
-      type: 'superF',
+      type: 'tntwOmni',
       enabled: true,
       requestMediaVersions: true,
       manageWeights: true,
@@ -28,6 +28,7 @@ export const forceSimulationStepPreviewConfig = {
         yFactor: 2.5,
         breathing: true,
         alignmentMaxLevelsX: 40,
+        centerXStretchMod: 1,
       },
       lattice: {
         strength: 0.8,

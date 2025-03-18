@@ -18,7 +18,7 @@ export const forceSimulationStepPreviewConfig = {
     //   maxRadius: 300,
     // },
     {
-      type: 'superF',
+      type: 'tntwOmni',
       enabled: true,
       requestMediaVersions: true,
       manageWeights: true,

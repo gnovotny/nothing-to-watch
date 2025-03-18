@@ -30,6 +30,7 @@ uniform float fRoundnessMod;
 uniform float fEdgeMod;
 uniform float fEdgeSmoothnessMod;
 uniform vec3 fBaseColor;
+uniform vec2 fCenter;
 
 in vec2 vUv;
 
@@ -596,6 +597,13 @@ Data update() {
 }
 
 void main() {
+    vec2 fragCoord = gl_FragCoord.xy;
+    vec2 center =vec2(fCenter.x, iResolution.y - fCenter.y);
+    float centerDist = distance(fragCoord, center);
+    if (centerDist > 500.) {
+        discard;
+    }
+
     Data data = update();
     uvec4 indices = data.indices;
     vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);

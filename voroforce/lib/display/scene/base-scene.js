@@ -7,10 +7,6 @@ import { CustomRenderTarget } from './utils/custom-render-target'
 import { readPixelsAsync } from './utils/read-pixels-async'
 
 export default class BaseScene {
-  baseUniforms = {}
-  configUniforms = {}
-  mainUniforms = {}
-
   constructor(app) {
     this.init(app)
   }
@@ -32,6 +28,7 @@ export default class BaseScene {
     this.gl = this.app.renderer.gl
     this.loader = this.store.get('loader')
     this.cells = this.app.cells
+    this.pointer = this.store.get('sharedPointer')
     this.numCells = this.cells.length
     this.dimensions = this.app.dimensions
     this.camera = this.app.controls?.camera
@@ -75,6 +72,8 @@ export default class BaseScene {
         this.baseUniforms.iFocusedIndex.value = this.cells.focused.index
 
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
+      this.baseUniforms.fCenter.value = this.getCenter()
+      // console.log('this.getCenter()', this.getCenter())
     }
 
     this.beforeUpdateCustom()
@@ -313,18 +312,29 @@ export default class BaseScene {
     }
   }
 
+  getCenter() {
+    const primaryCell = this.cells?.focused
+    const centerX = this.pointer?.x ?? primaryCell?.x ?? 0
+    const centerY = this.pointer?.y ?? primaryCell?.y ?? 0
+    return [centerX, centerY]
+  }
+
   initBaseUniforms() {
-    this.baseUniforms = {
-      ...this.initBaseMediaUniforms(),
-      iResolution: {
-        value: this.resolutionUniform,
-      },
-      iFocusedIndex: { value: this.cells?.focused?.index ?? -1 },
-      iNumCells: {
-        value: this.cells.length,
-      },
-      iTime: { value: 0 },
+    if (!this.baseUniforms) {
+      this.baseUniforms = {
+        ...this.initBaseMediaUniforms(),
+        iResolution: {
+          value: this.resolutionUniform,
+        },
+        iFocusedIndex: { value: this.cells?.focused?.index ?? -1 },
+        iNumCells: {
+          value: this.cells.length,
+        },
+        iTime: { value: 0 },
+        fCenter: { value: this.getCenter() },
+      }
     }
+
     return this.baseUniforms
   }
 

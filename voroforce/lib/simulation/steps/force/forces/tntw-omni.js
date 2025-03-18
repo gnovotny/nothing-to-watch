@@ -1,6 +1,5 @@
-import { clamp, lerp } from '../../../../utils'
+import { clamp, easedMinLerp, lerp } from '../../../../utils'
 import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
-import { easedMinLerp } from './utils/math'
 
 const getPushRadius = (dimensions) => {
   // const dimensionsScale = 0.125
@@ -14,10 +13,11 @@ const getPushRadius = (dimensions) => {
   return Math.min(max, min * minScale)
 }
 
-export const superForce = ({
+export const tntwOmniForce = ({
   cells,
   dimensions,
   pointer,
+  globalConfig,
   config: {
     primarySelector = 'focused',
     requestMediaVersions = true,
@@ -31,6 +31,10 @@ export const superForce = ({
       breathing: pushBreathing = false,
       alignmentMaxLevelsX: pushAlignmentMaxLevelsX = 0,
       alignmentMaxLevelsY: pushAlignmentMaxLevelsY = 0,
+      centerXStretchMod: pushCenterXStretchMod = 0,
+      centerXStretchMaxLevelsX: pushCenterXStretchMaxLevelsX = globalConfig
+        .lattice.cols * 0.4,
+      centerXStretchMaxLevelsY: pushCenterXStretchMaxLevelsY = 12,
     } = {},
     lattice: {
       strength: latticeStrength = 0.8,
@@ -45,7 +49,6 @@ export const superForce = ({
     } = {},
   },
   handleEnd,
-  globalConfig,
 }) => {
   const primary = (cells) => cells[primarySelector]
 
@@ -101,7 +104,10 @@ export const superForce = ({
     maxLatticeCol,
     latticeRow,
     latticeCol,
-    latticeStrengthMod
+    latticeStrengthMod,
+    centerXStretchMod,
+    centerXStretchModColRatio,
+    isPrimaryCell = false
 
   if (manageMedia) {
     // mediaV2DistThreshold = pushRadius * 0.1 // TODO
@@ -129,9 +135,10 @@ export const superForce = ({
       cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
 
       if (primaryCell) {
+        isPrimaryCell = i === primaryCell.index
         // center pull force
-        cell.vx += centerPullX
-        cell.vy += centerPullY
+        cell.vx += centerPullX * (isPrimaryCell ? 5 : 1)
+        cell.vy += centerPullY * (isPrimaryCell ? 5 : 1)
 
         colLevelAdjacency = abs(cell.col - primaryCell.col)
         rowLevelAdjacency = abs(cell.row - primaryCell.row)
@@ -167,7 +174,7 @@ export const superForce = ({
 
           cellTypePushXMod = 1
           cellTypePushYMod = 1
-          if (i === primaryCell.index) {
+          if (isPrimaryCell) {
             cellTypePushXMod = primaryCellPushFactorX
             cellTypePushYMod = primaryCellPushFactorY
           }
@@ -187,22 +194,22 @@ export const superForce = ({
                 alignmentPushYModMod
           }
 
-          let eyeShapePushXMod = 1
-          // const mod = 200
-          // const maxColLevels = 4000
-          const mod = 3
-          const maxColLevels = 200
-          const maxRowLevels = 6
+          centerXStretchMod = 1
           if (
-            i !== primaryCell.index &&
-            rowLevelAdjacency < maxRowLevels &&
-            colLevelAdjacency < maxColLevels
+            pushCenterXStretchMod > 0 &&
+            rowLevelAdjacency <= pushCenterXStretchMaxLevelsY &&
+            colLevelAdjacency <= pushCenterXStretchMaxLevelsX &&
+            !isPrimaryCell
           ) {
-            eyeShapePushXMod =
+            centerXStretchModColRatio =
+              colLevelAdjacency / pushCenterXStretchMaxLevelsX
+            centerXStretchMod =
               1 +
-              mod *
-                ((colLevelAdjacency + 1) / maxColLevels) *
-                (1 - (rowLevelAdjacency + 1) / maxRowLevels)
+              pushCenterXStretchMod *
+                ((centerXStretchModColRatio > 0.5
+                  ? 1 - centerXStretchModColRatio
+                  : centerXStretchModColRatio) *
+                  (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
           }
 
           // push force
@@ -211,15 +218,10 @@ export const superForce = ({
             configPushXMod *
             cellTypePushXMod *
             alignmentPushXMod *
-            eyeShapePushXMod
+            centerXStretchMod
           cell.vy += y * configPushYMod * cellTypePushYMod * alignmentPushYMod
         }
       }
-
-      // if (i === primaryCell?.index) {
-      //   console.log('cell.weight', cell.weight)
-      //   // cell.weight = easedMinLerp(cell.weight, 0, 0.075)
-      // }
 
       if (manageWeights && cell.weight !== 0 && i !== primaryCell?.index) {
         cell.weight = easedMinLerp(cell.weight, 0, 0.3)
@@ -258,23 +260,13 @@ export const superForce = ({
 
     primaryCellX = primaryCell.x + primaryCell.vx
     primaryCellY = primaryCell.y + primaryCell.vy
-    // primaryCell.weight = 1
 
     centerX = pointer?.x ?? primaryCellX
     centerY = pointer?.y ?? primaryCellY
 
-    // const closestCells = pointer.indices.filter((index) => isNumber(index) && index >= 0).map((i) => cells[i])
-    // if (closestCells.length > 0) {
-    //   calculatePointWeights(pointer, [closestCells[1],closestCells[2],closestCells[3]])
-    //
-    // }
-    // closestCells[0].weight = 1
+    // console.log('pointer speed', pointer.speedScale)
 
     secondaryCell = cells[pointer.indices[1]]
-
-    // if (pointer.indices[0] !== primaryCell.index) {
-    //   throw new Error('asdf')
-    // }
 
     if (secondaryCell) {
       x = centerX - primaryCellX
@@ -295,11 +287,6 @@ export const superForce = ({
         inverseDistRatio ** 2,
       )
 
-      // console.log(
-      //   'clampedSquaredInverseDistRatio',
-      //   clampedSquareRootInverseDistRatio,
-      // )
-
       const newWeight =
         clampedSquareRootInverseDistRatio * breathingPushMod ** 2
       // const newWeight = clamp(0, 1, inverseDistRatio)
@@ -309,12 +296,8 @@ export const superForce = ({
         newWeight > primaryCell.weight ? 0.025 : 0.075,
       )
 
-      // console.log('newWeight', newWeight)
+      // if (distRatio > 1) throw new Error('how?')
 
-      if (distRatio > 1) {
-        // console.log('distRatio', distRatio)
-        // throw new Error('asdf')
-      }
       primaryCellPushFactor = Math.min(distRatio, 1)
       primaryCellPushFactorX = primaryCellPushFactor
       primaryCellPushFactorY = primaryCellPushFactor

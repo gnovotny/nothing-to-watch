@@ -1,4 +1,4 @@
-import { clamp, isTouchDevice, setStyles } from '../utils'
+import { clamp, easedMinLerp, isTouchDevice, setStyles } from '../utils'
 
 const TMP_TOUCH_DRAG_MODE = true
 
@@ -52,11 +52,10 @@ export class Controls extends EventTarget {
     this.pointer = this.store.get('sharedPointer')
     this.cells = this.store.get('cells')
     this.maxDeltaTime = this.config.maxDeltaTime ?? 10 // Maximum time difference in milliseconds
-    this.maxPointerSpeed =
-      this.config.maxPointerSpeed * this.dimensions.get('diagonal')
 
-    this.pointerRadius =
-      this.config.pointerRadius * this.dimensions.get('diagonal')
+    const d = this.dimensions.get('diagonal')
+    this.maxPointerSpeed = this.config.maxPointerSpeed * d
+    this.pointerRadius = this.config.pointerRadius * d
   }
 
   handleFirstUpdate() {
@@ -113,7 +112,7 @@ export class Controls extends EventTarget {
 
     // Abort if outside of reaction radius
     if (distance > this.pointerRadius) {
-      newPointerData.speedScale = 0
+      this.pointer.speedScale = 0
       return
     }
 
@@ -121,12 +120,13 @@ export class Controls extends EventTarget {
     const dynamicMaxPointerSpeed = speedMod * this.maxPointerSpeed
 
     // Calculate current speed (pixels per second)
-    const speed = distance / (deltaTime / 1000)
+    let speed = distance / (deltaTime / 1000)
 
     // Apply speed limit if needed
     if (speed > dynamicMaxPointerSpeed) {
       // Scale factor to limit speed
       const scale = dynamicMaxPointerSpeed / speed
+      speed *= scale
 
       // Apply scaled movement
       const limitedDeltaX = deltaX * scale
@@ -141,8 +141,11 @@ export class Controls extends EventTarget {
       newPointerData.y = newY
     }
 
-    newPointerData.speedScale =
-      Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed
+    newPointerData.speedScale = easedMinLerp(
+      this.pointer.speedScale,
+      Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed,
+      0.1,
+    )
 
     // Update previous values for next event
     this.prevX = newPointerData.x
