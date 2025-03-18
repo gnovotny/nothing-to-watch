@@ -300,9 +300,9 @@ export const superForce = ({
       //   clampedSquareRootInverseDistRatio,
       // )
 
-      // const newWeight =
-      //   clampedSquareRootInverseDistRatio * breathingPushMod ** 2
-      const newWeight = clamp(0, 1, inverseDistRatio)
+      const newWeight =
+        clampedSquareRootInverseDistRatio * breathingPushMod ** 2
+      // const newWeight = clamp(0, 1, inverseDistRatio)
       primaryCell.weight = easedMinLerp(
         primaryCell.weight,
         newWeight,

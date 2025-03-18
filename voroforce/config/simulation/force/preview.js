@@ -26,7 +26,7 @@ export const forceSimulationStepPreviewConfig = {
         strength: 0.15,
         selector: 'focused',
         yFactor: 2.5,
-        // breathing: true,
+        breathing: true,
         alignmentMaxLevelsX: 40,
       },
       lattice: {
