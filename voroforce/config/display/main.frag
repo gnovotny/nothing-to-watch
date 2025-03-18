@@ -50,15 +50,14 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
-#define ROUNDNESS 0.015
-#define EDGE_1 .005
-#define EDGE_2 .001
 #define WEIGHTED_DIST 1
-#define WEIGHTED_DIST_SCALING 1
-#define WEIGHT_OFFSET_SCALE 4000.
-#define WEIGHT_OFFSET_SCALE_MEDIA_MOD 4.25
-#define BASE_X_DIST_SCALE 1.
+#define WEIGHT_OFFSET_SCALE 2000.
+//#define WEIGHT_OFFSET_SCALE_MEDIA_MOD 4.25
+#define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
+#define X_DIST_SCALING 1
+#define BASE_X_DIST_SCALE 1.5
 #define WEIGHTED_X_DIST_SCALE 1.5
+#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define LOCK_MEDIA_ASPECT 1
 #define MEDIA_ASPECT 1.5
 #define PIXEL_SEARCH 1
@@ -66,6 +65,9 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
+#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+#define EDGE_1 .007
+#define EDGE_2 .001
 
 struct Data {
     uvec4 indices;
@@ -185,19 +187,22 @@ vec3 randomColor(uint seed) {
 }
 
 float getXDistScale(float weight) {
-    //    return BASE_X_DIST_SCALE;
-//    return WEIGHTED_X_DIST_SCALE;
-    return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-1.);
+    return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-BASE_X_DIST_SCALE);
 }
 
 float weightedDist(vec2 p1, vec2 p2, float weight, float weightOffset) {
     vec2 v = p1 - p2;
 
-    float scaleX = getXDistScale(weight);
-    v.x *= scaleX; // Apply less x weight
+    #if X_DIST_SCALING == 1
+        float scaleX = getXDistScale(weight);
+        v.x *= scaleX; // Apply less x weight
+    #endif
 
     float dist = dot2(v);
-    return dist - weightOffset;
+    #if WEIGHTED_DIST == 1
+        dist -= weightOffset;
+    #endif
+    return dist;
 }
 
 bool indexIsUndefined(uint id) {
@@ -358,7 +363,7 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
 void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeDists, in float weight, in float weightOffset, in float weightOffsetScale) {
     vec2 closeCellCoords = fetchCellCoords(closeIndex);
 
-    #if WEIGHTED_DIST == 1
+    #if WEIGHTED_DIST == 1 || X_DIST_SCALING == 1
         float closeWeight = weightTexData(closeIndex);
         float closeWeightOffset = weightOffsetScale * closeWeight;
 
@@ -366,7 +371,7 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
         vec2 closeCellDiff = closeCellCoords - p;
         vec2 diffsDiff = closeCellDiff - cellDiff;
 
-        #if WEIGHTED_DIST_SCALING == 1
+        #if X_DIST_SCALING == 1
             float scaleX = getXDistScale(max(closeWeight, weight));
             cellDiff.x *= scaleX;
             closeCellDiff.x *= scaleX;
@@ -374,12 +379,15 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
         #endif
 
         float baseDist = dist(closeCellDiff, cellDiff);
-        float weightedDist = baseDist - (closeWeightOffset - weightOffset);
+        float weightedDist = baseDist;
+        #if WEIGHTED_DIST == 1
+            weightedDist -= (closeWeightOffset - weightOffset);
+        #endif
 
         float distFactor = weightedDist / (2.*baseDist);
         float len = dot( mix(cellDiff,closeCellDiff,distFactor), diffsDiff*(1./sqrt(baseDist)) );
     #else
-        // simplified variant without weights
+        // simplified variant without weights and x-component dist scaling
         vec2 mid = (closeCellCoords+cellCoords)*0.5;
         vec2 direction = normalize(cellCoords - closeCellCoords); // unit direction vector
         float len = dot(direction,p-mid);
@@ -460,20 +468,25 @@ Data update() {
     prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices.y));
 
     bool debugFlag = false;
-    float weightOffsetScale = WEIGHT_OFFSET_SCALE * fetchResolutionScale() * 1./float(iNumCells);
-    float mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
+    float weightOffsetScale = 1.;
+    float mediaWeightOffsetScale = 1.;
+
+    #if WEIGHTED_DIST == 1
+        weightOffsetScale = WEIGHT_OFFSET_SCALE * fetchResolutionScale() * 1./float(iNumCells);
+        mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
+    #endif
 
     vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
-    vec2 cellNdcCoords;
-    vec2 midPointsSum = vec2(0.0);
-    float mediaWeight;
+//    vec2 cellNdcCoords;
+//    vec2 midPointsSum = vec2(0.0);
+//    float mediaWeight;
 
     uint closestIndex = prevIndices.x;
 
-    if (bMediaEnabled) {
-        cellNdcCoords = fetchNormalizedCellCoords(closestIndex);
-        mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
-    }
+//    if (bMediaEnabled) {
+//        cellNdcCoords = fetchNormalizedCellCoords(closestIndex);
+//        mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
+//    }
 
     uvec4 indices = uvec4(-1);
     vec4 distances = vec4(FLOAT_INF);
@@ -515,20 +528,7 @@ Data update() {
     uint neighborsPosition = neighborsTexData(indices.x*2u);
     uint neighborsLength = neighborsTexData(indices.x*2u+1u);
     for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
-        uint neighborIndex = neighborsTexData(neighborsPosition+i);
-        sortClosest(distances, indices, neighborIndex, p, weightOffsetScale, prevMaxWeight);
-
-        if (bMediaEnabled && i < min(neighborsLength, MAX_NEIGHBOR_ITERATIONS_LEVEL_1)) {
-            vec2 neighborNdcCoords = fetchNormalizedCellCoords(neighborIndex);
-
-            float neighborMediaWeight = mediaWeightOffsetScale * weightTexData(neighborIndex);
-
-            vec2 mediaMidNdcPoint = mix(cellNdcCoords, neighborNdcCoords, 0.5 + (mediaWeight - neighborMediaWeight) );
-            midPointsSum += mediaMidNdcPoint;
-
-            mediaBbox.xy = min(mediaBbox.xy, mediaMidNdcPoint);
-            mediaBbox.zw = max(mediaBbox.zw, mediaMidNdcPoint);
-        }
+        sortClosest(distances, indices, neighborsTexData(neighborsPosition+i), p, weightOffsetScale, prevMaxWeight);
     }
 
     // update closest
@@ -543,11 +543,36 @@ Data update() {
     calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
     calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
 
-    // adjust media bbox
+    // media bbox
     if (bMediaEnabled) {
-        cellNdcCoords = fetchNormalizedCellCoords(closestIndex);
-        vec2 avgCenter = midPointsSum / float(min(neighborsLength, MAX_NEIGHBOR_ITERATIONS_LEVEL_1));
-        vec2 avgCenterDiff = avgCenter - cellNdcCoords;
+
+        mediaBbox = vec4(vec2(1.), vec2(-1.));
+        vec2 midPointsSum = vec2(0.0);
+        float mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
+        vec2 cellNdcCoords = fetchNormalizedCellCoords(closestIndex);
+
+        neighborsPosition = neighborsTexData(closestIndex*2u);
+        neighborsLength = min(neighborsTexData(closestIndex*2u+1u), MAX_NEIGHBOR_ITERATIONS_LEVEL_1);
+        for (uint i = 0u; i < neighborsLength; i++) {
+            uint neighborIndex = neighborsTexData(neighborsPosition+i);
+            vec2 neighborNdcCoords = fetchNormalizedCellCoords(neighborIndex);
+
+            float mid = 0.5;
+            #if WEIGHTED_DIST == 1
+                float neighborMediaWeight = mediaWeightOffsetScale * weightTexData(neighborIndex);
+                mid += (mediaWeight - neighborMediaWeight);
+            #endif
+
+            vec2 mediaMidNdcPoint = mix(cellNdcCoords, neighborNdcCoords, mid);
+            midPointsSum += mediaMidNdcPoint;
+
+            mediaBbox.xy = min(mediaBbox.xy, mediaMidNdcPoint);
+            mediaBbox.zw = max(mediaBbox.zw, mediaMidNdcPoint);
+        }
+
+        vec2 avgCenter = midPointsSum / float(neighborsLength);
+//        vec2 avgCenterDiff = avgCenter - cellNdcCoords;
+        vec2 avgCenterDiff = (avgCenter - cellNdcCoords) * MEDIA_BBOX_ADJUSTMENT_SCALE;
 
         mediaBbox.xy = min(mediaBbox.xy, mediaBbox.xy + avgCenterDiff);
         mediaBbox.zw = max(mediaBbox.zw, mediaBbox.zw + avgCenterDiff);

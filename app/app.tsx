@@ -5,7 +5,6 @@ import { Intro } from './components/intro/intro'
 import { Navbar } from './components/layout/navbar'
 import { ThemeProvider } from './components/layout/theme'
 import { Settings } from './components/settings/settings'
-import { SmallScreenWarning } from './components/small-screen-warning/small-screen-warning'
 
 function App() {
   return (
@@ -19,7 +18,7 @@ function App() {
           <FilmViewDrawer />
         </div>
       </div>
-      <SmallScreenWarning />
+      {/*<SmallScreenWarning />*/}
       <Intro />
     </ThemeProvider>
   )

@@ -1,5 +1,10 @@
 import { isNumber } from '../../utils'
 
+/**
+ * Since vx, vy are currently only used in a single location (single-threaded force step),
+ * they are stored locally (attr read/writes to typed array are commented out) in order to (potentially)
+ * improve perf. by reducing getter/setter calls and implicit type conversions during force computations
+ */
 export class SharedCell {
   subgrid
   subgridIndex
@@ -47,6 +52,9 @@ export class SharedCell {
     this.initialVx = 0
     this.initialVy = 0
 
+    this.vx = 0
+    this.vy = 0
+
     // if (!this.weight) {
     //   this.weight = 1
     // }
@@ -68,21 +76,21 @@ export class SharedCell {
     return this.cellCoordsArray[this.yIndex]
   }
 
-  set vx(v) {
-    this.cellAttributesArray[this.vxIndex] = v
-  }
-
-  get vx() {
-    return this.cellAttributesArray[this.vxIndex]
-  }
-
-  set vy(v) {
-    this.cellAttributesArray[this.vyIndex] = v
-  }
-
-  get vy() {
-    return this.cellAttributesArray[this.vyIndex]
-  }
+  // set vx(v) {
+  //   this.cellAttributesArray[this.vxIndex] = v
+  // }
+  //
+  // get vx() {
+  //   return this.cellAttributesArray[this.vxIndex]
+  // }
+  //
+  // set vy(v) {
+  //   this.cellAttributesArray[this.vyIndex] = v
+  // }
+  //
+  // get vy() {
+  //   return this.cellAttributesArray[this.vyIndex]
+  // }
 
   set fx(v) {
     this.cellAttributesArray[this.fxIndex] = isNumber(v) ? v : 0
