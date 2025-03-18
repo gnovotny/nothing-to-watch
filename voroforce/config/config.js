@@ -7,6 +7,7 @@ import simulation from './simulation'
 export const baseLatticeConfig = {
   enabled: true,
   aspect: 2 / 3,
+  latticeAspect: 'min',
 }
 
 export const introModeLatticeConfig = mergeConfigs(baseLatticeConfig, {

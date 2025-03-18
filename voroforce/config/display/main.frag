@@ -66,8 +66,8 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
-#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-#define EDGE_1 .007
+#define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+#define EDGE_1 .005
 #define EDGE_2 .001
 
 struct Data {
@@ -303,9 +303,7 @@ void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index) {
     mediaTileUv = rotatedUv + centerUv;
 }
 
-vec3 mediaColor(uint index, vec4 mediaBbox) {
-
-    vec2 p = fetchNormalizedPCoords();
+vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
 
     vec2 mediaTileUv = (p - mediaBbox.xy) / (mediaBbox.zw - mediaBbox.xy);
     mediaTileUv.y = 1. - mediaTileUv.y;
@@ -443,8 +441,7 @@ void fetchAndSortIndices( inout vec4 distances, inout uvec4 prevIndices, in vec2
     sortClosest(distances, prevIndices, indices.w, cellCenter, weightOffsetScale, prevMaxWeight);
 }
 
-Data init() {
-    vec2 p = fetchPCoords();
+Data init(vec2 p) {
     uvec4 indices = uvec4(uint(-1));
 
     uint row = uint(round((1.-vUv.y) * float(iLatticeRows)));
@@ -458,12 +455,10 @@ Data init() {
     return Data(indices, vec2(0.), vec4(0.), false, 0.);
 }
 
-Data update() {
+Data update(vec2 p) {
     vec2 fragCoord = gl_FragCoord.xy;
     uvec4 prevIndices = fetchIndices(fragCoord);
-    if (indexIsUndefined(prevIndices.x)) return init();
-
-    vec2 p = fetchPCoords();
+    if (indexIsUndefined(prevIndices.x)) return init(p);
 
     float prevMaxWeight = weightTexData(prevIndices.x);
     prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices.y));
@@ -597,16 +592,55 @@ Data update() {
 }
 
 void main() {
+    //    vec2 p = fragCoord / iResolution.x;//normalized coords with some cheat
+    vec2 p = fetchPCoords();
     vec2 fragCoord = gl_FragCoord.xy;
-    vec2 center =vec2(fCenter.x, iResolution.y - fCenter.y);
-    float centerDist = distance(fragCoord, center);
-    if (centerDist > 500.) {
-        discard;
-    }
+    vec2 centerPixel =vec2(fCenter.x, iResolution.y - fCenter.y);
+    //    vec2 center = normalizeCoords(centerPixel);
+    vec2 center = (centerPixel*2.0-iResolution.xy) / iResolution.y;
+//    vec2 center = normalizeCoords(centerPixel);
+//    float centerDist = distance(fragCoord, center);
+    float centerDist = sqrt(dist(fragCoord, centerPixel));
+//    if (centerDist > 450.) {
+//        discard;
+//    }
+    float aspect = iResolution.x / iResolution.y;//screen proroption
 
-    Data data = update();
+
+
+    vec2 screenCenter = vec2(0.5, 0.5 / aspect);//center coords
+
+    //    nCenter.y /= aspect;
+
+
+//    vec2 nCenter = vec2(0.5, 0.5 / aspect); //center coords
+    vec2 d = p - center;//vector from center to current fragment
+    float r = sqrt(dot(d, d)); // distance of pixel from center
+
+//    r *= 0.25;
+    r *= 0.5;
+//    float power = ( 2.0 * 3.141592 / (2.0 * sqrt(dot(screenCenter, screenCenter))) ) * -0.15;
+//    float power = ( 2.0 * 3.141592 / (2.0 * sqrt(dot(screenCenter, screenCenter))) ) * -0.5;
+//    float power = ( 2.0 * 3.141592 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.125;
+    float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.25;
+
+//    float bind;//radius of 1:1 effect
+//    if (power > 0.0) bind = sqrt(dot(center, center));//stick to corners
+//    else {if (aspect < 1.0) bind = center.x; else bind = center.y;}//stick to borders
+
+    float bind = center.x;
+
+
+    vec2 customP = center + normalize(d) * tan(r * power) * bind / tan( bind * power);
+
+//    uv *= 0.75;
+
+    vec2 mediaP = fetchNormalizedPCoords();
+
+    Data data = update(customP);
+//    Data data = update(p);
     uvec4 indices = data.indices;
-    vec3 c = bMediaEnabled ? mediaColor(indices.x, data.mediaBbox) : randomColor(indices.x);
+    vec3 c = bMediaEnabled ? mediaColor(mediaP, indices.x, data.mediaBbox) : randomColor(indices.x);
     float a = 1.;
 
     float edge1 = EDGE_1 * fEdgeSmoothnessMod;
@@ -627,6 +661,9 @@ void main() {
     #endif
 
     voroIndexBufferColor = uintBitsToFloat(indices + 1u);
+    if (centerDist > 425.) {
+        c = fBaseColor;
+    }
     outputColor = vec4(c, a);
     voroEdgeBufferColor = vec2(data.minEdgeDists.x, data.minEdgeDists.y);
 }

@@ -201,17 +201,19 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
  * Calculates the optimal lattice layout for displaying cells within a container
  * Ensures complete coverage of the container with minimal overflow
  *
- * @param {number} containerWidth - Width of the container
- * @param {number} containerHeight - Height of the container
+ * @param {number} width - Width of the container
+ * @param {number} height - Height of the container
  * @param {number} numCells - Number of cells to display
  * @param {number} cellAspect - Aspect ratio of cells (width/height)
+ * @param {number} latticeAspect - Aspect ratio of lattice
  * @returns {Object} Lattice configuration with columns, rows, rectWidth, rectHeight
  */
 function calculateOptimalLattice(
-  containerWidth,
-  containerHeight,
+  width,
+  height,
   numCells,
   cellAspect,
+  latticeAspect,
 ) {
   // Container aspect ratio
   // const containerAspect = containerWidth / containerHeight
@@ -219,6 +221,13 @@ function calculateOptimalLattice(
   // const initialColumns = Math.round(
   //   Math.sqrt((numCells * containerAspect) / cellAspect),
   // )
+
+  const containerWidth = width
+  const containerHeight = height
+  // if (latticeAspect === 'min') {
+  //   const min = Math.min(width, height)
+  //   containerWidth = containerHeight = min
+  // }
 
   // Setting up search parameters
   const maxColumns = Math.min(numCells, Math.ceil(containerWidth))
@@ -314,10 +323,34 @@ export const handleLattice = (latticeConfig, cells, width, height) => {
   const prevRows = latticeConfig.rows
   const prevCols = latticeConfig.cols
 
+  let containerWidth = width
+  let containerHeight = height
+  if (latticeConfig.latticeAspect === 'min') {
+    const min = Math.min(width, height)
+    containerWidth = containerHeight = min
+  }
+
+  console.log('containerWidth', containerWidth)
+  console.log('containerHeight', containerHeight)
+
   Object.assign(
     latticeConfig,
-    calculateOptimalLattice(width, height, cells.length, latticeConfig.aspect),
+    calculateOptimalLattice(
+      containerWidth,
+      containerHeight,
+      cells.length,
+      latticeConfig.aspect,
+      latticeConfig.latticeAspect,
+    ),
   )
+
+  // TODO
+  latticeConfig.offsetX =
+    -(latticeConfig.latticeWidth - containerWidth) / 2 -
+    (containerWidth - width) / 2
+  latticeConfig.offsetY =
+    -(latticeConfig.latticeHeight - containerHeight) / 2 -
+    (containerHeight - height) / 2
 
   if (latticeConfig.targetCellSizeViewportPercentage) {
     const landscape = width > height
@@ -330,8 +363,12 @@ export const handleLattice = (latticeConfig, cells, width, height) => {
     latticeConfig.cellHeight *= factor
     latticeConfig.latticeWidth *= factor
     latticeConfig.latticeHeight *= factor
-    latticeConfig.offsetX = -(latticeConfig.latticeWidth - width) / 2
-    latticeConfig.offsetY = -(latticeConfig.latticeHeight - height) / 2
+    latticeConfig.offsetX =
+      -(latticeConfig.latticeWidth - containerWidth) / 2 +
+      (containerWidth - width) / 2
+    latticeConfig.offsetY =
+      -(latticeConfig.latticeHeight - containerHeight) / 2 +
+      (containerHeight - height) / 2
   }
 
   console.log('lattice config', latticeConfig)
