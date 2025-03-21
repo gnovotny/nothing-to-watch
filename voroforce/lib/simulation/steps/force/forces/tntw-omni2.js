@@ -2,8 +2,8 @@ import { clamp, easedMinLerp, lerp } from '../../../../utils'
 import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
 
 const getPushRadius = (dimensions) => {
-  // const dimensionsScale = 0.125
-  const dimensionsScale = 0.5
+  // const dimensionsScale = 0.5
+  const dimensionsScale = 1
   const aspect = dimensions.get('aspect')
   const relativeAspect = aspect >= 1 ? aspect : 1 / aspect
   const minScale = Math.min(Math.max(relativeAspect * 0.75, 1), 2.5)
@@ -24,7 +24,8 @@ export const tntwOmniForce = ({
     manageWeights = false,
     push: {
       strength: _pushStrength = 1,
-      pushStrength = _pushStrength,
+      // pushStrength = _pushStrength,
+      pushStrength = _pushStrength * 0.5,
       radius: pushRadius = getPushRadius(dimensions),
       xFactor: configPushXMod = 1,
       yFactor: configPushYMod = 1,
@@ -63,6 +64,8 @@ export const tntwOmniForce = ({
 
   let centerX,
     centerY,
+    targetCenterX,
+    targetCenterY,
     primaryCell,
     newPrimaryCell,
     prevPrimaryCell,
@@ -74,6 +77,9 @@ export const tntwOmniForce = ({
     primaryCellPushFactorX = 0,
     primaryCellPushFactorY = 0,
     secondaryCell,
+    centerToPrimaryCellDist,
+    centerToSecondaryCellDist,
+    distRatio,
     centerPullX = 0,
     centerPullY = 0,
     alignmentPushXMod = 1,
@@ -122,7 +128,7 @@ export const tntwOmniForce = ({
 
   function force(alpha) {
     forceSetup(alpha)
-    if (primaryCell) latticeForcePass(alpha) // lattice pass must run in isolation
+    latticeForcePass(alpha) // lattice pass must run in isolation
     mainForcePass(alpha)
   }
 
@@ -136,9 +142,6 @@ export const tntwOmniForce = ({
 
       if (primaryCell) {
         isPrimaryCell = i === primaryCell.index
-        // center pull force
-        cell.vx += centerPullX * (isPrimaryCell ? 1 : 1)
-        cell.vy += centerPullY * (isPrimaryCell ? 1 : 1)
 
         colLevelAdjacency = abs(cell.col - primaryCell.col)
         rowLevelAdjacency = abs(cell.row - primaryCell.row)
@@ -146,9 +149,10 @@ export const tntwOmniForce = ({
 
         x = cell.x + cell.vx - centerX
         y = cell.y + cell.vy - centerY
-        l = sqrt(x * x + y * y)
+        l = x * x + y * y
 
-        if (l !== 0 && l <= pushRadius) {
+        if (l !== 0 && l < pushRadius * pushRadius) {
+          l = sqrt(l)
           // media loading logic, might move it at some point
           if (manageMedia) {
             if (
@@ -168,6 +172,12 @@ export const tntwOmniForce = ({
           }
 
           l = ((pushRadius - l) / l) * pushStrength * alpha * breathingPushMod
+
+          // if (isPrimaryCell) {
+          // center pull force
+          cell.vx += centerPullX * l * configPushXMod * alpha
+          cell.vy += centerPullY * l * configPushYMod * alpha
+          // }
 
           x *= l
           y *= l
@@ -261,73 +271,42 @@ export const tntwOmniForce = ({
     primaryCellX = primaryCell.x + primaryCell.vx
     primaryCellY = primaryCell.y + primaryCell.vy
 
-    centerX = pointer?.x ?? primaryCellX
-    centerY = pointer?.y ?? primaryCellY
+    targetCenterX = pointer?.x ?? primaryCellX
+    targetCenterY = pointer?.y ?? primaryCellY
+    centerX = centerX ?? targetCenterX
+    centerY = centerY ?? targetCenterY
 
-    // console.log('pointer speed', pointer.speedScale)
+    if (pointer.speedScale === 0) {
+      centerX = lerp(centerX, primaryCellX, 0.05)
+      centerY = lerp(centerY, primaryCellY, 0.05)
+    } else {
+      // centerX = targetCenterX
+      // centerY = targetCenterY
+      centerX = lerp(centerX, targetCenterX, 0.1)
+      centerY = lerp(centerY, targetCenterY, 0.1)
+    }
 
     secondaryCell = cells[pointer.indices[1]]
 
     if (secondaryCell) {
       x = centerX - primaryCellX
       y = centerY - primaryCellY
-      const centerToPrimaryCellDist = sqrt(x * x + y * y)
-
+      centerToPrimaryCellDist = sqrt(x * x + y * y)
       x = centerX - (secondaryCell.x + secondaryCell.vx)
       y = centerY - (secondaryCell.y + secondaryCell.vy)
-      const centerToPrimaryCellNeighborDist = sqrt(x * x + y * y)
+      centerToSecondaryCellDist = sqrt(x * x + y * y)
+      distRatio = centerToPrimaryCellDist / centerToSecondaryCellDist
 
-      const distRatio =
-        centerToPrimaryCellDist / centerToPrimaryCellNeighborDist
+      primaryCellPushFactorX = primaryCellPushFactorY = Math.min(distRatio, 1)
 
-      const inverseDistRatio = 1 - distRatio
-      const clampedSquareRootInverseDistRatio = clamp(
-        0,
-        1,
-        inverseDistRatio ** 2,
-      )
-
-      const newWeight =
-        clampedSquareRootInverseDistRatio * breathingPushMod ** 2
-      // const newWeight = clamp(0, 1, inverseDistRatio)
+      distRatio = clamp(0, 1, (1 - distRatio) ** 2)
       primaryCell.weight = easedMinLerp(
         primaryCell.weight,
-        newWeight,
-        newWeight > primaryCell.weight ? 0.025 : 0.075,
+        distRatio * breathingPushMod ** 2,
+        distRatio > primaryCell.weight
+          ? 0.025 * pointer.inverseSpeedScale
+          : 0.075,
       )
-
-      // if (distRatio > 1) throw new Error('how?')
-
-      primaryCellPushFactor = Math.min(distRatio, 1)
-      primaryCellPushFactorX = primaryCellPushFactor
-      primaryCellPushFactorY = primaryCellPushFactor
-
-      centerPullX = clamp(
-        -1,
-        1,
-        lerp(
-          centerPullX,
-          (centerX - primaryCellX) * clampedSquareRootInverseDistRatio,
-          min(1, abs(centerX - primaryCellX) * 0.0001),
-        ),
-      )
-
-      centerPullY = clamp(
-        -1,
-        1,
-        lerp(
-          centerPullY,
-          (centerY - primaryCellY) * clampedSquareRootInverseDistRatio,
-          min(1, abs(centerY - primaryCellY) * 0.0001),
-        ),
-      )
-
-      // primaryCell.x += centerPullX
-      // primaryCell.y += centerPullY
-      // primaryCellX = primaryCell.x + primaryCell.vx
-      // primaryCellY = primaryCell.y + primaryCell.vy
-    } else {
-      primaryCellPushFactor = 0
     }
 
     if (
@@ -341,6 +320,8 @@ export const tntwOmniForce = ({
   }
 
   function latticeForcePass(alpha) {
+    if (!primaryCell) return
+
     minLatticeRow = max(primaryCell.row - latticeMaxLevelsFromPrimary, 1)
     maxLatticeRow = min(
       primaryCell.row + latticeMaxLevelsFromPrimary,

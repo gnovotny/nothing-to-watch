@@ -52,8 +52,8 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
-#define WEIGHTED_DIST 1
-//#define WEIGHTED_DIST 0
+//#define WEIGHTED_DIST 1
+#define WEIGHTED_DIST 0
 #define WEIGHT_OFFSET_SCALE 2000.
 //#define WEIGHT_OFFSET_SCALE_MEDIA_MOD 4.25
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
@@ -70,10 +70,13 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
-#define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-//#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.05 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+#define ROUNDNESS 0.05 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
 
-#define EDGE_1 .005
+//#define EDGE_1 .005
+//#define EDGE_2 .001
+#define EDGE_1 .004
 #define EDGE_2 .001
 
 struct Data {
@@ -194,7 +197,11 @@ vec3 randomColor(uint seed) {
 }
 
 float getXDistScale(float weight) {
-    return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-BASE_X_DIST_SCALE);
+    float scale = BASE_X_DIST_SCALE;
+    #if WEIGHTED_DIST == 1
+        scale += weight * (WEIGHTED_X_DIST_SCALE-BASE_X_DIST_SCALE);
+    #endif
+    return scale;
 }
 
 float weightedDist(vec2 p1, vec2 p2, float weight, float weightOffset) {
@@ -406,12 +413,26 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
 void sortClosest(
     inout vec4 distances,
     inout uvec4 indices,
+    in uvec4 prevprevIndices,
     uint index,
     vec2 center,
-    float weightOffsetScale,
-    float prevMaxWeight
+    in float _weight, in float _weightOffset, in float weightOffsetScale,
+    float prevMaxWeight,
+    inout vec2 minEdgeDists,
+    in vec2 cellCoords,
+    in bool runCalcMinEdgeDists
 ) {
+
+
+
     if (indexIsUndefined(index) || any(equal(indices, uvec4(index)))) return;
+
+    //    if (runCalcMinEdgeDists && index != prevprevIndices.x) {
+    //    if (!any(equal(prevprevIndices, uvec4(index)))) {
+        if (runCalcMinEdgeDists && !any(equal(prevprevIndices, uvec4(index)))) {
+//    if (!any(equal(prevprevIndices, uvec4(index)))) {
+        calcMinEdgeDists(index, cellCoords, center, minEdgeDists, _weight, _weightOffset, weightOffsetScale);
+    }
 
     float weight = weightTexData(index);
     float weightOffset = weightOffsetScale * weight;
@@ -438,13 +459,13 @@ uvec4 fetchIndices(vec2 position) {
     return floatBitsToUint(texelFetch(uVoroIndexBufferTexture, ivec2(position), 0)) - 1u;
 }
 
-void fetchAndSortIndices( inout vec4 distances, inout uvec4 prevIndices, in vec2 samplePoint, in vec2 cellCenter, in float weightOffsetScale, in float prevMaxWeight ) {
+void fetchAndSortIndices( inout vec4 distances, inout uvec4 prevIndices, in uvec4 prevprevIndices, in vec2 samplePoint, in vec2 cellCenter, in float weight, in float weightOffset, in float weightOffsetScale, in float prevMaxWeight, inout vec2 minEdgeDists, in vec2 cellCoords, in bool runCalcMinEdgeDists ) {
     uvec4 indices = fetchIndices(samplePoint);
 
-    sortClosest(distances, prevIndices, indices.x, cellCenter, weightOffsetScale, prevMaxWeight);
-    sortClosest(distances, prevIndices, indices.y, cellCenter, weightOffsetScale, prevMaxWeight);
-    sortClosest(distances, prevIndices, indices.z, cellCenter, weightOffsetScale, prevMaxWeight);
-    sortClosest(distances, prevIndices, indices.w, cellCenter, weightOffsetScale, prevMaxWeight);
+    sortClosest(distances, prevIndices, prevprevIndices, indices.x, cellCenter, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, runCalcMinEdgeDists);
+    sortClosest(distances, prevIndices, prevprevIndices, indices.y, cellCenter, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+    sortClosest(distances, prevIndices, prevprevIndices, indices.z, cellCenter, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+    sortClosest(distances, prevIndices, prevprevIndices, indices.w, cellCenter, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
 }
 
 Data init(vec2 p) {
@@ -461,10 +482,8 @@ Data init(vec2 p) {
     return Data(indices, vec2(0.), vec4(0.), false, 0.);
 }
 
-Data update(vec2 p) {
+Data update(vec2 p, uvec4 prevIndices) {
     vec2 fragCoord = gl_FragCoord.xy;
-    uvec4 prevIndices = fetchIndices(fragCoord);
-    if (indexIsUndefined(prevIndices.x)) return init(p);
 
     float prevMaxWeight = weightTexData(prevIndices.x);
     prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices.y));
@@ -485,6 +504,14 @@ Data update(vec2 p) {
 
     uint closestIndex = prevIndices.x;
 
+    float weight = weightTexData(closestIndex);
+    float weightOffset = weightOffsetScale * weight;
+    vec2 cellCoords = fetchCellCoords(closestIndex);
+    vec2 minEdgeDists = vec2(0.1);
+    calcMinEdgeDists(prevIndices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
+    calcMinEdgeDists(prevIndices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
+    calcMinEdgeDists(prevIndices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
+
 //    if (bMediaEnabled) {
 //        cellNdcCoords = fetchNormalizedCellCoords(closestIndex);
 //        mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
@@ -501,21 +528,27 @@ Data update(vec2 p) {
             rad *= randomDir(seed);
         #endif
 
-        fetchAndSortIndices(distances, indices, fragCoord, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2( 1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2( 0., 1.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2(-1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2( 0.,-1.) * rad, p, weightOffsetScale, prevMaxWeight);
+        fetchAndSortIndices(distances, indices, prevIndices, fragCoord, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+        fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( 1., 0.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+        fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( 0., 1.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+        fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2(-1., 0.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+        fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( 0.,-1.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
 
-        #if PIXEL_SEARCH_FULL_RANDOM == 1
-            rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
-            for (int i = 0; i < 16; i++) {
-                sortClosest(bestDistances, indices, wrap1d(nextUint()), p, weightOffsetScale, prevMaxWeight);
-            }
-        #endif
+//    fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( 1., 1.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, true);
+//    fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( -1., -1.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, true);
+//    fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( 1., -1.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, true);
+//    fetchAndSortIndices(distances, indices, prevIndices, fragCoord + vec2( -1., 1.) * rad, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, true);
+
+
+    #if PIXEL_SEARCH_FULL_RANDOM == 1
+        rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
+        for (int i = 0; i < 16; i++) {
+            sortClosest(bestDistances, indices, prevIndices, wrap1d(nextUint()), p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
+        }
+    #endif
 
     # else
-        sortClosest(distances, indices, closestIndex, p, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, indices, prevIndices, closestIndex, p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, false);
     #endif
 
     // neighbors search
@@ -530,20 +563,20 @@ Data update(vec2 p) {
     uint neighborsPosition = neighborsTexData(indices.x*2u);
     uint neighborsLength = neighborsTexData(indices.x*2u+1u);
     for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
-        sortClosest(distances, indices, neighborsTexData(neighborsPosition+i), p, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, indices, prevIndices, neighborsTexData(neighborsPosition+i), p, weight, weightOffset, weightOffsetScale, prevMaxWeight, minEdgeDists, cellCoords, true);
     }
 
     // update closest
     closestIndex = indices.x;
 
     // edge calc using the other 3 indices
-    float weight = weightTexData(closestIndex);
-    float weightOffset = weightOffsetScale * weight;
-    vec2 cellCoords = fetchCellCoords(closestIndex);
-    vec2 minEdgeDists = vec2(0.1);
-    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
-    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
-    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
+//    float weight = weightTexData(closestIndex);
+//    float weightOffset = weightOffsetScale * weight;
+//    vec2 cellCoords = fetchCellCoords(closestIndex);
+//    vec2 minEdgeDists = vec2(0.1);
+//    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
+//    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
+//    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
 
     // media bbox
     vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
@@ -598,11 +631,13 @@ Data update(vec2 p) {
 }
 
 void main() {
+    vec2 fragCoord = gl_FragCoord.xy;
+    uvec4 prevIndices = fetchIndices(fragCoord);
+
     vec2 p = fetchPCoords();
     vec2 mediaP = fetchNormalizedPCoords();
 
     #if FISHEYE_TEST == 1
-        vec2 fragCoord = gl_FragCoord.xy;
         vec2 focusCenterPixel =vec2(fCenter.x, iResolution.y - fCenter.y);
         vec2 focusCenter = (focusCenterPixel*2.0-iResolution.xy) / iResolution.y;
         float focusCenterDist = sqrt(dist(fragCoord, focusCenterPixel));
@@ -627,9 +662,14 @@ void main() {
         //    p *= 0.75;
     #endif
 
-    Data data = update(p);
-    uvec4 indices = data.indices;
-    vec3 c = bMediaEnabled ? mediaColor(mediaP, indices.x, data.mediaBbox) : randomColor(indices.x);
+    Data data;
+    if (indexIsUndefined(prevIndices.x)) {
+        data = init(p);
+    } else {
+        data = update(p, prevIndices);
+    }
+
+    vec3 c = bMediaEnabled ? mediaColor(mediaP, prevIndices.x, data.mediaBbox) : randomColor(prevIndices.x);
     float a = 1.;
 
     float edge1 = EDGE_1 * fEdgeSmoothnessMod;
@@ -649,7 +689,7 @@ void main() {
         );
     #endif
 
-    voroIndexBufferColor = uintBitsToFloat(indices + 1u);
+    voroIndexBufferColor = uintBitsToFloat(data.indices + 1u);
 //    if (focusCenterDist > 425.) {
 //    if (focusCenterDist > 725.) {
 //        c = fBaseColor;

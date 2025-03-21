@@ -1,5 +1,9 @@
-import mainFrag from './main.frag'
-import postFrag from './post.frag'
+// import mainFrag from './main.frag'
+// import mainFrag from './main2.frag'
+// import mainFrag from './main3.frag'
+import mainFrag from './main33.frag'
+// import postFrag from './post.frag'
+import postFrag from './post33.frag'
 
 export default {
   scene: {
@@ -56,11 +60,12 @@ export default {
       uniforms: {
         fAlphaStrength: {
           // value: 0.3,
-          value: 0.3,
+          value: 1,
           animatable: true,
           modes: {
             default: {
-              value: 0.3,
+              // value: 0.3,
+              value: 1,
             },
             select: {
               value: 1,
@@ -68,11 +73,13 @@ export default {
           },
         },
         fEdgeStrength: {
-          value: 0.3,
+          // value: 0.3,
+          value: 1,
           animatable: true,
           modes: {
             default: {
-              value: 0.3,
+              // value: 0.3,
+              value: 1,
             },
             select: {
               value: 1,

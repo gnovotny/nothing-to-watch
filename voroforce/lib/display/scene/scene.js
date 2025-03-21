@@ -23,11 +23,18 @@ export default class Scene extends BaseScene {
         {},
         this.config.post?.enabled
           ? {
-              format: this.gl.RG,
-              internalFormat: this.gl.RG32F,
+              // format: this.gl.RG,
+              // internalFormat: this.gl.RG32F,
+              format: this.gl.RGBA,
+              internalFormat: this.gl.RGBA32F,
               type: this.gl.FLOAT,
             }
           : {},
+        // {
+        //   format: this.gl.RGBA,
+        //   internalFormat: this.gl.RGBA32F,
+        //   type: this.gl.FLOAT,
+        // },
       ],
     })
   }
@@ -50,6 +57,9 @@ export default class Scene extends BaseScene {
     if (!this.config.main?.enabled) return
     this.mainCustomUniforms.uVoroIndexBufferTexture.value =
       this.renderTargets[0].texture // output to input
+
+    // this.mainCustomUniforms.uVoroIndexBuffer2Texture.value =
+    //   this.renderTargets[0].textures[3] // output to input
 
     if (this.config.post?.enabled) {
       this.postCustomUniforms.uMainOutputTexture.value =
@@ -86,6 +96,9 @@ export default class Scene extends BaseScene {
       uVoroIndexBufferTexture: {
         value: this.renderTargets[1].texture,
       },
+      // uVoroIndexBuffer2Texture: {
+      //   value: this.renderTargets[1].textures[3],
+      // },
     }
     return {
       ...this.initCustomUniforms(),

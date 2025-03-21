@@ -48,20 +48,16 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define MAX_NEIGHBOR_ITERATIONS_LEVEL_3 48u
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
-#define FISHEYE_TEST 0
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
 #define WEIGHTED_DIST 1
-//#define WEIGHTED_DIST 0
 #define WEIGHT_OFFSET_SCALE 2000.
 //#define WEIGHT_OFFSET_SCALE_MEDIA_MOD 4.25
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
 #define X_DIST_SCALING 1
-//#define X_DIST_SCALING 0
 #define BASE_X_DIST_SCALE 1.5
 #define WEIGHTED_X_DIST_SCALE 1.5
-#define MEDIA_BBOX_SCALE 1. // TODO TMP
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define LOCK_MEDIA_ASPECT 1
 #define MEDIA_ASPECT 1.5
@@ -71,8 +67,6 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
 #define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-//#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-
 #define EDGE_1 .005
 #define EDGE_2 .001
 
@@ -478,7 +472,7 @@ Data update(vec2 p) {
         mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
     #endif
 
-//    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
+    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
 //    vec2 cellNdcCoords;
 //    vec2 midPointsSum = vec2(0.0);
 //    float mediaWeight;
@@ -546,18 +540,18 @@ Data update(vec2 p) {
     calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
 
     // media bbox
-    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
     if (bMediaEnabled) {
 
+        mediaBbox = vec4(vec2(1.), vec2(-1.));
         vec2 midPointsSum = vec2(0.0);
         float mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
-        vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex);
+        vec2 cellNdcCoords = fetchNormalizedCellCoords(closestIndex);
 
         neighborsPosition = neighborsTexData(closestIndex*2u);
         neighborsLength = min(neighborsTexData(closestIndex*2u+1u), MAX_NEIGHBOR_ITERATIONS_LEVEL_1);
         for (uint i = 0u; i < neighborsLength; i++) {
             uint neighborIndex = neighborsTexData(neighborsPosition+i);
-            vec2 neighborNCoords = fetchNormalizedCellCoords(neighborIndex);
+            vec2 neighborNdcCoords = fetchNormalizedCellCoords(neighborIndex);
 
             float mid = 0.5;
             #if WEIGHTED_DIST == 1
@@ -565,7 +559,7 @@ Data update(vec2 p) {
                 mid += (mediaWeight - neighborMediaWeight);
             #endif
 
-            vec2 mediaMidNdcPoint = mix(cellNCoords, neighborNCoords, mid);
+            vec2 mediaMidNdcPoint = mix(cellNdcCoords, neighborNdcCoords, mid);
             midPointsSum += mediaMidNdcPoint;
 
             mediaBbox.xy = min(mediaBbox.xy, mediaMidNdcPoint);
@@ -574,7 +568,7 @@ Data update(vec2 p) {
 
         vec2 avgCenter = midPointsSum / float(neighborsLength);
 //        vec2 avgCenterDiff = avgCenter - cellNdcCoords;
-        vec2 avgCenterDiff = (avgCenter - cellNCoords) * MEDIA_BBOX_ADJUSTMENT_SCALE;
+        vec2 avgCenterDiff = (avgCenter - cellNdcCoords) * MEDIA_BBOX_ADJUSTMENT_SCALE;
 
         mediaBbox.xy = min(mediaBbox.xy, mediaBbox.xy + avgCenterDiff);
         mediaBbox.zw = max(mediaBbox.zw, mediaBbox.zw + avgCenterDiff);
@@ -585,12 +579,12 @@ Data update(vec2 p) {
         #if LOCK_MEDIA_ASPECT == 1
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
-            vec2 offset = vec2(bbMax/aspect,bbMax*MEDIA_ASPECT)*0.5*MEDIA_BBOX_SCALE;
+            vec2 offset = vec2(bbMax/aspect,bbMax*MEDIA_ASPECT)*0.5;
             mediaBbox.xy = avgCenter - offset;
             mediaBbox.zw = avgCenter + offset;
         #else
-            mediaBbox.xy = avgCenter - vec2(bbX,bbY)*0.5*MEDIA_BBOX_SCALE;
-            mediaBbox.zw = avgCenter + vec2(bbX,bbY)*0.5*MEDIA_BBOX_SCALE;
+            mediaBbox.xy = avgCenter - vec2(bbX,bbY)*0.5;
+            mediaBbox.zw = avgCenter + vec2(bbX,bbY)*0.5;
         #endif
     }
 
@@ -598,36 +592,53 @@ Data update(vec2 p) {
 }
 
 void main() {
+    //    vec2 p = fragCoord / iResolution.x;//normalized coords with some cheat
     vec2 p = fetchPCoords();
+    vec2 fragCoord = gl_FragCoord.xy;
+    vec2 centerPixel =vec2(fCenter.x, iResolution.y - fCenter.y);
+    //    vec2 center = normalizeCoords(centerPixel);
+    vec2 center = (centerPixel*2.0-iResolution.xy) / iResolution.y;
+//    vec2 center = normalizeCoords(centerPixel);
+//    float centerDist = distance(fragCoord, center);
+    float centerDist = sqrt(dist(fragCoord, centerPixel));
+//    if (centerDist > 450.) {
+//        discard;
+//    }
+    float aspect = iResolution.x / iResolution.y;//screen proroption
+
+
+
+    vec2 screenCenter = vec2(0.5, 0.5 / aspect);//center coords
+
+    //    nCenter.y /= aspect;
+
+
+//    vec2 nCenter = vec2(0.5, 0.5 / aspect); //center coords
+    vec2 d = p - center;//vector from center to current fragment
+    float r = sqrt(dot(d, d)); // distance of pixel from center
+
+//    r *= 0.25;
+    r *= 0.5;
+//    float power = ( 2.0 * 3.141592 / (2.0 * sqrt(dot(screenCenter, screenCenter))) ) * -0.15;
+//    float power = ( 2.0 * 3.141592 / (2.0 * sqrt(dot(screenCenter, screenCenter))) ) * -0.5;
+//    float power = ( 2.0 * 3.141592 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.125;
+    float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.25;
+
+//    float bind;//radius of 1:1 effect
+//    if (power > 0.0) bind = sqrt(dot(center, center));//stick to corners
+//    else {if (aspect < 1.0) bind = center.x; else bind = center.y;}//stick to borders
+
+    float bind = center.x;
+
+
+    vec2 customP = center + normalize(d) * tan(r * power) * bind / tan( bind * power);
+
+//    uv *= 0.75;
+
     vec2 mediaP = fetchNormalizedPCoords();
 
-    #if FISHEYE_TEST == 1
-        vec2 fragCoord = gl_FragCoord.xy;
-        vec2 focusCenterPixel =vec2(fCenter.x, iResolution.y - fCenter.y);
-        vec2 focusCenter = (focusCenterPixel*2.0-iResolution.xy) / iResolution.y;
-        float focusCenterDist = sqrt(dist(fragCoord, focusCenterPixel));
-        //    if (centerDist > 450.) {
-        //        discard;
-        //    }
-        float aspect = iResolution.x / iResolution.y;
-        vec2 screenCenter = vec2(0.5, 0.5 / aspect);
-
-        vec2 d = p - focusCenter;
-        float r = sqrt(dot(d, d));
-        //    r *= 0.25;
-        r *= 0.5;
-        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.125;
-
-        float bind = screenCenter.x;
-        //    float bind = screenCenter.y;
-        //    float bind = sqrt(dot(screenCenter, screenCenter));
-        //    float bind = sqrt(dot(focusCenter, focusCenter));
-
-        p = focusCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-        //    p *= 0.75;
-    #endif
-
-    Data data = update(p);
+    Data data = update(customP);
+//    Data data = update(p);
     uvec4 indices = data.indices;
     vec3 c = bMediaEnabled ? mediaColor(mediaP, indices.x, data.mediaBbox) : randomColor(indices.x);
     float a = 1.;
@@ -650,10 +661,9 @@ void main() {
     #endif
 
     voroIndexBufferColor = uintBitsToFloat(indices + 1u);
-//    if (focusCenterDist > 425.) {
-//    if (focusCenterDist > 725.) {
-//        c = fBaseColor;
-//    }
+    if (centerDist > 425.) {
+        c = fBaseColor;
+    }
     outputColor = vec4(c, a);
     voroEdgeBufferColor = vec2(data.minEdgeDists.x, data.minEdgeDists.y);
 }

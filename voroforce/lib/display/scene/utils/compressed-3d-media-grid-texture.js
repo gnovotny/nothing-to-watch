@@ -11,6 +11,18 @@ export class Compressed3dMediaGridTexture extends Texture {
       ...args,
       target: gl.TEXTURE_2D_ARRAY,
       internalFormat: ext.COMPRESSED_RGB_S3TC_DXT1_EXT,
+
+      // These are the key parameters for bilinear filtering
+      minFilter: gl.LINEAR,
+      magFilter: gl.LINEAR,
+
+      // Optional: You might want these settings too
+      wrapS: gl.CLAMP_TO_EDGE,
+      wrapT: gl.CLAMP_TO_EDGE,
+
+      // If using mipmaps (recommended for better quality)
+      // generateMipmaps: true, // For some compressed formats
+      // minFilter: gl.LINEAR_MIPMAP_LINEAR, // Trilinear filtering with mipmaps
     })
 
     this.compressedTexExt = ext

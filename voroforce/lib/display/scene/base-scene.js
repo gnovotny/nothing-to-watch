@@ -370,6 +370,8 @@ export default class BaseScene {
     const { cellWidth, cellHeight, rows, cols } = this.globalConfig.lattice
 
     this.mainBaseUniforms = {
+      fLatticeCellWidth: { value: cellWidth },
+      fLatticeCellHeight: { value: cellHeight },
       iLatticeCols: { value: cols },
       iLatticeRows: { value: rows },
       bForceMaxQuality: { value: false },
