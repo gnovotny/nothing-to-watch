@@ -55,7 +55,7 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define DRAW_EDGES 0
 #define DOUBLE_INDEXING 1
 #define DOUBLE_INDEXING_BUFFER 0
-#define FISHEYE_TEST 0
+#define FISHEYE_TEST 1
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
