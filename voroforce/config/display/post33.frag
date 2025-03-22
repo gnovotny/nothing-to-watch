@@ -44,19 +44,25 @@ float bumpFunc(vec2 p){
 
     float c = v.x; // Rounded edge value.
 
+    float scaleMod = v.z;
+    scaleMod = clamp(scaleMod, 0.05, 0.5);
+    scaleMod *= 20.;
+
 //    float ew = .05; // Border threshold value. Bigger numbers mean thicker borders.
 //    float ew = .07; // Border threshold value. Bigger numbers mean thicker borders.
 //    float ew = .07*v.z; // Border threshold value. Bigger numbers mean thicker borders.
 //    ew *= fEdgeStrength;
 
-    float EDGE_1 = .07*v.z;
-    float EDGE_2 = .005;
+    float EDGE_1 = .007;
+    float EDGE_2 = .001;
 
-    float edge1 = EDGE_1;
-    float edge2 = EDGE_2;
+    float edge1 = EDGE_1*scaleMod;
+    float edge2 = EDGE_2*scaleMod*10.;
 
 //    objID = smoothstep(edge1, edge2, v.x);
-    objID = mix(0.,1.,smoothstep(edge1, edge2, v.x));
+//    objID = smoothstep(edge1*v.z, edge2*v.z*5., v.x);
+//    objID = mix(0.,1.,smoothstep(edge1, edge2, v.x));
+    objID = mix(1.,0.,smoothstep(edge1, edge2, v.x));
 
 //if(objID == 1.){
 //    discard;
@@ -65,13 +71,14 @@ float bumpFunc(vec2 p){
     // If the Voronoi value is under the threshold, produce a web like contoured border.
 //    if(c<ew){
 //    if(c<EDGE_1){
+//    if(c<edge1){
     if(objID > 0.5){
 
 //        c = mix(v.x,  v.y, .75);
 
 //        objID = 1.; // Voronoi web border ID.
 
-        c = abs(c - EDGE_1)/EDGE_1; // Normalize the domain to a range of zero to one.
+        c = abs(c - edge1)/edge1; // Normalize the domain to a range of zero to one.
 //        c = (objID-0.5)*2.; // Normalize the domain to a range of zero to one.
 
         // Add the contoured pattern to the web border.
@@ -82,7 +89,7 @@ float bumpFunc(vec2 p){
 
 //        objID = 0.;
         c = mix(v.x,  v.y, .75); // A mixture of rounded and straight edge values.
-        c = (c - EDGE_1)/(1. - EDGE_1); // Normalize the domain to a range of zero to one.
+        c = (c - edge1)/(1. - edge1); // Normalize the domain to a range of zero to one.
         c = clamp(c + cos(c*6.283*24.)*.002, 0., 1.); // Add some ridges.
     }
 
@@ -162,7 +169,9 @@ void main(){
 //    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
 
     // Object color. Initialize to the texture value.
-    vec3 oCol = tx *.025;
+//    vec3 oCol = tx *.025;
+    vec3 oCol = tx *.15;
+//    vec3 oCol = tx *.9;
 
     bool isWeb = svObjID>.5;
 
@@ -256,5 +265,6 @@ void main(){
 //        col = sqrt(max(col, 0.));
 //    }
     fragColor = mix(baseCol, vec4(col, 1), fAlphaStrength);
+//    fragColor = vec4(vec3(objID), 1.);
 
 }
