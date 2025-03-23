@@ -294,6 +294,7 @@ vec2 fetchNormalizedPCoords() {
 
 float fetchResolutionScale() {
     return ((iResolution.x * iResolution.y) / (1920.*1080.));
+//    return min(((iResolution.x * iResolution.y) / (1920.*1080.)), 0.1);
 }
 
 float calculateOrientation(vec2 left, vec2 right) {
@@ -528,7 +529,7 @@ Data update(vec2 p) {
     float mediaWeightOffsetScale = 1.;
 
     #if WEIGHTED_DIST == 1
-        weightOffsetScale = WEIGHT_OFFSET_SCALE * fetchResolutionScale() * 1./float(iNumCells);
+        weightOffsetScale = WEIGHT_OFFSET_SCALE * min(fetchResolutionScale(), 0.1) * 1./float(iNumCells);
         mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
     #endif
 
