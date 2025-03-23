@@ -83,7 +83,10 @@ export class Controls extends EventTarget {
   }
 
   handleUpdate() {
-    if (!this.targetPointer) return
+    if (!this.targetPointer) {
+      this.pointer.speedScale = 0
+      return
+    }
     const newPointerData = { x: this.targetPointer.x, y: this.targetPointer.y }
 
     const currentTime = performance.now()

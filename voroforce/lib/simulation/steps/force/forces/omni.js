@@ -1,7 +1,12 @@
-import { clamp, easedMinLerp, lerp } from '../../../../utils'
+import { clamp, easedMinLerp, lerp, mapRange } from '../../../../utils'
 import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
 
 const LERP_FACTOR_DEFAULT = 0.025
+
+const abs = Math.abs,
+  max = Math.max,
+  min = Math.min,
+  sqrt = Math.sqrt
 
 const getPushRadius = (dimensions) => {
   // const dimensionsScale = 0.5
@@ -40,6 +45,7 @@ export const omniForce = ({
       radius: pushRadius = getPushRadius(dimensions),
       xFactor: configPushXMod = 1,
       yFactor: configPushYMod = 1,
+      speedFactor: configPushSpeedFactor = 0,
       breathing: pushBreathing = false,
       breathingCycleDuration: pushBreathingCycleDuration = 6000,
       breathingVariability: pushBreathingVariability = 0.05,
@@ -70,12 +76,7 @@ export const omniForce = ({
   } = {},
   handleEnd,
 }) => {
-  const primary = (cells) => cells[primarySelector]
-
-  const abs = Math.abs,
-    max = Math.max,
-    min = Math.min,
-    sqrt = Math.sqrt
+  const selectPrimary = (cells) => cells[primarySelector]
 
   let centerX,
     centerY,
@@ -122,7 +123,10 @@ export const omniForce = ({
     pointerSpeedScale = 0,
     inversePointerSpeedScale = 1,
     pointerStoppedTimeout,
-    lerpCenterToPrimaryCell = false
+    lerpCenterToPrimaryCell = false,
+    primaryCellWeight = 0,
+    primaryCellWeightPushFactor = 1,
+    pushSpeedFactor = 1
 
   // TODO
   // if (manageMedia) {
@@ -137,10 +141,9 @@ export const omniForce = ({
   }
 
   function forceSetup(alpha) {
-    timestamp = Date.now()
-    if (!startTime) startTime = timestamp
-
     if (pushBreathing) {
+      timestamp = Date.now()
+      if (!startTime) startTime = timestamp
       breathingPushMod =
         1 -
         pushBreathingVariability +
@@ -151,7 +154,7 @@ export const omniForce = ({
           pushBreathingVariability
     }
 
-    newPrimaryCell = primary(cells)
+    newPrimaryCell = selectPrimary(cells)
     if (newPrimaryCell?.index !== primaryCell?.index) {
       prevPrimaryCell = primaryCell
       primaryCell = newPrimaryCell
@@ -165,6 +168,13 @@ export const omniForce = ({
 
     pointerSpeedScale = pointer.speedScale
     inversePointerSpeedScale = 1 - pointerSpeedScale
+
+    if (configPushSpeedFactor > 0) {
+      pushSpeedFactor = max(inversePointerSpeedScale, 0.2)
+      // console.log(pushSpeedFactor, 'pushSpeedFactor')
+    }
+
+    // console.log('inversePointerSpeedScale', inversePointerSpeedScale)
 
     primaryCellX = primaryCell.x + primaryCell.vx
     primaryCellY = primaryCell.y + primaryCell.vy
@@ -220,14 +230,26 @@ export const omniForce = ({
 
       primaryCellPushFactorX = primaryCellPushFactorY = Math.min(distRatio, 1)
 
-      distRatio = clamp(0, 1, (1 - distRatio) ** 2)
-      primaryCell.weight = easedMinLerp(
-        primaryCell.weight,
-        distRatio * breathingPushMod ** 2,
-        distRatio > primaryCell.weight
-          ? defaultLerpFactor * inversePointerSpeedScale
-          : defaultLerpFactor * 3,
-      )
+      if (manageWeights) {
+        distRatio = clamp(0, 1, (1 - distRatio) ** 2)
+        primaryCellWeight =
+          distRatio *
+          breathingPushMod ** 2 *
+          inversePointerSpeedScale *
+          pushSpeedFactor
+        primaryCellWeight = primaryCell.weight = easedMinLerp(
+          primaryCell.weight,
+          primaryCellWeight,
+          primaryCellWeight > primaryCell.weight
+            ? defaultLerpFactor * inversePointerSpeedScale
+            : defaultLerpFactor * 3,
+        )
+
+        primaryCellWeightPushFactor =
+          1 + clamp(0, 0.25, mapRange(0.75, 1, 0, 0.25, primaryCellWeight))
+
+        // console.log(primaryCellWeightPushFactor)
+      }
     }
 
     if (
@@ -278,7 +300,13 @@ export const omniForce = ({
             }
           }
 
-          l = ((pushRadius - l) / l) * pushStrength * alpha * breathingPushMod
+          l =
+            ((pushRadius - l) / l) *
+            pushStrength *
+            alpha *
+            breathingPushMod *
+            pushSpeedFactor *
+            primaryCellWeightPushFactor
 
           // center pull force
           // cell.vx += centerPullX * l * configPushXMod * alpha
