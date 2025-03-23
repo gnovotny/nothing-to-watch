@@ -13,7 +13,7 @@ const getPushRadius = (dimensions) => {
   return Math.min(max, min * minScale)
 }
 
-export const tntwOmniForce = ({
+export const omniForce = ({
   cells,
   dimensions,
   pointer,
@@ -33,9 +33,14 @@ export const tntwOmniForce = ({
       alignmentMaxLevelsX: pushAlignmentMaxLevelsX = 0,
       alignmentMaxLevelsY: pushAlignmentMaxLevelsY = 0,
       centerXStretchMod: pushCenterXStretchMod = 0,
+      // centerXStretchMaxLevelsX: pushCenterXStretchMaxLevelsX = globalConfig
+      //   .lattice.cols * 0.4,
+      // centerXStretchMaxLevelsY: pushCenterXStretchMaxLevelsY = 12,
+
       centerXStretchMaxLevelsX: pushCenterXStretchMaxLevelsX = globalConfig
-        .lattice.cols * 0.4,
-      centerXStretchMaxLevelsY: pushCenterXStretchMaxLevelsY = 12,
+        .lattice.cols,
+      centerXStretchMaxLevelsY: pushCenterXStretchMaxLevelsY = globalConfig
+        .lattice.rows,
     } = {},
     lattice: {
       strength: latticeStrength = 0.8,
@@ -73,7 +78,6 @@ export const tntwOmniForce = ({
     primaryCellY,
     cellTypePushXMod = 1,
     cellTypePushYMod = 1,
-    primaryCellPushFactor = 0,
     primaryCellPushFactorX = 0,
     primaryCellPushFactorY = 0,
     secondaryCell,
@@ -112,7 +116,6 @@ export const tntwOmniForce = ({
     latticeCol,
     latticeStrengthMod,
     centerXStretchMod,
-    centerXStretchModColRatio,
     isPrimaryCell = false
 
   if (manageMedia) {
@@ -173,11 +176,9 @@ export const tntwOmniForce = ({
 
           l = ((pushRadius - l) / l) * pushStrength * alpha * breathingPushMod
 
-          // if (isPrimaryCell) {
           // center pull force
           cell.vx += centerPullX * l * configPushXMod * alpha
           cell.vy += centerPullY * l * configPushYMod * alpha
-          // }
 
           x *= l
           y *= l
@@ -207,19 +208,14 @@ export const tntwOmniForce = ({
           centerXStretchMod = 1
           if (
             pushCenterXStretchMod > 0 &&
-            rowLevelAdjacency <= pushCenterXStretchMaxLevelsY &&
-            colLevelAdjacency <= pushCenterXStretchMaxLevelsX &&
+            // rowLevelAdjacency <= pushCenterXStretchMaxLevelsY &&
+            // colLevelAdjacency <= pushCenterXStretchMaxLevelsX &&
             !isPrimaryCell
           ) {
-            centerXStretchModColRatio =
-              colLevelAdjacency / pushCenterXStretchMaxLevelsX
-            centerXStretchMod =
-              1 +
+            centerXStretchMod +=
               pushCenterXStretchMod *
-                ((centerXStretchModColRatio > 0.5
-                  ? 1 - centerXStretchModColRatio
-                  : centerXStretchModColRatio) *
-                  (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
+              ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
+                (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
           }
 
           // push force
@@ -234,7 +230,7 @@ export const tntwOmniForce = ({
       }
 
       if (manageWeights && cell.weight !== 0 && i !== primaryCell?.index) {
-        cell.weight = easedMinLerp(cell.weight, 0, 0.3)
+        cell.weight = easedMinLerp(cell.weight, 0, 0.1)
       }
 
       handleEnd?.(cell)

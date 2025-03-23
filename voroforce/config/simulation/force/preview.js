@@ -18,18 +18,18 @@ export const forceSimulationStepPreviewConfig = {
     //   maxRadius: 300,
     // },
     {
-      type: 'tntwOmni',
+      type: 'omni',
       enabled: true,
       requestMediaVersions: true,
       manageWeights: true,
       push: {
-        // strength: 0.15,
-        strength: 0.4,
+        strength: 0.15,
+        // strength: 0.4,
         selector: 'focused',
         yFactor: 2.5,
         breathing: true,
         alignmentMaxLevelsX: 40,
-        centerXStretchMod: 3,
+        centerXStretchMod: 10,
         // centerXStretchMod: 4,
       },
       lattice: {

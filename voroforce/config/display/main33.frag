@@ -52,11 +52,11 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define MAX_NEIGHBOR_ITERATIONS_LEVEL_3 48u
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
-#define DRAW_EDGES 0
+#define DRAW_EDGES 1
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define FISHEYE_TEST 1
+#define FISHEYE_TEST 0
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
@@ -644,6 +644,7 @@ Data update(vec2 p) {
 //        scaleMod *= scaleMod;
 //                    scaleMod = (bbX * bbY) / 4. * 20.;
 //            scaleMod = clamp(scaleMod, 0.15, 0.75);
+            scaleMod = clamp(scaleMod, 0.05, 1.);
         #endif
     }
     #if EDGE_SCALING == 1
@@ -724,10 +725,9 @@ void main() {
 //        discard;
 //    }
 
-    float edge1 = EDGE_1 * fEdgeSmoothnessMod;
-    float edge2 = EDGE_2 * fEdgeMod;
-
     #if DRAW_EDGES == 1
+        float edge1 = EDGE_1 * fEdgeSmoothnessMod;
+        float edge2 = EDGE_2 * fEdgeMod;
         #if TRANSPARENT_BG == 1
             a = mix(
                 1.,

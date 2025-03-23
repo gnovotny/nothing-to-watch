@@ -1,4 +1,4 @@
-import { isNumber } from '../../../../utils'
+import { isNumber } from '../../../../../utils'
 
 export const moveCenterToPointForce = ({
   cells,

@@ -1,4 +1,4 @@
-import { isNumber, lerp, mapRange } from '../../../../utils'
+import { isNumber, lerp, mapRange } from '../../../../../utils'
 
 export const pushForce = ({
   cells,

@@ -7,7 +7,7 @@ export const forceSimulationStepSelectConfig = {
   },
   forces: [
     {
-      type: 'tntwOmni',
+      type: 'omni',
       enabled: true,
       requestMediaVersions: true,
       manageWeights: true,
