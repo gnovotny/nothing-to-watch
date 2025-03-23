@@ -358,6 +358,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
 
     int id = int(cellIdMapTexData(index));
     int mediaCapacity = mediaCols * mediaRows;
+//    int mediaCapacity = min(mediaCols * mediaRows, iNumCells);
     int layer = id / mediaCapacity % numLayers;
     int tileIndex = id % mediaCapacity;
     float tileRow = float(tileIndex / mediaCols);

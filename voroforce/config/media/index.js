@@ -5,7 +5,7 @@ export default {
   versions: [
     {
       cols: 512,
-      rows: 288,
+      rows: 104,
       width: 2048,
       height: 624,
       layers: 1,

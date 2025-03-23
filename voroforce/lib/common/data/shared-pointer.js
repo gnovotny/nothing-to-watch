@@ -50,8 +50,4 @@ export class SharedPointer {
   set speedScale(value) {
     this.data[6] = value
   }
-
-  get inverseSpeedScale() {
-    return 1 - this.speedScale
-  }
 }
