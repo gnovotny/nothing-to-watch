@@ -28,6 +28,7 @@ export class Controls extends EventTarget {
   prevY = 0
   prevTime = 0
   focusDisabled = false
+  isWarm = false
 
   constructor(store, display) {
     super()
@@ -55,7 +56,10 @@ export class Controls extends EventTarget {
 
     const d = this.dimensions.get('diagonal')
     this.maxPointerSpeed = this.config.maxPointerSpeed * d
-    this.pointerRadius = this.config.pointerRadius * d
+    this.defaultPointerRadiusScale = this.config.pointerRadius
+    this.unfocusedPointerRadiusScale = this.defaultPointerRadiusScale * 0.15
+    this.activePointerRadiusScale = this.unfocusedPointerRadiusScale
+    this.pointerRadius = this.activePointerRadiusScale * d
   }
 
   handleFirstUpdate() {
@@ -106,6 +110,13 @@ export class Controls extends EventTarget {
       return
     }
 
+    // if (!this.prevX || !this.prevY) {
+    //   this.prevX = this.targetPointer.x
+    //   this.prevY = this.targetPointer.y
+    // }
+
+    // console.log('this.prevX', this.prevX)
+
     // Calculate the raw movement
     const deltaX = this.targetPointer.x - this.prevX
     const deltaY = this.targetPointer.y - this.prevY
@@ -113,10 +124,23 @@ export class Controls extends EventTarget {
     // Calculate distance
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
+    console.log('distance', distance)
+    console.log('this.pointerRadius', this.pointerRadius)
     // Abort if outside of reaction radius
     if (distance > this.pointerRadius) {
+      this.activePointerRadiusScale = this.unfocusedPointerRadiusScale
+      this.pointerRadius =
+        this.activePointerRadiusScale * this.dimensions.get('diagonal')
+
       this.pointer.speedScale = 0
+      this.targetPointer = undefined
+
       return
+    }
+    if (distance !== 0) {
+      this.activePointerRadiusScale = this.defaultPointerRadiusScale
+      this.pointerRadius =
+        this.activePointerRadiusScale * this.dimensions.get('diagonal')
     }
 
     const speedMod = distance ? 1 - distance / this.pointerRadius : 1
@@ -165,7 +189,6 @@ export class Controls extends EventTarget {
         this.onPointerOut()
         return
       }
-      if (!this.targetPointer) return
 
       Object.assign(this.pointer, {
         indices,
@@ -177,6 +200,11 @@ export class Controls extends EventTarget {
           this.cells.focusedIndex = index
           this.dispatchEvent(new CellFocusedEvent(this.cells.focused))
         }
+      }
+
+      if (!this.isWarm) {
+        this.isWarm = true
+        this.onPointerOut()
       }
     })
   }
@@ -275,6 +303,9 @@ export class Controls extends EventTarget {
   handlePointerOut() {
     if (this.cells.selected) return
     this.targetPointer = undefined
+    this.activePointerRadiusScale = this.unfocusedPointerRadiusScale
+    this.pointerRadius =
+      this.activePointerRadiusScale * this.dimensions.get('diagonal')
     Object.assign(this.pointer, {
       x: undefined,
       y: undefined,
@@ -356,7 +387,7 @@ export class Controls extends EventTarget {
 
   resize(dimensions) {
     this.maxPointerSpeed = this.config.maxPointerSpeed * dimensions.diagonal
-    this.pointerRadius = this.config.pointerRadius * dimensions.diagonal
+    this.pointerRadius = this.activePointerRadiusScale * dimensions.diagonal
   }
 
   dispose() {

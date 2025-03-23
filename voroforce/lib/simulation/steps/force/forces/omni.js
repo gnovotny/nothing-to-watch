@@ -249,7 +249,7 @@ export const omniForce = ({
           primaryCell.weight,
           primaryCellWeight,
           primaryCellWeight > primaryCell.weight
-            ? defaultLerpFactor * inversePointerSpeedScale
+            ? defaultLerpFactor * sqrt(inversePointerSpeedScale)
             : defaultLerpFactor * 3,
         )
 

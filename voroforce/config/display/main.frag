@@ -63,14 +63,14 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define WEIGHTED_DIST 1
 //#define WEIGHTED_DIST 0
 #define WEIGHT_OFFSET_SCALE 2000.
-//#define WEIGHT_OFFSET_SCALE_MEDIA_MOD 4.25
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
 #define X_DIST_SCALING 1
 //#define X_DIST_SCALING 0
 #define BASE_X_DIST_SCALE 1.5
 #define WEIGHTED_X_DIST_SCALE 1.5
 #define MEDIA_BBOX_SCALE 1. // TODO TMP
-#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
+//#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
+#define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
 #define LOCK_MEDIA_ASPECT 1
 #define MEDIA_ASPECT 1.5
 #define PIXEL_SEARCH 1
@@ -78,13 +78,16 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
-//#define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-#define ROUNDNESS 0.025 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-//#define ROUNDNESS 0.05 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.025 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+#define ROUNDNESS 0.1 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
 //#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
 
-#define EDGE_1 .005
-#define EDGE_2 .001
+//#define EDGE_1 .005
+//#define EDGE_2 .001
+
+#define EDGE_1 .009
+#define EDGE_2 .0005
 
 struct Data {
     uvec4 indices;
@@ -414,8 +417,8 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS*min(scaleMod*5., 1.));
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*min(scaleMod, 1.));
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod*scaleMod*10.);
-    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*sqrt(scaleMod));
-//    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod);
+//    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*sqrt(scaleMod));
+    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod);
     minEdgeDists.y = min(minEdgeDists.y, len);
 }
 
@@ -640,12 +643,14 @@ Data update(vec2 p) {
 
         #if EDGE_SCALING == 1
 //            scaleMod = max(bbX, bbY) / 2.;
-            scaleMod = min(bbX, bbY);
+            scaleMod = min(bbX, bbY) / 2.;
 //            scaleMod = (bbX + bbY) / 2.;
 //        scaleMod *= scaleMod;
 //                    scaleMod = (bbX * bbY) / 4. * 20.;
 //            scaleMod = clamp(scaleMod, 0.15, 0.75);
-            scaleMod = clamp(scaleMod, 0.05, 1.);
+//            scaleMod = clamp(scaleMod, 0.05, 1.);
+//            scaleMod = clamp(sqrt(scaleMod), 0.0, 0.1);
+            scaleMod = clamp(sqrt(scaleMod), 0.025, 0.15)* fetchResolutionScale()/* * 1./float(iNumCells)*50000.*/;
         #endif
     }
     #if EDGE_SCALING == 1
@@ -717,8 +722,11 @@ void main() {
 //    float scaleMod = data.scaleMod*2.;
 //    float scaleMod = data.scaleMod*data.scaleMod*data.scaleMod;
     float scaleMod = data.scaleMod;
-    scaleMod = clamp(scaleMod, 0.05, 0.5);
-    scaleMod *= 10.;
+    #if EDGE_SCALING
+        scaleMod = clamp(scaleMod, 0.05, 0.5);
+        scaleMod *= 10.;
+    #endif
+
 //    float scaleMod = sqrt(sqrt(data.scaleMod));
     float inverseScaleMod = 1. - scaleMod;
 
@@ -739,8 +747,8 @@ void main() {
             c = mix(
                 c,
                 fBaseColor,
-//                smoothstep(edge1, edge2, data.minEdgeDists.x)
-                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
+                smoothstep(edge1, edge2, data.minEdgeDists.x)
+//                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
             );
         #endif
     #endif
