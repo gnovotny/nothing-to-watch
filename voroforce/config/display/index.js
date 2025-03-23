@@ -55,7 +55,7 @@ export default {
       },
     },
     post: {
-      enabled: false,
+      enabled: true,
       fragmentShader: postFrag,
       uniforms: {
         fAlphaStrength: {

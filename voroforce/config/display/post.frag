@@ -169,8 +169,8 @@ void main(){
 //    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
 
     // Object color. Initialize to the texture value.
-//    vec3 oCol = tx *.025;
-    vec3 oCol = tx *.15;
+    vec3 oCol = tx *.025;
+//    vec3 oCol = tx *.15;
 //    vec3 oCol = tx *.9;
 
     bool isWeb = svObjID>.5;
