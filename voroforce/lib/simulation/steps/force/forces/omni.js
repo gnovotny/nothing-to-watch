@@ -58,9 +58,9 @@ export const omniForce = ({
       //   .lattice.cols * 0.4,
       // centerXStretchMaxLevelsY: pushCenterXStretchMaxLevelsY = 12,
       centerXStretchMaxLevelsX: pushCenterXStretchMaxLevelsX = globalConfig
-        .lattice.cols,
+        .lattice.cols /* * 0.25*/,
       centerXStretchMaxLevelsY: pushCenterXStretchMaxLevelsY = globalConfig
-        .lattice.rows,
+        .lattice.rows /* * 0.25*/,
     } = {},
     lattice: {
       strength: latticeStrength = 0.8,
@@ -253,8 +253,14 @@ export const omniForce = ({
             : defaultLerpFactor * 3,
         )
 
-        primaryCellWeightPushFactor =
-          1 + clamp(0, 0.25, mapRange(0.75, 1, 0, 0.25, primaryCellWeight))
+        // primaryCellWeightPushFactor =
+        //   1 + clamp(0, 0.125, mapRange(0.25, 1, 0, 0.25, primaryCellWeight))
+
+        primaryCellWeightPushFactor = easedMinLerp(
+          primaryCellWeightPushFactor,
+          1 + clamp(0, 0.125, mapRange(0.25, 1, 0, 0.25, primaryCellWeight)),
+          defaultLerpFactor,
+        )
 
         // console.log(primaryCellWeightPushFactor)
       }
@@ -310,8 +316,9 @@ export const omniForce = ({
             }
           }
 
-          l =
-            ((pushRadius - l) / l) *
+          l = (pushRadius - l) / l
+
+          l *=
             pushStrength *
             alpha *
             breathingPushMod *
@@ -333,15 +340,32 @@ export const omniForce = ({
             cellTypePushYMod = primaryCellPushFactorY
           } else {
             if (
-              pushCenterXStretchMod > 0
-              // rowLevelAdjacency <= pushCenterXStretchMaxLevelsY &&
-              // colLevelAdjacency <= pushCenterXStretchMaxLevelsX &&
+              pushCenterXStretchMod > 0 &&
+              rowLevelAdjacency < pushCenterXStretchMaxLevelsY &&
+              colLevelAdjacency > 0 &&
+              colLevelAdjacency < pushCenterXStretchMaxLevelsX
             ) {
+              // centerXStretchMod +=
+              //   pushCenterXStretchMod *
+              //   ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
+              //     (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
               centerXStretchMod +=
                 pushCenterXStretchMod *
                 ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
-                  (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
+                  (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY)) *
+                abs(x)
+              //  *(1 / max(abs(x), 1)) *
+              //   *(1 / max(abs(y), 1))
             }
+
+            // if (pushCenterXStretchMod > 0) {
+            //   centerXStretchMod += clamp(
+            //     0,
+            //     100,
+            //     clamp(0, 0.005, abs((pushRadius - abs(x)) / abs(x))) *
+            //       pushCenterXStretchMod,
+            //   )
+            // }
           }
 
           alignmentPushYMod = 1
