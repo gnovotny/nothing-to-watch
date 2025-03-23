@@ -34,9 +34,11 @@ export const omniForce = ({
     mediaV2RowLevelAdjacencyThreshold = 3,
     mediaV1ColLevelAdjacencyThreshold = mediaV2ColLevelAdjacencyThreshold * 3,
     mediaV1RowLevelAdjacencyThreshold = mediaV2RowLevelAdjacencyThreshold * 3,
+    mediaV1SpeedLimit = 0.75,
+    mediaV2SpeedLimit = 0.25,
     manageWeights = false,
-    lerpCenterToPrimaryCellOnPointerStopped = true,
-    pointerStoppedTimeoutMs = 500,
+    lerpCenterToPrimaryCellOnIdlePointer = true,
+    idlePointerDelay = 500,
     defaultLerpFactor = LERP_FACTOR_DEFAULT,
     push: {
       strength: _pushStrength = 1,
@@ -122,8 +124,8 @@ export const omniForce = ({
     isPrimaryCell = false,
     pointerSpeedScale = 0,
     inversePointerSpeedScale = 1,
-    pointerStoppedTimeout,
-    lerpCenterToPrimaryCell = false,
+    idlePointerTimeout,
+    idleLerpCenterToPrimaryCell = false,
     primaryCellWeight = 0,
     primaryCellWeightPushFactor = 1,
     pushSpeedFactor = 1
@@ -162,15 +164,21 @@ export const omniForce = ({
 
     if (!primaryCell) return
 
-    if (requestMediaVersions) {
-      primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
-    }
-
     pointerSpeedScale = pointer.speedScale
     inversePointerSpeedScale = 1 - pointerSpeedScale
 
+    if (requestMediaVersions) {
+      if (pointerSpeedScale < mediaV2SpeedLimit) {
+        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
+      }
+    }
+
     if (configPushSpeedFactor > 0) {
-      pushSpeedFactor = max(inversePointerSpeedScale, 0.2)
+      pushSpeedFactor = easedMinLerp(
+        pushSpeedFactor,
+        max(inversePointerSpeedScale, 0.2),
+        defaultLerpFactor,
+      )
       // console.log(pushSpeedFactor, 'pushSpeedFactor')
     }
 
@@ -183,16 +191,16 @@ export const omniForce = ({
     centerX = centerX ?? targetCenterX
     centerY = centerY ?? targetCenterY
 
-    if (lerpCenterToPrimaryCellOnPointerStopped && pointerSpeedScale === 0) {
-      if (pointerStoppedTimeoutMs > 0 && !pointerStoppedTimeout) {
-        pointerStoppedTimeout = setTimeout(() => {
-          lerpCenterToPrimaryCell = true
-        }, pointerStoppedTimeoutMs)
+    if (lerpCenterToPrimaryCellOnIdlePointer && pointerSpeedScale === 0) {
+      if (idlePointerDelay > 0 && !idlePointerTimeout) {
+        idlePointerTimeout = setTimeout(() => {
+          idleLerpCenterToPrimaryCell = true
+        }, idlePointerDelay)
       } else {
-        lerpCenterToPrimaryCell = true
+        idleLerpCenterToPrimaryCell = true
       }
 
-      if (lerpCenterToPrimaryCell) {
+      if (idleLerpCenterToPrimaryCell) {
         // if (pointerSpeedScale < 0.05) {
         centerX = easedMinLerp(
           centerX,
@@ -206,12 +214,12 @@ export const omniForce = ({
         )
       }
     } else {
-      if (lerpCenterToPrimaryCellOnPointerStopped) {
-        if (pointerStoppedTimeout) {
-          clearTimeout(pointerStoppedTimeout)
-          pointerStoppedTimeout = undefined
+      if (lerpCenterToPrimaryCellOnIdlePointer) {
+        if (idlePointerTimeout) {
+          clearTimeout(idlePointerTimeout)
+          idlePointerTimeout = undefined
         }
-        lerpCenterToPrimaryCell = false
+        idleLerpCenterToPrimaryCell = false
       }
       centerX = easedMinLerp(centerX, targetCenterX, defaultLerpFactor)
       centerY = easedMinLerp(centerY, targetCenterY, defaultLerpFactor)
@@ -286,12 +294,14 @@ export const omniForce = ({
           // media loading logic, might move it at some point
           if (requestMediaVersions) {
             if (
+              pointerSpeedScale < mediaV2SpeedLimit &&
               // l < mediaV2DistThreshold ||
               colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
               rowLevelAdjacency <= mediaV2RowLevelAdjacencyThreshold
             ) {
               cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
             } else if (
+              pointerSpeedScale < mediaV1SpeedLimit &&
               // l < mediaV1DistThreshold ||
               colLevelAdjacency <= mediaV1ColLevelAdjacencyThreshold &&
               rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
