@@ -37,49 +37,27 @@ mat2 r2(in float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
 float bumpFunc(vec2 p){
 
     // Vector holds the rounded edge value, straight edge value,
-    vec3 v = texture(uVoroEdgeBufferTexture, vec2(p.x, p.y)).rgb;
+    vec2 v = texture(uVoroEdgeBufferTexture, vec2(p.x, p.y)).rg;
 
 //    v.x *= 0.75;
 //    v.y *= 0.75;
 
     float c = v.x; // Rounded edge value.
 
-    float scaleMod = v.z;
-    scaleMod = clamp(scaleMod, 0.05, 0.5);
-    scaleMod *= 20.;
 
-//    float ew = .05; // Border threshold value. Bigger numbers mean thicker borders.
 //    float ew = .07; // Border threshold value. Bigger numbers mean thicker borders.
-//    float ew = .07*v.z; // Border threshold value. Bigger numbers mean thicker borders.
-//    ew *= fEdgeStrength;
+    float ew = .05; // Border threshold value. Bigger numbers mean thicker borders.
 
-    float EDGE_1 = .007;
-    float EDGE_2 = .001;
-
-    float edge1 = EDGE_1*scaleMod;
-    float edge2 = EDGE_2*scaleMod*10.;
-
-//    objID = smoothstep(edge1, edge2, v.x);
-//    objID = smoothstep(edge1*v.z, edge2*v.z*5., v.x);
-//    objID = mix(0.,1.,smoothstep(edge1, edge2, v.x));
-    objID = mix(1.,0.,smoothstep(edge1, edge2, v.x));
-
-//if(objID == 1.){
-//    discard;
-//}
+    ew *= fEdgeStrength;
 
     // If the Voronoi value is under the threshold, produce a web like contoured border.
-//    if(c<ew){
-//    if(c<EDGE_1){
-//    if(c<edge1){
-    if(objID > 0.5){
+    if(c<ew){
 
 //        c = mix(v.x,  v.y, .75);
 
-//        objID = 1.; // Voronoi web border ID.
+        objID = 1.; // Voronoi web border ID.
 
-        c = abs(c - edge1)/edge1; // Normalize the domain to a range of zero to one.
-//        c = (objID-0.5)*2.; // Normalize the domain to a range of zero to one.
+        c = abs(c - ew)/ew; // Normalize the domain to a range of zero to one.
 
         // Add the contoured pattern to the web border.
         c = smoothstep(0., .25, c)/4. + clamp(-cos(c*6.283*1.5) - .5, 0., 1.);
@@ -87,9 +65,9 @@ float bumpFunc(vec2 p){
     }
     else { // Over the threshold? Use the regular Voronoi cell value.
 
-//        objID = 0.;
+        objID = 0.;
         c = mix(v.x,  v.y, .75); // A mixture of rounded and straight edge values.
-        c = (c - edge1)/(1. - edge1); // Normalize the domain to a range of zero to one.
+        c = (c - ew)/(1. - ew); // Normalize the domain to a range of zero to one.
         c = clamp(c + cos(c*6.283*24.)*.002, 0., 1.); // Add some ridges.
     }
 
@@ -169,37 +147,32 @@ void main(){
 //    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
 
     // Object color. Initialize to the texture value.
-//    vec3 oCol = tx *.025;
-    vec3 oCol = tx *.15;
-//    vec3 oCol = tx *.9;
+    vec3 oCol = tx;
 
     bool isWeb = svObjID>.5;
 
-    oCol = mix(baseCol.rgb, oCol, svObjID);
+    if(isWeb){ // The webbing portion.
 
-//    if(isWeb) { // The webbing portion.
-//
-////        oCol *= vec3(1.2, .8, .4); // Uncomment for gold webbing.
-////        oCol *= vec3(1.4, 1, .7);
-//        oCol *= .025;
-////        oCol *= .9;
-////        oCol = vec3(1.,0.,0.);
-//
-//    }
-//    else { // The cell portion. Do what you want here.
-//
-////        oCol = vec3(1.,0.,0.);
-//        oCol = baseCol.rgb;
-////        // Uncomment for colored cells, etc.
-////        #if CELL_COLOR == 1
-////        oCol *= vec3(1.4, 1, .7);
-////        #elif CELL_COLOR == 2
-////        oCol *= vec3(.9, 1.1, 1.3);
-////        #else
-////        oCol *= vec3(1.1, 1.4, .7);
-////        #endif
-//
-//    }
+//        oCol *= vec3(1.2, .8, .4); // Uncomment for gold webbing.
+//        oCol *= vec3(1.4, 1, .7);
+        oCol *= .9;
+//        oCol = vec3(1.,0.,0.);
+
+    }
+    else { // The cell portion. Do what you want here.
+
+//        oCol = vec3(1.,0.,0.);
+        oCol = baseCol.rgb;
+//        // Uncomment for colored cells, etc.
+//        #if CELL_COLOR == 1
+//        oCol *= vec3(1.4, 1, .7);
+//        #elif CELL_COLOR == 2
+//        oCol *= vec3(.9, 1.1, 1.3);
+//        #else
+//        oCol *= vec3(1.1, 1.4, .7);
+//        #endif
+
+    }
 
 
     //oCol *= vec3(1.2, 1, .84); // Warmer coloring.
@@ -232,20 +205,17 @@ void main(){
 
     vec3 col = oCol;
 
-//    if (isWeb) {
+    if (isWeb) {
         // Light one.
-        vec3 webCol = col;
-    webCol *= (diff*vec3(.5, .7, 1) + .25 + vec3(.25, .5, 1)*spec*32.)*atten*.5;
+        col *= (diff*vec3(.5, .7, 1) + .25 + vec3(.25, .5, 1)*spec*32.)*atten*.5;
 
         // Adding light two.
-    webCol += oCol*(diff2*vec3(1, .7, .5) + .25 + vec3(1, .3, .1)*spec2*32.)*atten2*.5;
+        col += oCol*(diff2*vec3(1, .7, .5) + .25 + vec3(1, .3, .1)*spec2*32.)*atten2*.5;
 
         // Apply the edging. This provides fake AO, depth information, etc. Comment it out, and
         // the example becomes very 2-dimensional.
-    webCol *= edge;
-
-    col = mix(col, sqrt(max(webCol, 0.)), svObjID);
-//    }
+        col *= edge;
+    }
 
 
     // POSTPROCESSING, SCREEN PRESENTATION, ETC.
@@ -254,17 +224,16 @@ void main(){
     //col *= vec3(.9, 1.2, 1.4); // Cooler coloring.
 
     // Subtle vignette.
-//    vec2 u = fragCoord/iResolution.xy;
-//    col *= pow(16.*u.x*u.y*(1. - u.x)*(1. - u.y) , .125);
+    vec2 u = fragCoord/iResolution.xy;
+    col *= pow(16.*u.x*u.y*(1. - u.x)*(1. - u.y) , .125);
     // Colored variation.
     //col = mix(pow(min(vec3(1.5, 1, 1)*col, 1.), vec3(1, 3, 16)), col,
     //pow(16.*u.x*u.y*(1. - u.x)*(1. - u.y) , .125)*.75 + .25);
 
     // Rough gamma correction.
-//    if (isWeb) {
-//        col = sqrt(max(col, 0.));
-//    }
+    if (isWeb) {
+        col = sqrt(max(col, 0.));
+    }
     fragColor = mix(baseCol, vec4(col, 1), fAlphaStrength);
-//    fragColor = vec4(vec3(objID), 1.);
 
 }

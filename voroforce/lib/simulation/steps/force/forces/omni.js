@@ -121,8 +121,6 @@ export const omniForce = ({
   if (manageMedia) {
     // mediaV2DistThreshold = pushRadius * 0.1 // TODO
     // mediaV1DistThreshold = mediaV2DistThreshold * 3 // TODO
-    mediaV2DistThreshold = 0
-    mediaV1DistThreshold = 0
     mediaV2ColLevelAdjacencyThreshold = 9
     mediaV2RowLevelAdjacencyThreshold = 3
     mediaV1ColLevelAdjacencyThreshold = mediaV2ColLevelAdjacencyThreshold * 3
@@ -159,16 +157,15 @@ export const omniForce = ({
           // media loading logic, might move it at some point
           if (manageMedia) {
             if (
-              l < mediaV2DistThreshold ||
-              (colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
-                rowLevelAdjacency <= mediaV2RowLevelAdjacencyThreshold)
+              // l < mediaV2DistThreshold ||
+              colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
+              rowLevelAdjacency <= mediaV2RowLevelAdjacencyThreshold
             ) {
-              // cell.targetMediaVersion = cell.mediaVersion === 0 ? 1 : 2
               cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
             } else if (
-              l < mediaV1DistThreshold ||
-              (colLevelAdjacency <= mediaV1ColLevelAdjacencyThreshold &&
-                rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold)
+              // l < mediaV1DistThreshold ||
+              colLevelAdjacency <= mediaV1ColLevelAdjacencyThreshold &&
+              rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
             ) {
               cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
             }
@@ -185,9 +182,21 @@ export const omniForce = ({
 
           cellTypePushXMod = 1
           cellTypePushYMod = 1
+          centerXStretchMod = 1
           if (isPrimaryCell) {
             cellTypePushXMod = primaryCellPushFactorX
             cellTypePushYMod = primaryCellPushFactorY
+          } else {
+            if (
+              pushCenterXStretchMod > 0
+              // rowLevelAdjacency <= pushCenterXStretchMaxLevelsY &&
+              // colLevelAdjacency <= pushCenterXStretchMaxLevelsX &&
+            ) {
+              centerXStretchMod +=
+                pushCenterXStretchMod *
+                ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
+                  (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
+            }
           }
 
           alignmentPushXMod = 1
@@ -198,24 +207,10 @@ export const omniForce = ({
             rowLevelAdjacency === 0 &&
             colLevelAdjacency < pushAlignmentMaxLevelsX
           ) {
-            alignmentPushYMod =
-              1 -
+            alignmentPushYMod -=
               ((pushAlignmentMaxLevelsX - max(colLevelAdjacency, 1)) /
                 pushAlignmentMaxLevelsX) *
-                alignmentPushYModMod
-          }
-
-          centerXStretchMod = 1
-          if (
-            pushCenterXStretchMod > 0 &&
-            // rowLevelAdjacency <= pushCenterXStretchMaxLevelsY &&
-            // colLevelAdjacency <= pushCenterXStretchMaxLevelsX &&
-            !isPrimaryCell
-          ) {
-            centerXStretchMod +=
-              pushCenterXStretchMod *
-              ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
-                (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
+              alignmentPushYModMod
           }
 
           // push force
@@ -261,7 +256,7 @@ export const omniForce = ({
     if (!primaryCell) return
 
     if (manageMedia) {
-      primaryCell.targetMediaVersion = 2
+      primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
     }
 
     primaryCellX = primaryCell.x + primaryCell.vx

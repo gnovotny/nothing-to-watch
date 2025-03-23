@@ -4,6 +4,7 @@ precision highp float;
 
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
+uniform highp sampler2D uVoroIndexBuffer2Texture;
 uniform highp usampler2D uCellNeighborsTexture;
 uniform highp usampler2D uCellNeighborsAltTexture;
 uniform highp sampler2D uCellWeightsTexture;
@@ -22,6 +23,8 @@ uniform vec3 iResolution;
 uniform int iNumCells;
 uniform int iLatticeRows;
 uniform int iLatticeCols;
+uniform float fLatticeCellWidth;
+uniform float fLatticeCellHeight;
 uniform int iFocusedIndex;
 uniform float iTime;
 uniform bool bForceMaxQuality;
@@ -36,7 +39,8 @@ in vec2 vUv;
 
 layout(location = 0) out vec4 voroIndexBufferColor;
 layout(location = 1) out vec4 outputColor;
-layout(location = 2) out vec2 voroEdgeBufferColor;
+layout(location = 2) out vec3 voroEdgeBufferColor;
+layout(location = 3) out vec4 voroIndexBuffer2Color;
 
 #define PI 3.14159265359
 #define PI2 2.0 * PI
@@ -48,6 +52,10 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define MAX_NEIGHBOR_ITERATIONS_LEVEL_3 48u
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
+#define DRAW_EDGES 1
+#define EDGE_SCALING 1
+#define DOUBLE_INDEX_POOL 1
+#define DOUBLE_INDEX_POOL_BUFFER 0
 #define FISHEYE_TEST 0
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
@@ -70,7 +78,9 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
-#define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.005 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+#define ROUNDNESS 0.025 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.05 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
 //#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
 
 #define EDGE_1 .005
@@ -78,6 +88,7 @@ layout(location = 2) out vec2 voroEdgeBufferColor;
 
 struct Data {
     uvec4 indices;
+    uvec4 indices2;
     vec2 minEdgeDists;
     vec4 mediaBbox;
     bool debugFlag;
@@ -365,7 +376,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
     return texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
 }
 
-void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeDists, in float weight, in float weightOffset, in float weightOffsetScale) {
+void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeDists, in float weight, in float weightOffset, in float weightOffsetScale, in float scaleMod) {
     vec2 closeCellCoords = fetchCellCoords(closeIndex);
 
     #if WEIGHTED_DIST == 1 || X_DIST_SCALING == 1
@@ -399,19 +410,29 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
     #endif
 
     //  minEdgeDists.x = smin( minEdgeDists.x, len, ROUNDNESS );
-    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS);
+//    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS*min(scaleMod*5., 1.));
+//    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*min(scaleMod, 1.));
+//    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod*scaleMod*10.);
+    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*sqrt(scaleMod));
+//    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod);
     minEdgeDists.y = min(minEdgeDists.y, len);
 }
 
 void sortClosest(
     inout vec4 distances,
+    inout vec4 distances2,
     inout uvec4 indices,
+    inout uvec4 indices2,
     uint index,
     vec2 center,
     float weightOffsetScale,
     float prevMaxWeight
 ) {
     if (indexIsUndefined(index) || any(equal(indices, uvec4(index)))) return;
+
+    #if DOUBLE_INDEX_POOL == 1
+        if (any(equal(indices2, uvec4(index)))) return;
+    #endif
 
     float weight = weightTexData(index);
     float weightOffset = weightOffsetScale * weight;
@@ -432,23 +453,52 @@ void sortClosest(
         distances = vec4(distances.xyz, dist);
         indices = uvec4(indices.xyz, index);
     }
+    #if DOUBLE_INDEX_POOL == 1
+    else if (dist < distances2.x) {
+        distances2 = vec4(dist, distances2.xyz);
+        indices2 = uvec4(index, indices2.xyz);
+    } else if (dist < distances2.y) {
+        distances2 = vec4(distances2.x, dist, distances2.yz);
+        indices2 = uvec4(indices2.x, index, indices2.yz);
+    } else if (dist < distances2.z) {
+        distances2 = vec4(distances2.xy, dist, distances2.z);
+        indices2 = uvec4(indices2.xy, index, indices2.z);
+    } else if (dist < distances2.w) {
+        distances2 = vec4(distances2.xyz, dist);
+        indices2 = uvec4(indices2.xyz, index);
+    }
+    #endif
+
 }
 
 uvec4 fetchIndices(vec2 position) {
     return floatBitsToUint(texelFetch(uVoroIndexBufferTexture, ivec2(position), 0)) - 1u;
 }
 
-void fetchAndSortIndices( inout vec4 distances, inout uvec4 prevIndices, in vec2 samplePoint, in vec2 cellCenter, in float weightOffsetScale, in float prevMaxWeight ) {
-    uvec4 indices = fetchIndices(samplePoint);
+uvec4 fetchIndices2(vec2 position) {
+    return floatBitsToUint(texelFetch(uVoroIndexBuffer2Texture, ivec2(position), 0)) - 1u;
+}
 
-    sortClosest(distances, prevIndices, indices.x, cellCenter, weightOffsetScale, prevMaxWeight);
-    sortClosest(distances, prevIndices, indices.y, cellCenter, weightOffsetScale, prevMaxWeight);
-    sortClosest(distances, prevIndices, indices.z, cellCenter, weightOffsetScale, prevMaxWeight);
-    sortClosest(distances, prevIndices, indices.w, cellCenter, weightOffsetScale, prevMaxWeight);
+void fetchAndSortIndices( inout vec4 distances, inout vec4 distances2, inout uvec4 prevIndices, inout uvec4 prevIndices2, in vec2 samplePoint, in vec2 cellCenter, in float weightOffsetScale, in float prevMaxWeight ) {
+    uvec4 indices = fetchIndices(samplePoint);
+    sortClosest(distances, distances2, prevIndices, prevIndices2, indices.x, cellCenter, weightOffsetScale, prevMaxWeight);
+    sortClosest(distances, distances2, prevIndices, prevIndices2, indices.y, cellCenter, weightOffsetScale, prevMaxWeight);
+    sortClosest(distances, distances2, prevIndices, prevIndices2, indices.z, cellCenter, weightOffsetScale, prevMaxWeight);
+    sortClosest(distances, distances2, prevIndices, prevIndices2, indices.w, cellCenter, weightOffsetScale, prevMaxWeight);
+
+    // this doesn't seem to be helping
+    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
+        uvec4 indices2 = fetchIndices2(samplePoint);
+        sortClosest(distances, distances2, prevIndices, prevIndices2, indices2.x, cellCenter, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, distances2, prevIndices, prevIndices2, indices2.y, cellCenter, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, distances2, prevIndices, prevIndices2, indices2.z, cellCenter, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, distances2, prevIndices, prevIndices2, indices2.w, cellCenter, weightOffsetScale, prevMaxWeight);
+    #endif
 }
 
 Data init(vec2 p) {
     uvec4 indices = uvec4(uint(-1));
+    uvec4 indices2 = uvec4(uint(-1));
 
     uint row = uint(round((1.-vUv.y) * float(iLatticeRows)));
     uint col = uint(round(vUv.x * float(iLatticeCols)));
@@ -458,7 +508,7 @@ Data init(vec2 p) {
         indices.x = (row-1u) * uint(iLatticeCols) + col;
     }
 
-    return Data(indices, vec2(0.), vec4(0.), false, 0.);
+    return Data(indices, indices2, vec2(0.), vec4(0.), false, 0.);
 }
 
 Data update(vec2 p) {
@@ -491,7 +541,9 @@ Data update(vec2 p) {
 //    }
 
     uvec4 indices = uvec4(-1);
+    uvec4 indices2 = uvec4(-1);
     vec4 distances = vec4(FLOAT_INF);
+    vec4 distances2 = vec4(FLOAT_INF);
 
     // pixel search
     #if PIXEL_SEARCH == 1
@@ -501,21 +553,21 @@ Data update(vec2 p) {
             rad *= randomDir(seed);
         #endif
 
-        fetchAndSortIndices(distances, indices, fragCoord, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2( 1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2( 0., 1.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2(-1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, indices, fragCoord + vec2( 0.,-1.) * rad, p, weightOffsetScale, prevMaxWeight);
+        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord, p, weightOffsetScale, prevMaxWeight);
+        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
+        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 0., 1.) * rad, p, weightOffsetScale, prevMaxWeight);
+        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2(-1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
+        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 0.,-1.) * rad, p, weightOffsetScale, prevMaxWeight);
 
         #if PIXEL_SEARCH_FULL_RANDOM == 1
             rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
             for (int i = 0; i < 16; i++) {
-                sortClosest(bestDistances, indices, wrap1d(nextUint()), p, weightOffsetScale, prevMaxWeight);
+                sortClosest(distances, distances2, indices, indices2, wrap1d(nextUint()), p, weightOffsetScale, prevMaxWeight);
             }
         #endif
 
     # else
-        sortClosest(distances, indices, closestIndex, p, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, distances2, indices, indices2, closestIndex, p, weightOffsetScale, prevMaxWeight);
     #endif
 
     // neighbors search
@@ -530,21 +582,13 @@ Data update(vec2 p) {
     uint neighborsPosition = neighborsTexData(indices.x*2u);
     uint neighborsLength = neighborsTexData(indices.x*2u+1u);
     for (uint i = 0u; i < min(neighborsLength, maxNeighborIterations); i++) {
-        sortClosest(distances, indices, neighborsTexData(neighborsPosition+i), p, weightOffsetScale, prevMaxWeight);
+        sortClosest(distances, distances2, indices, indices2, neighborsTexData(neighborsPosition+i), p, weightOffsetScale, prevMaxWeight);
     }
 
     // update closest
     closestIndex = indices.x;
 
-    // edge calc using the other 3 indices
-    float weight = weightTexData(closestIndex);
-    float weightOffset = weightOffsetScale * weight;
-    vec2 cellCoords = fetchCellCoords(closestIndex);
-    vec2 minEdgeDists = vec2(0.1);
-    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
-    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
-    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale);
-
+    float scaleMod = 1.;
     // media bbox
     vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
     if (bMediaEnabled) {
@@ -582,19 +626,51 @@ Data update(vec2 p) {
         float bbX = mediaBbox.z - mediaBbox.x;
         float bbY = mediaBbox.w - mediaBbox.y;
 
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
         #if LOCK_MEDIA_ASPECT == 1
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
-            vec2 offset = vec2(bbMax/aspect,bbMax*MEDIA_ASPECT)*0.5*MEDIA_BBOX_SCALE;
-            mediaBbox.xy = avgCenter - offset;
-            mediaBbox.zw = avgCenter + offset;
+            offset *= vec2(bbMax/aspect,bbMax*MEDIA_ASPECT);
         #else
-            mediaBbox.xy = avgCenter - vec2(bbX,bbY)*0.5*MEDIA_BBOX_SCALE;
-            mediaBbox.zw = avgCenter + vec2(bbX,bbY)*0.5*MEDIA_BBOX_SCALE;
+            offset *= vec2(bbX,bbY);
+        #endif
+        mediaBbox.xy = avgCenter - offset;
+        mediaBbox.zw = avgCenter + offset;
+
+        #if EDGE_SCALING == 1
+//            scaleMod = max(bbX, bbY) / 2.;
+            scaleMod = min(bbX, bbY);
+//            scaleMod = (bbX + bbY) / 2.;
+//        scaleMod *= scaleMod;
+//                    scaleMod = (bbX * bbY) / 4. * 20.;
+//            scaleMod = clamp(scaleMod, 0.15, 0.75);
+            scaleMod = clamp(scaleMod, 0.05, 1.);
         #endif
     }
+    #if EDGE_SCALING == 1
+    else {
+        vec2 rawCellCoords = fetchRawCellCoords(closestIndex);
+        float avgXNeighborXDist = (abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
+        scaleMod = max(1. - (fLatticeCellWidth / avgXNeighborXDist), 0.3);
+    }
+    #endif
 
-    return Data(indices, minEdgeDists, mediaBbox, debugFlag, 0.);
+    // edge calc using the other 3 indices
+    vec2 cellCoords = fetchCellCoords(closestIndex);
+    float weight = weightTexData(closestIndex);
+    float weightOffset = weightOffsetScale * weight;
+    vec2 minEdgeDists = vec2(0.1);
+    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+    #if DOUBLE_INDEX_POOL == 1
+        calcMinEdgeDists(indices2.x, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+        calcMinEdgeDists(indices2.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+        calcMinEdgeDists(indices2.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+        calcMinEdgeDists(indices2.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+    #endif
+
+    return Data(indices, indices2, minEdgeDists, mediaBbox, debugFlag, scaleMod);
 }
 
 void main() {
@@ -614,9 +690,12 @@ void main() {
 
         vec2 d = p - focusCenter;
         float r = sqrt(dot(d, d));
-        //    r *= 0.25;
+//            r *= 0.25;
         r *= 0.5;
+//        r *= 0.75;
         float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.125;
+//        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.1;
+//        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.05;
 
         float bind = screenCenter.x;
         //    float bind = screenCenter.y;
@@ -624,36 +703,62 @@ void main() {
         //    float bind = sqrt(dot(focusCenter, focusCenter));
 
         p = focusCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-        //    p *= 0.75;
+//            p *= 0.75;
+//            p *= 3.;
     #endif
 
     Data data = update(p);
     uvec4 indices = data.indices;
+    uvec4 indices2 = data.indices2;
     vec3 c = bMediaEnabled ? mediaColor(mediaP, indices.x, data.mediaBbox) : randomColor(indices.x);
     float a = 1.;
 
-    float edge1 = EDGE_1 * fEdgeSmoothnessMod;
-    float edge2 = EDGE_2 * fEdgeMod;
+//    float scaleMod = data.scaleMod*2.;
+//    float scaleMod = data.scaleMod*data.scaleMod*data.scaleMod;
+    float scaleMod = data.scaleMod;
+    scaleMod = clamp(scaleMod, 0.05, 0.5);
+    scaleMod *= 10.;
+//    float scaleMod = sqrt(sqrt(data.scaleMod));
+    float inverseScaleMod = 1. - scaleMod;
 
-    #if TRANSPARENT_BG == 1
-        a = mix(
-            1.,
-            0.,
-            smoothstep(edge1, edge2, data.minEdgeDists.x)
-        );
-    # else
-        c = mix(
-            c,
-            fBaseColor,
-            smoothstep(edge1, edge2, data.minEdgeDists.x)
-        );
+//    if (inverseScaleMod > 1.) {
+//        discard;
+//    }
+
+    #if DRAW_EDGES == 1
+        float edge1 = EDGE_1 * fEdgeSmoothnessMod;
+        float edge2 = EDGE_2 * fEdgeMod;
+        #if TRANSPARENT_BG == 1
+            a = mix(
+                1.,
+                0.,
+                smoothstep(edge1, edge2, data.minEdgeDists.x)
+            );
+        # else
+            c = mix(
+                c,
+                fBaseColor,
+//                smoothstep(edge1, edge2, data.minEdgeDists.x)
+                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
+            );
+        #endif
     #endif
 
     voroIndexBufferColor = uintBitsToFloat(indices + 1u);
+
 //    if (focusCenterDist > 425.) {
 //    if (focusCenterDist > 725.) {
 //        c = fBaseColor;
 //    }
     outputColor = vec4(c, a);
-    voroEdgeBufferColor = vec2(data.minEdgeDists.x, data.minEdgeDists.y);
+//    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*inverseScaleMod)), 1.);
+//    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)*scaleMod), 1.);
+//    outputColor = vec4(vec3(smoothstep(edge1*scaleMod, edge2, data.minEdgeDists.x)), 1.);
+//    outputColor = vec4(vec3(smoothstep(edge1*scaleMod*5., edge2*scaleMod*50., data.minEdgeDists.x)), 1.);
+//    outputColor = vec4(vec3(smoothstep(edge1*scaleMod, edge2*scaleMod*10., data.minEdgeDists.x)), 1.);
+//    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)), 1.);
+    voroEdgeBufferColor = vec3(data.minEdgeDists.x, data.minEdgeDists.y, data.scaleMod);
+    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
+        voroIndexBuffer2Color = uintBitsToFloat(indices2 + 1u);
+    #endif
 }

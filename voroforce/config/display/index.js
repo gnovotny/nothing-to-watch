@@ -1,9 +1,9 @@
 // import mainFrag from './main.frag'
 // import mainFrag from './main2.frag'
 // import mainFrag from './main3.frag'
-import mainFrag from './main33.frag'
+import mainFrag from './main.frag'
 // import postFrag from './post.frag'
-import postFrag from './post33.frag'
+import postFrag from './post.frag'
 
 export default {
   scene: {
