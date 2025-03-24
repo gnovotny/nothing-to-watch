@@ -52,6 +52,7 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define MAX_NEIGHBOR_ITERATIONS_LEVEL_3 48u
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
+#define BICUBIC_MEDIA_FILTER 0
 #define DRAW_EDGES 0
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
@@ -62,7 +63,9 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define MEDIA_UV_ROTATE_FACTOR 1
 #define WEIGHTED_DIST 1
 //#define WEIGHTED_DIST 0
-#define WEIGHT_OFFSET_SCALE 2000.
+//#define WEIGHT_OFFSET_SCALE 2000.
+#define WEIGHT_OFFSET_SCALE 0.1
+//#define WEIGHT_OFFSET_SCALE 1.
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
 #define X_DIST_SCALING 1
 //#define X_DIST_SCALING 0
@@ -97,6 +100,45 @@ struct Data {
     bool debugFlag;
     float scaleMod;
 };
+
+// Cubic function for interpolation
+vec4 cubic(float v) {
+    vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
+    vec4 s = n * n * n;
+    float x = s.x;
+    float y = s.y - 4.0 * s.x;
+    float z = s.z - 4.0 * s.y + 6.0 * s.x;
+    float w = 6.0 - x - y - z;
+    return vec4(x, y, z, w) * (1.0/6.0);
+}
+
+vec4 bicubicFilter(mediump sampler2DArray tex, vec3 texCoord, vec2 texSize) {
+    vec2 invTexSize = 1.0 / texSize;
+    texCoord.xy = texCoord.xy * texSize - 0.5;
+
+    vec2 fxy = fract(texCoord.xy);
+    texCoord.xy -= fxy;
+
+    vec4 xcubic = cubic(fxy.x);
+    vec4 ycubic = cubic(fxy.y);
+
+    vec4 c = texCoord.xxyy + vec2(-0.5, 1.5).xyxy;
+
+    vec4 s = vec4(xcubic.xz + xcubic.yw, ycubic.xz + ycubic.yw);
+    vec4 offset = c + vec4(xcubic.yw, ycubic.yw) / s;
+
+    offset *= invTexSize.xxyy;
+
+    vec4 sample0 = texture(tex, vec3(offset.xz, float(texCoord.z)));
+    vec4 sample1 = texture(tex, vec3(offset.yz, float(texCoord.z)));
+    vec4 sample2 = texture(tex, vec3(offset.xw, float(texCoord.z)));
+    vec4 sample3 = texture(tex, vec3(offset.yw, float(texCoord.z)));
+
+    float sx = s.x / (s.x + s.y);
+    float sy = s.z / (s.z + s.w);
+
+    return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
+}
 
 uint hash(inout uint x) {
     x ^= x >> 16;
@@ -371,14 +413,35 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
     float tileHeight = 1.0 / float(mediaRows);
     vec2 tileOffset = vec2(tileCol * tileWidth, tileRow * tileHeight);
 
-    vec2 mediaTexcoord = tileOffset + mediaTileUv * vec2(tileWidth, tileHeight);
+    vec2 tileSize = vec2(tileWidth, tileHeight);
+    vec2 mediaTexcoord = tileOffset + mediaTileUv * tileSize;
+
 
     if (iMediaVersion == 1) {
-        return texture(uMediaV1Texture, vec3(mediaTexcoord, float(layer))).rgb;
+        #if BICUBIC_MEDIA_FILTER == 1
+            vec2 texSize = vec2(textureSize(uMediaV1Texture, 0).xy);
+            vec2 tileTexSize = texSize*tileSize;
+            return bicubicFilter(uMediaV1Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+        #else
+            return texture(uMediaV1Texture, vec3(mediaTexcoord, float(layer))).rgb;
+        #endif
     } else if (iMediaVersion == 2) {
-        return texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
+
+        #if BICUBIC_MEDIA_FILTER == 1
+            vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
+            vec2 tileTexSize = texSize*tileSize;
+            return bicubicFilter(uMediaV2Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+        #else
+            return texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
+        #endif
     }
-    return texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
+    #if BICUBIC_MEDIA_FILTER == 1
+        vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
+        vec2 tileTexSize = texSize*tileSize;
+        return bicubicFilter(uMediaV0Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+    #else
+        return texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
+    #endif
 }
 
 void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeDists, in float weight, in float weightOffset, in float weightOffsetScale, in float scaleMod) {
@@ -491,7 +554,6 @@ void fetchAndSortIndices( inout vec4 distances, inout vec4 distances2, inout uve
     sortClosest(distances, distances2, prevIndices, prevIndices2, indices.z, cellCenter, weightOffsetScale, prevMaxWeight);
     sortClosest(distances, distances2, prevIndices, prevIndices2, indices.w, cellCenter, weightOffsetScale, prevMaxWeight);
 
-    // this doesn't seem to be helping
     #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
         uvec4 indices2 = fetchIndices2(samplePoint);
         sortClosest(distances, distances2, prevIndices, prevIndices2, indices2.x, cellCenter, weightOffsetScale, prevMaxWeight);
@@ -529,7 +591,7 @@ Data update(vec2 p) {
     float mediaWeightOffsetScale = 1.;
 
     #if WEIGHTED_DIST == 1
-        weightOffsetScale = WEIGHT_OFFSET_SCALE * min(fetchResolutionScale(), 0.1) * 1./float(iNumCells);
+        weightOffsetScale = WEIGHT_OFFSET_SCALE * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
         mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
     #endif
 

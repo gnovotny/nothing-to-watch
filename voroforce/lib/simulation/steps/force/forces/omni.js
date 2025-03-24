@@ -30,10 +30,10 @@ export const omniForce = ({
     primarySelector = 'focused',
     requestMediaVersions: _requestMediaVersions = true,
     requestMediaVersions = globalConfig.media?.enabled && _requestMediaVersions,
-    mediaV2ColLevelAdjacencyThreshold = 9,
+    mediaV2ColLevelAdjacencyThreshold = 6,
     mediaV2RowLevelAdjacencyThreshold = 3,
-    mediaV1ColLevelAdjacencyThreshold = mediaV2ColLevelAdjacencyThreshold * 3,
-    mediaV1RowLevelAdjacencyThreshold = mediaV2RowLevelAdjacencyThreshold * 3,
+    mediaV1ColLevelAdjacencyThreshold = mediaV2ColLevelAdjacencyThreshold * 4,
+    mediaV1RowLevelAdjacencyThreshold = mediaV2RowLevelAdjacencyThreshold * 4,
     mediaV1SpeedLimit = 0.75,
     mediaV2SpeedLimit = 0.25,
     manageWeights = false,
@@ -313,6 +313,9 @@ export const omniForce = ({
               rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
             ) {
               cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
+              // cell.targetMediaVersion = 1 // reduce res if out of range (mipmapping)
+            } else {
+              cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (mipmapping)
             }
           }
 

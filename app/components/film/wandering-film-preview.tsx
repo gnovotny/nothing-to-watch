@@ -5,6 +5,7 @@ import { useVoroforce } from '../../lib/voroforce'
 import { FilmPoster } from './shared/film-poster'
 import { FilmRatingGauge } from './shared/film-rating-gauge'
 import { lerp } from '../../lib/utils/math'
+import { Badge } from '../ui/badge'
 
 const WanderingFilmPreview = () => {
   const active = true
@@ -78,15 +79,20 @@ const WanderingFilmPreview = () => {
               },
             )}
           >
+            <p className='landscape:line-clamp- line-clamp-2 font-medium text-base text-foreground/90 leading-none lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
+              {film.tagline}
+            </p>
             <h3 className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'>
               {film.title}
               <span className='font-normal text-foreground/50'>
                 &nbsp;({film.year})
               </span>
             </h3>
-            <p className='landscape:line-clamp- line-clamp-2 font-medium text-base text-foreground/90 leading-none lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
-              {film.tagline}
-            </p>
+            <div className='flex flex-row gap-3 pt-2'>
+              {film.genres?.map((genre) => (
+                <Badge key={genre}>{genre}</Badge>
+              ))}
+            </div>
             <FilmRatingGauge value={film.rating} />
           </div>
         </div>

@@ -16,11 +16,10 @@ export class Compressed3dMediaGridTexture extends Texture {
       minFilter: gl.LINEAR,
       magFilter: gl.LINEAR,
 
-      // Optional: You might want these settings too
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
 
-      // If using mipmaps (recommended for better quality)
+      // If using mipmaps
       // generateMipmaps: true, // For some compressed formats
       // minFilter: gl.LINEAR_MIPMAP_LINEAR, // Trilinear filtering with mipmaps
     })
@@ -59,6 +58,71 @@ export class Compressed3dMediaGridTexture extends Texture {
       // set active texture unit to perform texture functions
       this.gl.renderer.activeTexture(textureUnit)
       this.bind()
+
+      if (this.flipY !== this.glState.flipY) {
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, this.flipY)
+        this.glState.flipY = this.flipY
+      }
+
+      if (this.premultiplyAlpha !== this.glState.premultiplyAlpha) {
+        this.gl.pixelStorei(
+          this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
+          this.premultiplyAlpha,
+        )
+        this.glState.premultiplyAlpha = this.premultiplyAlpha
+      }
+
+      if (this.unpackAlignment !== this.glState.unpackAlignment) {
+        this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, this.unpackAlignment)
+        this.glState.unpackAlignment = this.unpackAlignment
+      }
+
+      if (this.minFilter !== this.state.minFilter) {
+        this.gl.texParameteri(
+          this.target,
+          this.gl.TEXTURE_MIN_FILTER,
+          this.minFilter,
+        )
+        this.state.minFilter = this.minFilter
+      }
+
+      if (this.magFilter !== this.state.magFilter) {
+        this.gl.texParameteri(
+          this.target,
+          this.gl.TEXTURE_MAG_FILTER,
+          this.magFilter,
+        )
+        this.state.magFilter = this.magFilter
+      }
+
+      if (this.wrapS !== this.state.wrapS) {
+        this.gl.texParameteri(this.target, this.gl.TEXTURE_WRAP_S, this.wrapS)
+        this.state.wrapS = this.wrapS
+      }
+
+      if (this.wrapT !== this.state.wrapT) {
+        this.gl.texParameteri(this.target, this.gl.TEXTURE_WRAP_T, this.wrapT)
+        this.state.wrapT = this.wrapT
+      }
+
+      if (this.wrapR !== this.state.wrapR) {
+        this.gl.texParameteri(this.target, this.gl.TEXTURE_WRAP_R, this.wrapR)
+        this.state.wrapR = this.wrapR
+      }
+
+      if (this.anisotropy && this.anisotropy !== this.state.anisotropy) {
+        this.gl.texParameterf(
+          this.target,
+          this.gl.renderer.getExtension('EXT_texture_filter_anisotropic')
+            .TEXTURE_MAX_ANISOTROPY_EXT,
+          this.anisotropy,
+        )
+        this.state.anisotropy = this.anisotropy
+      }
+    }
+
+    if (this.generateMipmaps) {
+      this.gl.generateMipmap(this.target)
     }
 
     this.pendingLayerUpdates.forEach(({ index, bytes }) => {
