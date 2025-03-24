@@ -110,13 +110,6 @@ export class Controls extends EventTarget {
       return
     }
 
-    // if (!this.prevX || !this.prevY) {
-    //   this.prevX = this.targetPointer.x
-    //   this.prevY = this.targetPointer.y
-    // }
-
-    // console.log('this.prevX', this.prevX)
-
     // Calculate the raw movement
     const deltaX = this.targetPointer.x - this.prevX
     const deltaY = this.targetPointer.y - this.prevY
@@ -124,8 +117,6 @@ export class Controls extends EventTarget {
     // Calculate distance
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
-    console.log('distance', distance)
-    console.log('this.pointerRadius', this.pointerRadius)
     // Abort if outside of reaction radius
     if (distance > this.pointerRadius) {
       this.activePointerRadiusScale = this.unfocusedPointerRadiusScale
