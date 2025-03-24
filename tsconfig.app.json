@@ -33,8 +33,6 @@
     }
   },
   "include": [
-    "app",
-    "voroforce",
-    "voroforce/config"
+    "app"
   ]
 }
