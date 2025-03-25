@@ -143,19 +143,6 @@ export const omniForce = ({
   }
 
   function forceSetup(alpha) {
-    if (pushBreathing) {
-      timestamp = Date.now()
-      if (!startTime) startTime = timestamp
-      breathingPushMod =
-        1 -
-        pushBreathingVariability +
-        diaphragmaticBreathing(
-          ((timestamp - startTime) % pushBreathingCycleDuration) /
-            pushBreathingCycleDuration,
-        ) *
-          pushBreathingVariability
-    }
-
     newPrimaryCell = selectPrimary(cells)
     if (newPrimaryCell?.index !== primaryCell?.index) {
       prevPrimaryCell = primaryCell
@@ -166,6 +153,20 @@ export const omniForce = ({
 
     pointerSpeedScale = pointer.speedScale
     inversePointerSpeedScale = 1 - pointerSpeedScale
+
+    if (pushBreathing) {
+      timestamp = Date.now()
+      if (!startTime) startTime = timestamp
+      breathingPushMod =
+        1 -
+        pushBreathingVariability +
+        diaphragmaticBreathing(
+          ((timestamp - startTime) % pushBreathingCycleDuration) /
+            pushBreathingCycleDuration,
+        ) *
+          pushBreathingVariability *
+          inversePointerSpeedScale
+    }
 
     if (requestMediaVersions) {
       if (pointerSpeedScale < mediaV2SpeedLimit) {
@@ -242,7 +243,8 @@ export const omniForce = ({
         distRatio = clamp(0, 1, (1 - distRatio) ** 2)
         primaryCellWeight =
           distRatio *
-          breathingPushMod ** 2 *
+          // breathingPushMod ** 2 *
+          breathingPushMod *
           inversePointerSpeedScale *
           pushSpeedFactor
         primaryCellWeight = primaryCell.weight = easedMinLerp(

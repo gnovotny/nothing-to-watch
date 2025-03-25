@@ -1,52 +1,111 @@
 import { useEffect, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { cn } from '../../lib/utils/tw'
-import { useVoroforce } from '../../lib/voroforce'
+import {
+  easedMinLerp,
+  MIN_LERP_EASING_TYPES,
+  useVoroforce,
+  type VoroforceCell,
+} from '../../lib/voroforce'
 import { FilmPoster } from './shared/film-poster'
 import { FilmRatingGauge } from './shared/film-rating-gauge'
-import { lerp } from '../../lib/utils/math'
 import { Badge } from '../ui/badge'
+import { useMediaQuery } from '../../hooks/use-media-query'
+import { down } from '../../lib/utils/mq'
 
 const WanderingFilmPreview = () => {
   const active = true
   const reverse = false
   const containerRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
+  const isSmallScreen = useMediaQuery(down('md'))
 
-  const { film, isPreviewMode, voroforce } = useVoroforce(
+  const { film, isPreviewMode } = useVoroforce(
     useShallow((state) => ({
       film: state.film,
       isPreviewMode: state.isPreviewMode,
-      voroforce: state.instance,
     })),
   )
 
-  const position = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
-  const offset = useRef<{ x: number; y: number }>({ x: -250, y: -270 })
+  const primaryCell = useRef<VoroforceCell>(null)
+  const voroforceRef = useRef(useVoroforce.getState().instance)
+  const positionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const scaleRef = useRef<number>(0)
+  const opacityRef = useRef<number>(0)
+  const targetPositionRef = useRef<{ x: number; y: number }>(
+    positionRef.current,
+  )
 
   useEffect(() => {
-    const { ticker, controls } = voroforce
+    if (isSmallScreen) return
+    const {
+      ticker,
+      controls,
+      controls: { pointer },
+      config: {
+        lattice: { cols },
+      },
+    } = voroforceRef.current
 
-    position.current = { x: controls.prevX, y: controls.prevY }
+    let customSpeedScale = 0
+
     const onTick = () => {
+      if (!primaryCell.current) return
       if (!containerRef.current) return
-      position.current.x = lerp(
-        position.current.x,
-        controls.prevX + offset.current.x,
+      if (!innerRef.current) return
+      positionRef.current.x = easedMinLerp(
+        positionRef.current.x,
+        targetPositionRef.current.x,
         0.1,
+        MIN_LERP_EASING_TYPES.easeInOutQuad,
       )
-      position.current.y = lerp(
-        position.current.y,
-        controls.prevY + offset.current.y,
+      positionRef.current.y = easedMinLerp(
+        positionRef.current.y,
+        targetPositionRef.current.y,
         0.1,
+        MIN_LERP_EASING_TYPES.easeInOutQuad,
       )
-      containerRef.current.style.translate = `${position.current.x}px ${position.current.y}px`
+
+      // customSpeedScale = 1.2 - Math.max(pointer.speedScale, 0.2)
+      customSpeedScale = 1 - pointer.speedScale
+      scaleRef.current = easedMinLerp(
+        scaleRef.current,
+        customSpeedScale,
+        // customSpeedScale * 0.5 + 0.5 * primaryCell.current.weight,
+        0.05,
+        MIN_LERP_EASING_TYPES.easeInOutQuad,
+      )
+      opacityRef.current = easedMinLerp(
+        scaleRef.current,
+        customSpeedScale,
+        0.05,
+        MIN_LERP_EASING_TYPES.linear,
+      )
+      containerRef.current.style.translate = `${positionRef.current.x}px ${positionRef.current.y}px`
+      innerRef.current.style.scale = `${scaleRef.current}`
+      innerRef.current.style.opacity = `${scaleRef.current}`
+    }
+
+    const onCellFocused = ({
+      cell,
+      cells,
+    }: { cell: VoroforceCell; cells: VoroforceCell[] }) => {
+      if (cell) {
+        primaryCell.current = cell
+        const neighborCell = cells[cell.index - cols]
+        if (neighborCell) {
+          targetPositionRef.current = neighborCell
+        }
+      }
     }
     ticker.addEventListener('tick', onTick)
+    controls.addEventListener('focused', onCellFocused)
 
     return () => {
       ticker.removeEventListener('tick', onTick)
+      controls.removeEventListener('focused', onCellFocused)
     }
-  }, [voroforce])
+  }, [isSmallScreen])
 
   return (
     <>
@@ -54,46 +113,56 @@ const WanderingFilmPreview = () => {
         <div
           ref={containerRef}
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-10 flex w-300 max-w-full flex-row gap-6 p-6 opacity-0 transition-opacity duration-300 will-change-transform lg:max-w-[80%] lg:gap-9 lg:p-9',
+            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-6 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:max-w-[80%] lg:p-9',
             {
-              'right-0 left-auto flex-row-reverse': reverse,
+              'right-0 left-auto': reverse,
               '!opacity-100': active,
             },
           )}
         >
-          <FilmPoster
-            film={film}
-            className={cn(
-              'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
-              {
-                'pointer-events-auto': active,
-              },
-            )}
-            // onPointerOver={onPointerOver}
-          />
           <div
+            ref={innerRef}
             className={cn(
-              'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',
+              '-translate-y-1/2 -translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
               {
-                'items-end text-right': reverse,
+                'flex-row-reverse': reverse,
               },
             )}
           >
-            <p className='landscape:line-clamp- line-clamp-2 font-medium text-base text-foreground/90 leading-none lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
-              {film.tagline}
-            </p>
-            <h3 className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'>
-              {film.title}
-              <span className='font-normal text-foreground/50'>
-                &nbsp;({film.year})
-              </span>
-            </h3>
-            <div className='flex flex-row gap-3 pt-2'>
-              {film.genres?.map((genre) => (
-                <Badge key={genre}>{genre}</Badge>
-              ))}
+            <FilmPoster
+              film={film}
+              className={cn(
+                'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
+                {
+                  'pointer-events-auto': active,
+                },
+              )}
+              // onPointerOver={onPointerOver}
+            />
+            <div
+              className={cn(
+                'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',
+                {
+                  'items-end text-right': reverse,
+                },
+              )}
+            >
+              <p className='landscape:line-clamp- line-clamp-2 font-medium text-base text-foreground/90 leading-none lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
+                {film.tagline}
+              </p>
+              <h3 className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'>
+                {film.title}
+                <span className='font-normal text-foreground/50'>
+                  &nbsp;({film.year})
+                </span>
+              </h3>
+              <div className='flex flex-row gap-3 pt-2'>
+                {film.genres?.map((genre) => (
+                  <Badge key={genre}>{genre}</Badge>
+                ))}
+              </div>
+              <FilmRatingGauge value={film.rating} />
             </div>
-            <FilmRatingGauge value={film.rating} />
           </div>
         </div>
       )}

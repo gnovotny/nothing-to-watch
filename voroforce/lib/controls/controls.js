@@ -10,16 +10,18 @@ class PointerMoveEvent extends Event {
 }
 
 class CellFocusedEvent extends Event {
-  constructor(cell) {
+  constructor(cell, cells) {
     super('focused')
     this.cell = cell
+    this.cells = cells
   }
 }
 
 class CellSelectedEvent extends Event {
-  constructor(cell) {
+  constructor(cell, cells) {
     super('selected')
     this.cell = cell
+    this.cells = cells
   }
 }
 
@@ -189,7 +191,9 @@ export class Controls extends EventTarget {
         this.cells.realFocusedIndex = index
         if (!this.focusDisabled) {
           this.cells.focusedIndex = index
-          this.dispatchEvent(new CellFocusedEvent(this.cells.focused))
+          this.dispatchEvent(
+            new CellFocusedEvent(this.cells.focused, this.cells),
+          )
         }
       }
 
@@ -303,7 +307,7 @@ export class Controls extends EventTarget {
       index: undefined,
     })
     // this.cells.focusedIndex = undefined
-    // this.dispatchEvent(new CellFocusedEvent(undefined))
+    // this.dispatchEvent(new CellFocusedEvent(undefined, this.cells))
   }
 
   disableFocus() {
