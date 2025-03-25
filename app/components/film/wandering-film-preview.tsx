@@ -42,9 +42,6 @@ const WanderingFilmPreview = () => {
       ticker,
       controls,
       controls: { pointer },
-      config: {
-        lattice: { cols },
-      },
     } = voroforceRef.current
 
     let customSpeedScale = 0
@@ -67,7 +64,7 @@ const WanderingFilmPreview = () => {
       )
 
       // customSpeedScale = 1.2 - Math.max(pointer.speedScale, 0.2)
-      customSpeedScale = 1 - pointer.speedScale
+      customSpeedScale = 1 - pointer.speedScale * 4
       scaleRef.current = easedMinLerp(
         scaleRef.current,
         customSpeedScale,
@@ -92,6 +89,11 @@ const WanderingFilmPreview = () => {
     }: { cell: VoroforceCell; cells: VoroforceCell[] }) => {
       if (cell) {
         primaryCell.current = cell
+        const {
+          config: {
+            lattice: { cols },
+          },
+        } = voroforceRef.current
         const neighborCell = cells[cell.index - cols]
         if (neighborCell) {
           targetPositionRef.current = neighborCell
@@ -113,7 +115,7 @@ const WanderingFilmPreview = () => {
         <div
           ref={containerRef}
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-6 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:max-w-[80%] lg:p-9',
+            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-6 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
             {
               'right-0 left-auto': reverse,
               '!opacity-100': active,
@@ -123,7 +125,7 @@ const WanderingFilmPreview = () => {
           <div
             ref={innerRef}
             className={cn(
-              '-translate-y-1/2 -translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
+              '-translate-y-2/3 -translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
               {
                 'flex-row-reverse': reverse,
               },
@@ -150,7 +152,10 @@ const WanderingFilmPreview = () => {
               <p className='landscape:line-clamp- line-clamp-2 font-medium text-base text-foreground/90 leading-none lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
                 {film.tagline}
               </p>
-              <h3 className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'>
+              <h3
+                // className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'
+                className='line-clamp-2.2 font-black text-3xl lg:line-clamp-1.1 lg:text-5xl landscape:line-clamp-1.1'
+              >
                 {film.title}
                 <span className='font-normal text-foreground/50'>
                   &nbsp;({film.year})

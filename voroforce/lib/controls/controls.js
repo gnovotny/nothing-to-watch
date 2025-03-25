@@ -383,6 +383,11 @@ export class Controls extends EventTarget {
   resize(dimensions) {
     this.maxPointerSpeed = this.config.maxPointerSpeed * dimensions.diagonal
     this.pointerRadius = this.activePointerRadiusScale * dimensions.diagonal
+    if (this.cells.focused) {
+      this.prevX = this.cells.focused.x
+      this.prevY = this.cells.focused.y
+      this.dispatchEvent(new CellFocusedEvent(this.cells.focused, this.cells))
+    }
   }
 
   dispose() {
