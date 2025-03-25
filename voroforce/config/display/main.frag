@@ -64,7 +64,7 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define WEIGHTED_DIST 1
 //#define WEIGHTED_DIST 0
 //#define WEIGHT_OFFSET_SCALE 2000.
-#define WEIGHT_OFFSET_SCALE 0.1
+#define WEIGHT_OFFSET_SCALE 0.25
 //#define WEIGHT_OFFSET_SCALE 1.
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
 #define X_DIST_SCALING 1
@@ -479,6 +479,7 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
 
     //  minEdgeDists.x = smin( minEdgeDists.x, len, ROUNDNESS );
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS*min(scaleMod*5., 1.));
+//    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS);
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*min(scaleMod, 1.));
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod*scaleMod*10.);
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*sqrt(scaleMod));

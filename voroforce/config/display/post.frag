@@ -46,7 +46,8 @@ float bumpFunc(vec2 p){
 
     float scaleMod = v.z;
     scaleMod = clamp(scaleMod, 0.05, 0.5);
-    scaleMod *= 20.;
+//    scaleMod *= 20.;
+    scaleMod *= 10.;
 
 //    float ew = .05; // Border threshold value. Bigger numbers mean thicker borders.
 //    float ew = .07; // Border threshold value. Bigger numbers mean thicker borders.
@@ -56,8 +57,10 @@ float bumpFunc(vec2 p){
     float EDGE_1 = .007;
     float EDGE_2 = .001;
 
-    float edge1 = EDGE_1*scaleMod;
-    float edge2 = EDGE_2*scaleMod*10.;
+//    float edge1 = EDGE_1*scaleMod;
+//    float edge2 = EDGE_2*scaleMod*10.;
+    float edge1 = EDGE_1;
+    float edge2 = EDGE_2*10.;
 
 //    objID = smoothstep(edge1, edge2, v.x);
 //    objID = smoothstep(edge1*v.z, edge2*v.z*5., v.x);
@@ -169,7 +172,8 @@ void main(){
 //    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
 
     // Object color. Initialize to the texture value.
-    vec3 oCol = tx *.025;
+//    vec3 oCol = tx *.025;
+    vec3 oCol = tx *.05;
 //    vec3 oCol = tx *.15;
 //    vec3 oCol = tx *.9;
 

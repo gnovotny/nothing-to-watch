@@ -30,7 +30,8 @@ export const forceSimulationStepPreviewConfig = {
         breathing: true,
         alignmentMaxLevelsX: 40,
         // centerXStretchMod: 1,
-        centerXStretchMod: 1.25,
+        // centerXStretchMod: 1.25,
+        centerXStretchMod: 0.5,
         speedFactor: 1,
       },
       lattice: {
