@@ -85,10 +85,10 @@ export default class Renderer {
     const width = this.dimensions.width
     const height = this.dimensions.height
     this.instance.setScissor(
-      width - padding * 2 - offsetRight - offsetLeft * pixelRatio,
-      height - padding * 2 - offsetTop - offsetBottom * pixelRatio,
-      padding + offsetLeft * pixelRatio,
-      padding + offsetTop * pixelRatio,
+      (width - padding * 2 - offsetRight - offsetLeft) * pixelRatio,
+      (height - padding * 2 - offsetTop - offsetBottom) * pixelRatio,
+      (padding + offsetLeft) * pixelRatio,
+      (padding + offsetTop) * pixelRatio,
     )
   }
 
