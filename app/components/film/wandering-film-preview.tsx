@@ -125,7 +125,7 @@ const WanderingFilmPreview = () => {
           <div
             ref={innerRef}
             className={cn(
-              '-translate-y-2/3 -translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
+              'md:-translate-y-2/3 md:-translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
               {
                 'flex-row-reverse': reverse,
               },
@@ -149,7 +149,7 @@ const WanderingFilmPreview = () => {
                 },
               )}
             >
-              <p className='landscape:line-clamp- line-clamp-2 font-medium text-base text-foreground/90 leading-none lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
+              <p className='landscape:line-clamp- line-clamp-2 hidden font-medium text-base text-foreground/90 leading-none md:inline-block lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
                 {film.tagline}
               </p>
               <h3

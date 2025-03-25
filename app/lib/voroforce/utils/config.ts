@@ -61,7 +61,7 @@ export const getVoroforceConfigProps = (state: VoroforceState) => {
   const isSmallScreen = matchMediaQuery(down('md')).matches
   const config = transformConfig(
     mergeConfigs(baseConfig, {
-      cells: isSmallScreen ? 5000 : 50000,
+      cells: isSmallScreen ? 10000 : 50000,
       ...(!playedIntro
         ? {
             lattice: introModeLatticeConfig,
