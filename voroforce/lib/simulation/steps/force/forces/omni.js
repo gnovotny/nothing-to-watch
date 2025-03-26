@@ -1,3 +1,5 @@
+// @ts-nocheck
+// ^ the huge destructuring of function args causes tsc to hang for some reason
 import { clamp, easedMinLerp, lerp, mapRange } from '../../../../utils'
 import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
 
