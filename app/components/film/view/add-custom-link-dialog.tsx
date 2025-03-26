@@ -73,7 +73,7 @@ export function AddCustomLinkDialog() {
       <DialogTrigger asChild>
         <Button
           size='icon'
-          className='hidden md:inline-flex'
+          className='hidden cursor-pointer md:inline-flex'
           title='Add new link'
         >
           <Plus />

@@ -11,6 +11,7 @@ export default {
       layers: 1,
       layerIndexStart: 0,
       layerSrcFormat: '/low/dds/{INDEX}.dds',
+      type: 'default',
     },
     {
       cols: 90,
@@ -20,6 +21,7 @@ export default {
       layers: 10,
       layerIndexStart: 0,
       layerSrcFormat: '/mid/dds/{INDEX}.dds',
+      type: 'default',
     },
     {
       cols: 18,
@@ -29,6 +31,7 @@ export default {
       layers: 241,
       layerIndexStart: 0,
       layerSrcFormat: '/high/dds/{INDEX}.dds',
+      type: 'default',
     },
   ],
 }

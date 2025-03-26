@@ -113,6 +113,7 @@ export class Voroforce {
       ...this.sharedCellData,
       ...this.sharedLoadedMediaVersionLayersData,
     })
+    this.loader.store = this.store // TODO TMP?
   }
 
   start() {

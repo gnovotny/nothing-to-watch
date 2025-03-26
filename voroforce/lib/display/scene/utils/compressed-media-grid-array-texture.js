@@ -1,6 +1,6 @@
 import { Texture } from 'ogl'
 
-export class Compressed3dMediaGridTexture extends Texture {
+export class CompressedMediaGridArrayTexture extends Texture {
   constructor(gl, args) {
     const ext = gl.getExtension('WEBGL_compressed_texture_s3tc')
     if (!ext) {

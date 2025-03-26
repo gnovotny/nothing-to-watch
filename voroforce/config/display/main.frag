@@ -15,9 +15,10 @@ uniform bool bMediaEnabled;
 uniform mediump sampler2DArray uMediaV0Texture;
 uniform mediump sampler2DArray uMediaV1Texture;
 uniform mediump sampler2DArray uMediaV2Texture;
-uniform ivec3 iNumMediaVersionCols;
-uniform ivec3 iNumMediaVersionRows;
-uniform ivec3 iNumMediaVersionLayers;
+uniform mediump sampler2DArray uMediaV3Texture;
+uniform ivec3 iStdNumMediaVersionCols;
+uniform ivec3 iStdNumMediaVersionRows;
+uniform ivec3 iStdNumMediaVersionLayers;
 
 uniform vec3 iResolution;
 uniform int iNumCells;
@@ -57,8 +58,8 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define FISHEYE_TEST 0
-#define DEBUG_MEDIA_BBOXES 0
+#define FISHEYE_TEST 1
+#define DEBUG_MEDIA_BBOXES 1
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
 #define WEIGHTED_DIST 1
@@ -71,7 +72,8 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 //#define X_DIST_SCALING 0
 #define BASE_X_DIST_SCALE 1.5
 #define WEIGHTED_X_DIST_SCALE 1.5
-#define MEDIA_BBOX_SCALE 1. // TODO TMP
+//#define MEDIA_BBOX_SCALE 1. // TODO TMP
+#define MEDIA_BBOX_SCALE 2.45 // TODO TMP
 //#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
 #define LOCK_MEDIA_ASPECT 1
@@ -389,17 +391,25 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
     int mediaRows;
     // dynamic indexing of vectors and matrices is emulated and can be slow.
     if (iMediaVersion == 1) {
-        numLayers = iNumMediaVersionLayers.y;
-        mediaCols = iNumMediaVersionCols.y;
-        mediaRows = iNumMediaVersionRows.y;
+        numLayers = iStdNumMediaVersionLayers.y;
+        mediaCols = iStdNumMediaVersionCols.y;
+        mediaRows = iStdNumMediaVersionRows.y;
     } else if (iMediaVersion == 2) {
-        numLayers = iNumMediaVersionLayers.z;
-        mediaCols = iNumMediaVersionCols.z;
-        mediaRows = iNumMediaVersionRows.z;
+        numLayers = iStdNumMediaVersionLayers.z;
+        mediaCols = iStdNumMediaVersionCols.z;
+        mediaRows = iStdNumMediaVersionRows.z;
+    } else if (iMediaVersion == 3) {
+//        numLayers = 50000;
+//        mediaCols = 1;
+//        mediaRows = 1;
+//        numLayers = int(ceil(50000./54.));
+        numLayers = 1;
+        mediaCols = 9;
+        mediaRows = 6;
     } else {
-        numLayers = iNumMediaVersionLayers.x;
-        mediaCols = iNumMediaVersionCols.x;
-        mediaRows = iNumMediaVersionRows.x;
+        numLayers = iStdNumMediaVersionLayers.x;
+        mediaCols = iStdNumMediaVersionCols.x;
+        mediaRows = iStdNumMediaVersionRows.x;
     }
 
     int id = int(cellIdMapTexData(index));
@@ -433,6 +443,15 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
             return bicubicFilter(uMediaV2Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
         #else
             return texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
+        #endif
+    } else if (iMediaVersion == 3) {
+
+        #if BICUBIC_MEDIA_FILTER == 1
+            vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
+            vec2 tileTexSize = texSize*tileSize;
+            return bicubicFilter(uMediaV3Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+        #else
+            return texture(uMediaV3Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
     }
     #if BICUBIC_MEDIA_FILTER == 1

@@ -170,7 +170,8 @@ export const omniForce = ({
 
     if (requestMediaVersions) {
       if (pointerSpeedScale < mediaV2SpeedLimit) {
-        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
+        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 3)
+        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
       }
     }
 
@@ -300,7 +301,7 @@ export const omniForce = ({
         if (l !== 0 && l < pushRadius * pushRadius) {
           l = sqrt(l)
           // media loading logic, might move it at some point
-          if (requestMediaVersions) {
+          if (!isPrimaryCell && requestMediaVersions) {
             if (
               pointerSpeedScale < mediaV2SpeedLimit &&
               // l < mediaV2DistThreshold ||

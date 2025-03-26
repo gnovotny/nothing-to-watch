@@ -1,10 +1,12 @@
-import { Geometry, Mesh, Program, Texture, Transform, Triangle } from 'ogl'
+import { Geometry, Mesh, /*Program,*/ Texture, Transform, Triangle } from 'ogl'
 import devPointFragmentShader from './shaders/dev/dev-points.frag'
 import devPointVertexShader from './shaders/dev/dev-points.vert'
-import { Compressed3dMediaGridTexture } from './utils/compressed-3d-media-grid-texture'
+import { CompressedMediaGridArrayTexture } from './utils/compressed-media-grid-array-texture'
 import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
 import { CustomRenderTarget } from './utils/custom-render-target'
 import { readPixelsAsync } from './utils/read-pixels-async'
+import { DynamicMediaGridArrayTexture } from './utils/dynamic-media-grid-array-texture'
+import { Program } from './utils/custom-program'
 
 export default class BaseScene {
   constructor(app) {
@@ -73,7 +75,6 @@ export default class BaseScene {
 
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
       this.baseUniforms.fCenter.value = this.getCenter()
-      // console.log('this.getCenter()', this.getCenter())
     }
 
     this.beforeUpdateCustom()
@@ -254,23 +255,54 @@ export default class BaseScene {
   initMedia() {
     if (!this.globalConfig.media?.enabled) {
       const emptyTex = new Texture(this.gl, {})
-      this.mediaTextures = [emptyTex, emptyTex, emptyTex]
+      this.compressedMediaTextures = this.globalConfig.media.versions
+        .filter(({ type }) => !type || type === 'default')
+        .map(() => emptyTex)
+      this.mediaTextures = this.globalConfig.media.versions
+        .filter(({ type }) => type && type !== 'default')
+        .map(() => emptyTex)
+
       return
     }
 
-    this.mediaTextures = this.globalConfig.media.versions.map(
-      ({ width, height, layers }) =>
-        new Compressed3dMediaGridTexture(this.gl, {
+    this.compressedMediaTextures = this.globalConfig.media.versions
+      .filter(({ type }) => !type || type === 'default')
+      .map(
+        ({ width, height, layers }) =>
+          new CompressedMediaGridArrayTexture(this.gl, {
+            width,
+            height,
+            length: layers,
+          }),
+      )
+
+    this.mediaTextures = this.globalConfig.media.versions
+      .filter(({ type }) => type && type !== 'default')
+      .map((mediaVersion) => {
+        const { width, height, layers } = mediaVersion
+        return new DynamicMediaGridArrayTexture(this.gl, {
           width,
           height,
           length: layers,
-        }),
-    )
+          mediaVersion,
+        })
+      })
 
     this.loader.addEventListener(
       'mediaLayerLoaded',
-      ({ data: { versionIndex, layerIndex, bytes } }) => {
-        this.mediaTextures[versionIndex].prepareLayerUpdate(layerIndex, bytes)
+      ({ data: { versionIndex, layerIndex, bytes, type, isCompressed } }) => {
+        if (!type || type === 'default') {
+          this.compressedMediaTextures[versionIndex].prepareLayerUpdate(
+            layerIndex,
+            bytes,
+          )
+        } else {
+          // TODO
+          this.mediaTextures[versionIndex - 3].prepareLayerUpdate(
+            layerIndex,
+            bytes,
+          )
+        }
       },
     )
 
@@ -279,7 +311,7 @@ export default class BaseScene {
         this.loader.preloadAllMediaLayersVersion0()
         break
       case 'first':
-        this.loader.preloadFirstMediaLayerAllVersions()
+        this.loader.preloadFirstMediaLayerAllGridVersions()
         break
     }
   }
@@ -289,25 +321,21 @@ export default class BaseScene {
   }
 
   initBaseMediaUniforms() {
+    const stdMediaVersions = this.globalConfig.media.versions?.toSpliced(3)
     return {
       bMediaEnabled: { value: this.globalConfig.media?.enabled ?? false },
-      uMediaV0Texture: { value: this.mediaTextures[0] },
-      uMediaV1Texture: { value: this.mediaTextures[1] },
-      uMediaV2Texture: { value: this.mediaTextures[2] },
-      iNumMediaVersionCols: {
-        value: this.globalConfig.media.versions?.map(({ cols }) => cols) ?? [
-          0, 0, 0,
-        ],
+      uMediaV0Texture: { value: this.compressedMediaTextures[0] },
+      uMediaV1Texture: { value: this.compressedMediaTextures[1] },
+      uMediaV2Texture: { value: this.compressedMediaTextures[2] },
+      uMediaV3Texture: { value: this.mediaTextures[0] },
+      iStdNumMediaVersionCols: {
+        value: stdMediaVersions?.map(({ cols }) => cols) ?? [0, 0, 0],
       },
-      iNumMediaVersionRows: {
-        value: this.globalConfig.media.versions?.map(({ rows }) => rows) ?? [
-          0, 0, 0,
-        ],
+      iStdNumMediaVersionRows: {
+        value: stdMediaVersions?.map(({ rows }) => rows) ?? [0, 0, 0],
       },
-      iNumMediaVersionLayers: {
-        value: this.globalConfig.media.versions?.map(
-          ({ layers }) => layers,
-        ) ?? [0, 0, 0],
+      iStdNumMediaVersionLayers: {
+        value: stdMediaVersions?.map(({ layers }) => layers) ?? [0, 0, 0],
       },
     }
   }

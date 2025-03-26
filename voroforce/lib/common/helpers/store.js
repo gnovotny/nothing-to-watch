@@ -7,6 +7,22 @@ import {
 } from '../data'
 import { Dimensions } from './dimensions'
 
+function stripFunctions(obj) {
+  if (typeof obj !== 'object' || obj === null) return obj
+
+  if (Array.isArray(obj)) {
+    return obj.map(stripFunctions)
+  }
+
+  const result = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value !== 'function') {
+      result[key] = stripFunctions(value)
+    }
+  }
+  return result
+}
+
 class StoreEvent extends Event {
   constructor(state = {}) {
     super('state')
@@ -105,7 +121,8 @@ export class Store extends EventTarget {
 
   getSimulationWorkerConfig() {
     // display config can contain classes and big shaders
-    const { display: _, ...config } = this.get('config')
+    const { display: _, media, ...config } = this.get('config')
+    config.media = stripFunctions(media)
     return config
   }
 

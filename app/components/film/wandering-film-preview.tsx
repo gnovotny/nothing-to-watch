@@ -12,6 +12,7 @@ import { FilmRatingGauge } from './shared/film-rating-gauge'
 import { Badge } from '../ui/badge'
 import { useMediaQuery } from '../../hooks/use-media-query'
 import { down } from '../../lib/utils/mq'
+import { clamp } from '../../lib/utils/math'
 
 const WanderingFilmPreview = () => {
   const active = true
@@ -64,7 +65,8 @@ const WanderingFilmPreview = () => {
       )
 
       // customSpeedScale = 1.2 - Math.max(pointer.speedScale, 0.2)
-      customSpeedScale = 1 - pointer.speedScale * 4
+      // customSpeedScale = 1 - pointer.speedScale * 4
+      customSpeedScale = 1.25 - clamp(0.25, 1.25, pointer.speedScale * 4)
       scaleRef.current = easedMinLerp(
         scaleRef.current,
         customSpeedScale,
@@ -125,7 +127,7 @@ const WanderingFilmPreview = () => {
           <div
             ref={innerRef}
             className={cn(
-              'md:-translate-y-2/3 md:-translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
+              'md:-translate-y-full md:-translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
               {
                 'flex-row-reverse': reverse,
               },
