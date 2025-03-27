@@ -12,8 +12,8 @@ export const forceSimulationStepPreviewConfig = {
       type: 'omni',
       enabled: true,
       requestMediaVersions: true,
-      manageWeights: false,
-      lerpCenterToPrimaryCellOnIdlePointer: false,
+      manageWeights: true,
+      // lerpCenterToPrimaryCellOnIdlePointer: false,
       push: {
         // strength: 0.15,
         strength: 0.2,
@@ -26,6 +26,7 @@ export const forceSimulationStepPreviewConfig = {
         // centerXStretchMod: 1,
         // centerXStretchMod: 1.25,
         centerXStretchMod: 0.5,
+        // centerXStretchMod: 0,
         speedFactor: 1,
       },
       lattice: {

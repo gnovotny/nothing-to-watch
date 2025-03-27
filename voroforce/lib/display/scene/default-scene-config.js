@@ -1,6 +1,6 @@
-import defaultVertexShader from '../shaders/default.vert'
+import defaultVertexShader from './shaders/default.vert'
 
-export default {
+export const defaultSceneConfig = {
   dev: {
     enabled: false,
   },

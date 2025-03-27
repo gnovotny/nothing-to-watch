@@ -1,12 +1,11 @@
-import { Geometry, Mesh, /*Program,*/ Texture, Transform, Triangle } from 'ogl'
+import { Geometry, Mesh, Program, Texture, Transform, Triangle } from 'ogl'
 import devPointFragmentShader from './shaders/dev/dev-points.frag'
 import devPointVertexShader from './shaders/dev/dev-points.vert'
 import { CompressedMediaGridArrayTexture } from './utils/compressed-media-grid-array-texture'
 import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
 import { CustomRenderTarget } from './utils/custom-render-target'
-import { readPixelsAsync } from './utils/read-pixels-async'
 import { DynamicMediaGridArrayTexture } from './utils/dynamic-media-grid-array-texture'
-import { Program } from './utils/custom-program'
+import { readPixelsAsync } from './utils/read-pixels-async'
 
 export default class BaseScene {
   constructor(app) {
@@ -31,6 +30,7 @@ export default class BaseScene {
     this.loader = this.store.get('loader')
     this.cells = this.app.cells
     this.pointer = this.store.get('sharedPointer')
+    this.sharedData = this.store.get('sharedData')
     this.numCells = this.cells.length
     this.dimensions = this.app.dimensions
     this.camera = this.app.controls?.camera
@@ -74,7 +74,8 @@ export default class BaseScene {
         this.baseUniforms.iFocusedIndex.value = this.cells.focused.index
 
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
-      this.baseUniforms.fCenter.value = this.getCenter()
+      this.baseUniforms.fPointer.value = this.getPointer()
+      this.baseUniforms.fForceCenter.value = this.getForceCenter()
     }
 
     this.beforeUpdateCustom()
@@ -340,10 +341,16 @@ export default class BaseScene {
     }
   }
 
-  getCenter() {
-    const primaryCell = this.cells?.focused
-    const centerX = this.pointer?.x ?? primaryCell?.x ?? 0
-    const centerY = this.pointer?.y ?? primaryCell?.y ?? 0
+  getPointer() {
+    return [
+      this.pointer?.x ?? this.cells?.focused?.x ?? 0,
+      this.pointer?.y ?? this.cells?.focused?.y ?? 0,
+    ]
+  }
+
+  getForceCenter() {
+    const centerX = this.sharedData?.forceCenterX ?? 0
+    const centerY = this.sharedData?.forceCenterY ?? 0
     return [centerX, centerY]
   }
 
@@ -359,7 +366,8 @@ export default class BaseScene {
           value: this.cells.length,
         },
         iTime: { value: 0 },
-        fCenter: { value: this.getCenter() },
+        fPointer: { value: this.getPointer() },
+        fForceCenter: { value: this.getForceCenter() },
       }
     }
 

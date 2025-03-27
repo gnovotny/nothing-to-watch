@@ -1,9 +1,9 @@
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { orientation } from '@/lib/utils/mq'
+import { orientation } from '../../utils/mq'
 import { Drawer as DrawerPrimitive } from 'vaul'
 import { useShallow } from 'zustand/react/shallow'
-import { cn } from '../../lib/utils/tw'
-import { useVoroforce } from '../../lib/voroforce'
+import { cn } from '../../utils/tw'
+import { useVoroforce } from '../../voroforce'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import {

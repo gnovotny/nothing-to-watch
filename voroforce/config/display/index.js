@@ -1,9 +1,7 @@
-// import mainFrag from './main.frag'
-// import mainFrag from './main2.frag'
-// import mainFrag from './main3.frag'
 import mainFrag from './main.frag'
-// import postFrag from './post.frag'
+// import mainFrag from './main-fisheye-test.frag'
 import postFrag from './post.frag'
+// import postFrag from './post-fisheye-test.frag'
 
 export default {
   scene: {
@@ -11,7 +9,6 @@ export default {
       enabled: false,
     },
     main: {
-      // enabled: false,
       fragmentShader: mainFrag,
       uniforms: {
         iForceMaxNeighborLevel: { value: 0 },
@@ -95,14 +92,13 @@ export default {
     },
   },
   renderer: {
-    // antialias: true,
     scissor: {
       enabled: true,
       offset: {
         top: 0,
         right: 0,
         bottom: 0,
-        // left: 100,
+        left: 0,
       },
     },
   },

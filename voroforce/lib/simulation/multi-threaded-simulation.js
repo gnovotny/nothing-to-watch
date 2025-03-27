@@ -20,7 +20,7 @@ export default class MultiThreadedSimulation extends BaseSimulation {
 
   initVoronoiWorker(workerState) {
     this.voronoiWorker = new Worker(
-      new URL('./steps/voronoi/worker', import.meta.url),
+      new URL('./steps/voronoi-step/worker', import.meta.url),
       {
         type: 'module',
         name: 'voronoi-worker',
@@ -36,7 +36,7 @@ export default class MultiThreadedSimulation extends BaseSimulation {
 
   initForceWorker(workerState) {
     this.forceWorker = new Worker(
-      new URL('./steps/force/worker', import.meta.url),
+      new URL('./steps/forces-step/worker', import.meta.url),
       {
         type: 'module',
         name: 'force-worker',

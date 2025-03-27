@@ -1,7 +1,7 @@
-import baseSceneConfig from '../scene/config/scene-config'
+import { defaultSceneConfig } from './scene'
 
-const baseDisplayConfig = {
-  scene: baseSceneConfig,
+export const defaultDisplayConfig = {
+  scene: defaultSceneConfig,
   renderer: {
     depth: true,
     preserveDrawingBuffer: false,
@@ -13,7 +13,6 @@ const baseDisplayConfig = {
     // pixelRatio: 2, // override device pixel ratio
     scissor: {
       enabled: true,
-      // padding: 10,
       offset: {
         top: 0,
         right: 0,
@@ -23,5 +22,3 @@ const baseDisplayConfig = {
     },
   },
 }
-
-export default baseDisplayConfig

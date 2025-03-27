@@ -1,11 +1,8 @@
 import { isNumber } from '../../../utils'
 import BaseSimulationStep from '../common/base-simulation-step'
 import * as forceFunctions from './forces'
-import lcg from './utils/lcg'
 
-const RANDOM = lcg()
-
-export default class ForceSimulationStep extends BaseSimulationStep {
+export default class ForcesSimulationStep extends BaseSimulationStep {
   forces = []
 
   constructor(store, options) {
@@ -48,6 +45,7 @@ export default class ForceSimulationStep extends BaseSimulationStep {
         links: this.links,
         dimensions: this.dimensions,
         pointer: this.pointer,
+        sharedData: this.sharedData,
         config: config,
         simulationStepConfig: this.config,
         simulationConfig: this.simulationConfig,

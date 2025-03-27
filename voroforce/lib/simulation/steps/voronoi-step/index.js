@@ -1,5 +1,5 @@
-import BaseSimulationStep from '../common/base-simulation-step'
 import { easedMinLerp } from '../../../utils'
+import BaseSimulationStep from '../common/base-simulation-step'
 
 export default class VoronoiSimulationStep extends BaseSimulationStep {
   neighborsNeedUpdate = true

@@ -20,6 +20,7 @@ export default class BaseSimulationStep {
     this.cells = this.store.get('cells')
     this.numCells = this.cells.length
     this.pointer = this.store.get('sharedPointer')
+    this.sharedData = this.store.get('sharedData')
 
     this.isWorker =
       typeof WorkerGlobalScope !== 'undefined' &&

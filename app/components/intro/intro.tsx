@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { cn } from '../../lib/utils/tw'
-import { useVoroforce } from '../../lib/voroforce'
+import { cn } from '../../utils/tw'
+import { useVoroforce } from '../../voroforce'
 
 export const Intro = () => {
   const played = useVoroforce((state) => state.playedIntro)

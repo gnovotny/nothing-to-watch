@@ -1,8 +1,8 @@
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { down, orientation } from '@/lib/utils/mq'
+import { down, orientation } from '../../utils/mq'
 import { useEffect, useState } from 'react'
 import { Drawer as DrawerPrimitive } from 'vaul'
-import { cn } from '../../lib/utils/tw'
+import { cn } from '../../utils/tw'
 import { Button } from '../ui/button'
 import {
   Drawer,

@@ -1,11 +1,11 @@
-import baseControlsConfig from './controls/config/controls-config'
-import baseDisplayConfig from './display/config/display-config'
-import baseSimulationConfig from './simulation/config/simulation-config'
+import { defaultControlsConfig } from './controls'
+import { defaultDisplayConfig } from './display'
+import { defaultSimulationConfig } from './simulation'
 
-const baseConfig = {
-  simulation: baseSimulationConfig,
-  display: baseDisplayConfig,
-  controls: baseControlsConfig,
+export const defaultConfig = {
+  simulation: defaultSimulationConfig,
+  display: defaultDisplayConfig,
+  controls: defaultControlsConfig,
   cells: 100,
   devTools: {
     enabled: false,
@@ -26,11 +26,10 @@ const baseConfig = {
   lattice: {
     enabled: true,
     aspect: 2 / 3,
+    latticeAspect: undefined,
   },
   handleVisibilityChange: {
     enabled: false,
     hiddenDelay: 0,
   },
 }
-
-export default baseConfig

@@ -36,7 +36,7 @@ export class DynamicMediaGridArrayTexture extends Texture {
       maxLayers,
     )
 
-    console.log('this.length', this.length)
+    // console.log('this.length', this.length)
     // console.log(`Maximum 2D texture array layers: ${maxLayers}`)
 
     this.bind()
@@ -170,9 +170,9 @@ export class DynamicMediaGridArrayTexture extends Texture {
       const tileRow = Math.floor(tileIndex / this.cols)
       const tileCol = tileIndex % this.cols
 
-      console.log('tileIndex', tileIndex, tileRow, tileCol)
-      const trueIndex = Math.ceil(index / this.layerCapacity)
-      console.log('bytes', bytes)
+      // console.log('tileIndex', tileIndex, tileRow, tileCol)
+      // const trueIndex = Math.ceil(index / this.layerCapacity)
+      // console.log('bytes', bytes)
       this.gl.texSubImage3D(
         this.gl.TEXTURE_2D_ARRAY,
         0,

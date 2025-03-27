@@ -1,4 +1,4 @@
-import type { Film } from '../../../lib/voroforce/utils'
+import type { Film } from '../../../voroforce/utils'
 
 export const FilmBackdrop = ({ film }: { film: Film }) => {
   return (

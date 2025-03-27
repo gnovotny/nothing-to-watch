@@ -132,7 +132,7 @@ export class Loader extends EventTarget {
       // image.src = URL.createObjectURL(blob)
 
       async function loadImage(src) {
-        console.log('loadImage', src)
+        // console.log('loadImage', src)
         return new Promise((resolve, reject) => {
           const img = new Image()
           img.onload = () => {
@@ -140,7 +140,7 @@ export class Loader extends EventTarget {
             resolve(img)
           }
           img.onerror = () => {
-            reject(new Error(`Failed to load image`))
+            reject(new Error('Failed to load image'))
           }
           // img.crossOrigin = 'anonymous'
           img.src = src

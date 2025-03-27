@@ -1,10 +1,10 @@
 import { About } from './components/about/about'
 import { FilmViewDrawer } from './components/film/view/film-view-drawer'
+import WanderingFilmPreview from './components/film/wandering-film-preview'
 import { Intro } from './components/intro/intro'
 import { Navbar } from './components/layout/navbar'
 import { ThemeProvider } from './components/layout/theme'
 import { Settings } from './components/settings/settings'
-import WanderingFilmPreview from './components/film/wandering-film-preview'
 
 function App() {
   return (

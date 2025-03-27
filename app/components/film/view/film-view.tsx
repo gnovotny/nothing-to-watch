@@ -1,9 +1,8 @@
 import slugify from 'slugify'
 import config from '../../../config'
-import { cn } from '../../../lib/utils/tw'
-import { type Film, useVoroforce } from '../../../lib/voroforce'
+import { cn } from '../../../utils/tw'
+import { type Film, useVoroforce } from '../../../voroforce'
 import { Badge } from '../../ui/badge'
-import { FilmPoster } from '../shared/film-poster'
 import { FilmRatingGauge } from '../shared/film-rating-gauge'
 
 import { Copy, X } from 'lucide-react'
@@ -44,7 +43,7 @@ export const FilmView = ({
               'linear-gradient(to right, var(--background) calc((25vw - 170px) - 340px), color-mix(in oklab, var(--background) 64%, transparent) 50%, color-mix(in oklab, var(--background) 64%, transparent) 100%)',
           }}
         >
-          <FilmPoster film={film} className='aspect-[2/3] h-full rounded-sm' />
+          {/*<FilmPoster film={film} className='aspect-[2/3] h-full rounded-sm' />*/}
           <div className='flex flex-col justify-between gap-9'>
             <div className='flex flex-col gap-3'>
               <h3 className='font-black text-3xl lg:text-5xl'>

@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app'
-import { animateHtmlTitleSuffix } from './lib/utils/anim'
-import { createVoroforce } from './lib/voroforce'
+import { animateHtmlTitleSuffix } from './utils/anim'
+import { createVoroforce } from './voroforce'
 import './index.css'
 
 // try {

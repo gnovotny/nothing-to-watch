@@ -1,5 +1,5 @@
 import { mergeConfigs } from '../index.js'
-import { baseForceSimulationStepConfig } from './config/simulation-config.js'
+import { defaultForceSimulationStepConfig } from './default-simulation-config.js'
 import { setupDevTools } from './utils/dev-tools'
 
 export default class BaseSimulation {
@@ -44,7 +44,7 @@ export default class BaseSimulation {
 
   updateForceStepConfig(config) {
     this.config.steps.force = mergeConfigs(
-      baseForceSimulationStepConfig,
+      defaultForceSimulationStepConfig,
       config,
     )
     this.handleForceStepConfigUpdated()

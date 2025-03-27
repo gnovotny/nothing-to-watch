@@ -1,11 +1,11 @@
 import BaseSimulation from './base-simulation'
-import ForceSimulationStep from './steps/force'
-import VoronoiSimulationStep from './steps/voronoi'
+import ForcesSimulationStep from './steps/forces-step'
+import VoronoiSimulationStep from './steps/voronoi-step'
 
 export default class Simulation extends BaseSimulation {
   constructor(store, options) {
     super(store, options)
-    this.forceStep = new ForceSimulationStep(this.store)
+    this.forceStep = new ForcesSimulationStep(this.store)
     this.voronoiStep = new VoronoiSimulationStep(this.store)
   }
 

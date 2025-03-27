@@ -1,7 +1,7 @@
 import type { RectReadOnly } from 'react-use-measure'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type voroforce from '../../../voroforce/lib'
+import type voroforce from '√/lib'
 import type {
   ConfigUniforms,
   Film,

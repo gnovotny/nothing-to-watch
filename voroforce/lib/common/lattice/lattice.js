@@ -191,9 +191,6 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
     }
   }
 
-  console.log('currentSubgrid', currentSubgrid)
-  console.log('currentCellId', currentCellId)
-
   return result
 }
 
@@ -330,8 +327,8 @@ export const handleLattice = (latticeConfig, cells, width, height) => {
     containerWidth = containerHeight = min
   }
 
-  console.log('containerWidth', containerWidth)
-  console.log('containerHeight', containerHeight)
+  // console.log('containerWidth', containerWidth)
+  // console.log('containerHeight', containerHeight)
 
   Object.assign(
     latticeConfig,

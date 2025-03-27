@@ -25,7 +25,7 @@ class CellSelectedEvent extends Event {
   }
 }
 
-export class Controls extends EventTarget {
+export default class Controls extends EventTarget {
   prevX = 0
   prevY = 0
   prevTime = 0

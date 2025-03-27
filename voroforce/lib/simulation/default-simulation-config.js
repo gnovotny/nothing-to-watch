@@ -1,7 +1,7 @@
-export const baseVoronoiSimulationStepConfig = {
+export const defaultVoronoiSimulationStepConfig = {
   latticeNeighborLevels: 1,
 }
-export const baseForceSimulationStepConfig = {
+export const defaultForceSimulationStepConfig = {
   parameters: {
     alpha: 0.2,
     alphaTarget: 0,
@@ -29,11 +29,9 @@ export const baseForceSimulationStepConfig = {
   ],
 }
 
-const baseSimulationConfig = {
+export const defaultSimulationConfig = {
   steps: {
-    voronoi: baseVoronoiSimulationStepConfig,
-    force: baseForceSimulationStepConfig,
+    voronoi: defaultVoronoiSimulationStepConfig,
+    force: defaultForceSimulationStepConfig,
   },
 }
-
-export default baseSimulationConfig

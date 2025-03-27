@@ -5,21 +5,21 @@ import {
 } from './common/data'
 import { Dimensions, Loader, Store, Ticker } from './common/helpers'
 import { handleLattice } from './common/lattice'
-import baseConfig from './config'
-import { Controls } from './controls/controls.js'
+import { defaultConfig } from './default-config'
+import Controls from './controls'
 import Display from './display'
+import { MultiThreadedSimulation, Simulation } from './simulation'
 import { isTouchDevice, mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
-import { MultiThreadedSimulation } from './simulation'
 
 export class Voroforce {
   mediaEnabled = false
   multiThreading = false
-  renderInParallel = false
+  parallelDisplay = false
   simulationIsWarm = false
 
   constructor(container, config = {}) {
-    this.config = mergeConfigs(baseConfig, config)
+    this.config = mergeConfigs(defaultConfig, config)
     this.container = container
     this.init()
   }
@@ -42,12 +42,9 @@ export class Voroforce {
   }
 
   handleMultiThreadingConfig() {
-    const mTConfig = this.config.multiThreading
-    if (!mTConfig?.enabled) return
-
-    // this.multiThreading = false // hardcoded
-    this.multiThreading = true // hardcoded
-    this.renderInParallel = mTConfig.renderInParallel
+    this.multiThreading = this.config.multiThreading?.enabled
+    this.parallelDisplay =
+      this.multiThreading && this.config.multiThreading?.renderInParallel
   }
 
   handleMediaConfig() {
@@ -55,9 +52,9 @@ export class Voroforce {
   }
 
   initComponents() {
-    // hardcoded
-    this.simulation = new MultiThreadedSimulation(this.store, {
-      // this.simulation = new Simulation(this.store, {
+    this.simulation = new (
+      this.multiThreading ? MultiThreadedSimulation : Simulation
+    )(this.store, {
       onUpdated: this.onSimulationUpdated.bind(this),
     })
     this.display = new Display(this.store)
@@ -190,9 +187,7 @@ export class Voroforce {
     this.updateControls()
     this.updateSimulation()
 
-    if (this.multiThreading && this.renderInParallel) {
-      this.updateDisplay()
-    }
+    if (this.parallelDisplay) this.updateDisplay()
   }
 
   updateSimulation() {
@@ -202,9 +197,7 @@ export class Voroforce {
   onSimulationUpdated() {
     this.simulationIsWarm = true
 
-    if (!this.multiThreading || !this.renderInParallel) {
-      this.updateDisplay()
-    }
+    if (!this.parallelDisplay) this.updateDisplay()
 
     if (this.pendingResize) {
       this.deferredResize()
@@ -233,28 +226,14 @@ export class Voroforce {
   // TODO
   dispose() {
     this.removeEventListeners()
-
     this.simulation.dispose()
-    this.simulation = null
     this.display.dispose()
-    this.display = null
     this.controls.dispose()
-    this.controls = null
-
     this.dimensions.dispose()
-    this.dimensions = null
     this.ticker.dispose()
-    this.ticker = this.loader.dispose()
-    this.loader = null
-
-    this.config = null
-    this.cells = null
-
+    this.loader.dispose()
     this.store.dispose()
-    this.store = null
-
     this.devTools?.dispose()
-    this.devTools = null
   }
 }
 

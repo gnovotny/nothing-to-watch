@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { combineMediaQueries, matchMediaQuery } from '../lib/utils/mq'
+import { combineMediaQueries, matchMediaQuery } from '../utils/mq'
 
 const match = (query: string | string[]) =>
   matchMediaQuery(Array.isArray(query) ? combineMediaQueries(...query) : query)

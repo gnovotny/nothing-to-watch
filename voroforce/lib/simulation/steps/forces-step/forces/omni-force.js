@@ -26,6 +26,7 @@ export const omniForce = ({
   cells,
   dimensions,
   pointer,
+  sharedData,
   globalConfig,
   config: {
     cellsLen = cells.length,
@@ -142,6 +143,9 @@ export const omniForce = ({
     forceSetup(alpha)
     latticeForcePass(alpha) // lattice pass must run in isolation
     mainForcePass(alpha)
+
+    sharedData.forceCenterX = centerX
+    sharedData.forceCenterY = centerY
   }
 
   function forceSetup(alpha) {
@@ -230,7 +234,6 @@ export const omniForce = ({
     }
 
     secondaryCell = cells[pointer.indices[1]]
-
     if (secondaryCell) {
       x = centerX - primaryCellX
       y = centerY - primaryCellY
@@ -318,9 +321,9 @@ export const omniForce = ({
               rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
             ) {
               cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
-              // cell.targetMediaVersion = 1 // reduce res if out of range (mipmapping)
+              // cell.targetMediaVersion = 1 // reduce res if out of range (free mipmapping)
             } else {
-              cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (mipmapping)
+              cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
             }
           }
 

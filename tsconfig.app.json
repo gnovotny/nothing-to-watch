@@ -28,8 +28,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
-      "√/*": ["./voroforce/*"],
-      "~/*": ["./*"]
+      "√/*": ["./voroforce/*"]
     }
   },
   "include": [

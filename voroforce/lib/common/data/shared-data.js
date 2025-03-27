@@ -16,4 +16,20 @@ export class SharedData {
       index: this.data[2] !== -1 ? this.data[2] : undefined,
     }
   }
+
+  get forceCenterX() {
+    return this.data[7]
+  }
+
+  set forceCenterX(value) {
+    this.data[7] = value
+  }
+
+  get forceCenterY() {
+    return this.data[8]
+  }
+
+  set forceCenterY(value) {
+    this.data[8] = value
+  }
 }

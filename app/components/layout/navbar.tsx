@@ -1,6 +1,6 @@
 import { Info, Settings } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
-import { useVoroforce } from '../../lib/voroforce'
+import { useVoroforce } from '../../voroforce'
 import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
 

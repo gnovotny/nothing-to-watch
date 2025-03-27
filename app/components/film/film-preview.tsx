@@ -1,15 +1,13 @@
 import { type PointerEventHandler, useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { cn } from '../../lib/utils/tw'
-import { type Film, useVoroforce } from '../../lib/voroforce'
-import { FilmPoster } from './shared/film-poster'
+import { cn } from '../../utils/tw'
+import { type Film, useVoroforce } from '../../voroforce'
 import { FilmRatingGauge } from './shared/film-rating-gauge'
 
 const FilmPreviewMirrorItem = ({
   film,
   reverse = false,
   active = false,
-  onPointerOver,
 }: {
   film: Film
   reverse?: boolean
@@ -26,16 +24,16 @@ const FilmPreviewMirrorItem = ({
         },
       )}
     >
-      <FilmPoster
-        film={film}
-        className={cn(
-          'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
-          {
-            'pointer-events-auto': active,
-          },
-        )}
-        onPointerOver={onPointerOver}
-      />
+      {/*<FilmPoster*/}
+      {/*  film={film}*/}
+      {/*  className={cn(*/}
+      {/*    'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',*/}
+      {/*    {*/}
+      {/*      'pointer-events-auto': active,*/}
+      {/*    },*/}
+      {/*  )}*/}
+      {/*  onPointerOver={onPointerOver}*/}
+      {/*/>*/}
       <div
         className={cn(
           'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',

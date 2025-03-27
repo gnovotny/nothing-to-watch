@@ -1,5 +1,5 @@
 import type React from 'react'
-import { cn } from '../../../lib/utils/tw'
+import { cn } from '../../../utils/tw'
 
 type RatingGaugeProps = React.ComponentProps<'svg'> & {
   value: number

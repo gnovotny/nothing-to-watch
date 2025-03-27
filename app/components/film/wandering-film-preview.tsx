@@ -1,18 +1,17 @@
 import { useEffect, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { cn } from '../../lib/utils/tw'
-import {
-  easedMinLerp,
-  MIN_LERP_EASING_TYPES,
-  useVoroforce,
-  type VoroforceCell,
-} from '../../lib/voroforce'
-import { FilmPoster } from './shared/film-poster'
-import { FilmRatingGauge } from './shared/film-rating-gauge'
-import { Badge } from '../ui/badge'
 import { useMediaQuery } from '../../hooks/use-media-query'
-import { down } from '../../lib/utils/mq'
-import { clamp } from '../../lib/utils/math'
+import { clamp } from '../../utils/math'
+import { down } from '../../utils/mq'
+import { cn } from '../../utils/tw'
+import {
+  MIN_LERP_EASING_TYPES,
+  type VoroforceCell,
+  easedMinLerp,
+  useVoroforce,
+} from '../../voroforce'
+import { Badge } from '../ui/badge'
+import { FilmRatingGauge } from './shared/film-rating-gauge'
 
 const WanderingFilmPreview = () => {
   const active = true
@@ -133,16 +132,16 @@ const WanderingFilmPreview = () => {
               },
             )}
           >
-            <FilmPoster
-              film={film}
-              className={cn(
-                'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
-                {
-                  'pointer-events-auto': active,
-                },
-              )}
-              // onPointerOver={onPointerOver}
-            />
+            {/*<FilmPoster*/}
+            {/*  film={film}*/}
+            {/*  className={cn(*/}
+            {/*    'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',*/}
+            {/*    {*/}
+            {/*      'pointer-events-auto': active,*/}
+            {/*    },*/}
+            {/*  )}*/}
+            {/*  // onPointerOver={onPointerOver}*/}
+            {/*/>*/}
             <div
               className={cn(
                 'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',

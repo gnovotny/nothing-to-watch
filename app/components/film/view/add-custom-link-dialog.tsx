@@ -22,7 +22,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useVoroforce } from '../../../lib/voroforce'
+import { useVoroforce } from '../../../voroforce'
 import {
   Select,
   SelectContent,
