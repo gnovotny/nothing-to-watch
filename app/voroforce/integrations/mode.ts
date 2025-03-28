@@ -36,9 +36,10 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
     //     top: 0,
     //   },
     // })
-    controls.disableFocus()
+    // controls.disableFocus()
+    controls.freezePointer()
   } else if (mode === VOROFORCE_MODES.preview) {
-    controls.enableFocus()
+    // controls.enableFocus()
   }
 
   updateUniformsByMode(mainUniforms, mode, animatingUniforms)
