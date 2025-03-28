@@ -444,7 +444,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
         #else
             return texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
-    } else if (iMediaVersion == 3) {
+    }/* else if (iMediaVersion == 3) {
 
         #if BICUBIC_MEDIA_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
@@ -453,7 +453,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
         #else
             return texture(uMediaV3Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
-    }
+    }*/
     #if BICUBIC_MEDIA_FILTER == 1
         vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
         vec2 tileTexSize = texSize*tileSize;

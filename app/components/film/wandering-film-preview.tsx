@@ -29,12 +29,10 @@ const WanderingFilmPreview = () => {
 
   const primaryCell = useRef<VoroforceCell>(null)
   const voroforceRef = useRef(useVoroforce.getState().instance)
-  const positionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const targetPositionRef = useRef<{ x: number; y: number }>(undefined)
+  const positionRef = useRef<{ x: number; y: number }>(undefined)
   const scaleRef = useRef<number>(0)
   const opacityRef = useRef<number>(0)
-  const targetPositionRef = useRef<{ x: number; y: number }>(
-    positionRef.current,
-  )
 
   useEffect(() => {
     if (isSmallScreen) return
@@ -50,18 +48,26 @@ const WanderingFilmPreview = () => {
       if (!primaryCell.current) return
       if (!containerRef.current) return
       if (!innerRef.current) return
-      positionRef.current.x = easedMinLerp(
-        positionRef.current.x,
-        targetPositionRef.current.x,
-        0.1,
-        MIN_LERP_EASING_TYPES.easeInOutQuad,
-      )
-      positionRef.current.y = easedMinLerp(
-        positionRef.current.y,
-        targetPositionRef.current.y,
-        0.1,
-        MIN_LERP_EASING_TYPES.easeInOutQuad,
-      )
+      if (!targetPositionRef.current) return
+      if (!positionRef.current) {
+        positionRef.current = {
+          x: targetPositionRef.current.x,
+          y: targetPositionRef.current.y,
+        }
+      } else {
+        positionRef.current.x = easedMinLerp(
+          positionRef.current.x,
+          targetPositionRef.current.x,
+          0.1,
+          MIN_LERP_EASING_TYPES.easeInOutQuad,
+        )
+        positionRef.current.y = easedMinLerp(
+          positionRef.current.y,
+          targetPositionRef.current.y,
+          0.1,
+          MIN_LERP_EASING_TYPES.easeInOutQuad,
+        )
+      }
 
       // customSpeedScale = 1.2 - Math.max(pointer.speedScale, 0.2)
       // customSpeedScale = 1 - pointer.speedScale * 4

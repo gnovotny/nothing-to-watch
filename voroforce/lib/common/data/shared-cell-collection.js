@@ -27,7 +27,8 @@ export class SharedCellCollection extends Array {
   }
 
   get focusedIndex() {
-    return this.cellCollectionData[this.focusedArrayIndex]
+    const index = this.cellCollectionData[this.focusedArrayIndex]
+    return index !== -1 ? index : undefined
   }
 
   set selected(n) {
@@ -44,7 +45,8 @@ export class SharedCellCollection extends Array {
   }
 
   get selectedIndex() {
-    return this.cellCollectionData[this.selectedArrayIndex]
+    const index = this.cellCollectionData[this.selectedArrayIndex]
+    return index !== -1 ? index : undefined
   }
 
   set dragging(n) {

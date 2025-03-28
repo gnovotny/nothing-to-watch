@@ -12,6 +12,7 @@ import type {
 
 type SafeVoroforceInstance = ReturnType<typeof voroforce>
 export type VoroforceInstance = SafeVoroforceInstance & {
+  ticker: NonNullable<SafeVoroforceInstance['ticker']>
   loader: NonNullable<SafeVoroforceInstance['loader']>
   controls: NonNullable<SafeVoroforceInstance['controls']>
   display: NonNullable<SafeVoroforceInstance['display']> & {

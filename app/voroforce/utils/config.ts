@@ -78,37 +78,37 @@ export const getVoroforceConfigProps = (state: VoroforceState) => {
       media: {
         versions: [
           ...baseConfig.media.versions,
-          {
-            // cols: 6,
-            // rows: 4,
-            cols: 1,
-            rows: 1,
-            realCols: 9,
-            realRows: 6,
-            // width: 300,
-            // height: 450,
-            tileWidth: 220,
-            tileHeight: 330,
-            width: 1980,
-            height: 1980,
-
-            layers: 50000, // real layers for 50000/54: 925.9 = 926
-            layerIndexStart: 0,
-            layerSrcFormat: '/posters/{INDEX}.jpg',
-            // layerSrcFormat: async (
-            //   layerIndex: number,
-            //   voroforceStore: VoroforceInstance['store'],
-            // ) => {
-            //   const posterUrl = (
-            //     await getCellFilm(
-            //       voroforceStore.get('cells')[layerIndex],
-            //       state.filmBatches,
-            //     )
-            //   )?.poster
-            //   if (posterUrl) return `${appConfig.posterBaseUrl}${posterUrl}`
-            // },
-            type: 'extra',
-          },
+          // {
+          //   // cols: 6,
+          //   // rows: 4,
+          //   cols: 1,
+          //   rows: 1,
+          //   realCols: 9,
+          //   realRows: 6,
+          //   // width: 300,
+          //   // height: 450,
+          //   tileWidth: 220,
+          //   tileHeight: 330,
+          //   width: 1980,
+          //   height: 1980,
+          //
+          //   layers: 50000, // real layers for 50000/54: 925.9 = 926
+          //   layerIndexStart: 0,
+          //   layerSrcFormat: '/posters/{INDEX}.jpg',
+          //   // layerSrcFormat: async (
+          //   //   layerIndex: number,
+          //   //   voroforceStore: VoroforceInstance['store'],
+          //   // ) => {
+          //   //   const posterUrl = (
+          //   //     await getCellFilm(
+          //   //       voroforceStore.get('cells')[layerIndex],
+          //   //       state.filmBatches,
+          //   //     )
+          //   //   )?.poster
+          //   //   if (posterUrl) return `${appConfig.posterBaseUrl}${posterUrl}`
+          //   // },
+          //   type: 'extra',
+          // },
         ],
       },
     }),
