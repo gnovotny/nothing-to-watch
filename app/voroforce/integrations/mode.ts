@@ -15,7 +15,7 @@ let afterModeChangeTimeout: NodeJS.Timeout
 const handleModeChange = (mode: VOROFORCE_MODES): void => {
   const {
     setMode,
-    instance: { simulation, controls },
+    instance: { simulation },
     configUniforms: {
       main: mainUniforms,
       post: postUniforms,
