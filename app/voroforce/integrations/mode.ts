@@ -1,10 +1,6 @@
 import { baseLatticeConfig, forceSimulationStepConfigs } from '√/config'
 import { VOROFORCE_MODES, store } from '../store'
-import {
-  type VoroforceCell,
-  updateUniforms,
-  updateUniformsByMode,
-} from '../utils'
+import { type VoroforceCell, updateUniformsByMode } from '../utils'
 
 export const revealVoroforceContainer = () => {
   store.getState().container.classList.remove('opacity-0')
@@ -46,20 +42,20 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
   updateUniformsByMode(postUniforms, mode, animatingUniforms)
 
   // when switching modes, need to temporarily up the neighbor searches in the shader to max supported level (voronoi cell propagation speed limits in shader)
-  updateUniforms(mainUniforms, {
-    // bForceMaxQuality: true,
-    iForceMaxNeighborLevel: 3,
-  })
+  // updateUniforms(mainUniforms, {
+  //   // bForceMaxQuality: true,
+  //   iForceMaxNeighborLevel: 3,
+  // })
 
   simulation.updateForceStepConfig(forceStepConfig)
 
   clearTimeout(afterModeChangeTimeout)
   afterModeChangeTimeout = setTimeout(() => {
     // we revert back to default neighbor level as using max is extremely expensive
-    updateUniforms(mainUniforms, {
-      // bForceMaxQuality: false,
-      iForceMaxNeighborLevel: 0,
-    })
+    // updateUniforms(mainUniforms, {
+    //   // bForceMaxQuality: false,
+    //   iForceMaxNeighborLevel: 0,
+    // })
 
     // revert to default velocityDecay after the transition (voronoi cell propagation speed limits in shader, see above)
     forceStepConfig.parameters.velocityDecay =
