@@ -43,6 +43,9 @@ export const omniForce = ({
     lerpCenterToPrimaryCellOnIdlePointer = true,
     idlePointerDelay = 500,
     defaultLerpFactor = LERP_FACTOR_DEFAULT,
+    breathing = false,
+    breathingCycleDuration = 6000,
+    breathingVariability = 0.1,
     push: {
       strength: _pushStrength = 1,
       // pushStrength = _pushStrength,
@@ -51,9 +54,6 @@ export const omniForce = ({
       xFactor: configPushXMod = 1,
       yFactor: configPushYMod = 1,
       speedFactor: configPushSpeedFactor = 0,
-      breathing: pushBreathing = false,
-      breathingCycleDuration: pushBreathingCycleDuration = 6000,
-      breathingVariability: pushBreathingVariability = 0.05,
       alignmentMaxLevelsX: pushAlignmentMaxLevelsX = 0,
       alignmentMaxLevelsY: pushAlignmentMaxLevelsY = 0,
       centerXStretchMod: pushCenterXStretchMod = 0,
@@ -130,7 +130,7 @@ export const omniForce = ({
     centerXStretchMod,
     isPrimaryCell = false,
     pointerSpeedScale = 0,
-    inversePointerSpeedScale = 1,
+    idlePointerScale = 1,
     idlePointerTimeout,
     idleLerpCenterToPrimaryCell = false,
     primaryCellWeight = 0,
@@ -168,21 +168,23 @@ export const omniForce = ({
     //   defaultLerpFactor,
     // )
     // console.log('pointerSpeedScale', pointerSpeedScale)
-    inversePointerSpeedScale = 1 - pointerSpeedScale
+    idlePointerScale = 1 - pointerSpeedScale
 
-    if (pushBreathing) {
+    if (breathing) {
       timestamp = Date.now()
       if (!startTime) startTime = timestamp
       breathingPushMod =
         1 -
-        pushBreathingVariability +
+        breathingVariability +
         diaphragmaticBreathing(
-          ((timestamp - startTime) % pushBreathingCycleDuration) /
-            pushBreathingCycleDuration,
+          ((timestamp - startTime) % breathingCycleDuration) /
+            breathingCycleDuration,
         ) *
-          pushBreathingVariability *
-          inversePointerSpeedScale
+          breathingVariability *
+          idlePointerScale
     }
+
+    // console.log('breathingPushMod', breathingPushMod)
 
     if (requestMediaVersions) {
       if (pointerSpeedScale < mediaV2SpeedLimit) {
@@ -194,7 +196,7 @@ export const omniForce = ({
     if (configPushSpeedFactor > 0) {
       pushSpeedFactor = easedMinLerp(
         pushSpeedFactor,
-        max(inversePointerSpeedScale, 0.2),
+        max(idlePointerScale, 0.2),
         defaultLerpFactor,
       )
     }
@@ -256,13 +258,13 @@ export const omniForce = ({
         targetCenterX,
         pointer?.x ?? primaryCellX,
         // defaultLerpFactor,
-        inversePointerSpeedScale,
+        idlePointerScale,
       )
       targetCenterY = easedMinLerp(
         targetCenterY,
         pointer?.y ?? primaryCellY,
         // defaultLerpFactor,
-        inversePointerSpeedScale,
+        idlePointerScale,
       )
 
       // if (centerToPrimaryCellDist < targetCenterToPrimaryCellDist) {
@@ -321,14 +323,15 @@ export const omniForce = ({
       primaryCellWeight =
         clamp(0, 1, (1 - distRatio) ** 2) *
         // breathingPushMod ** 2 *
-        breathingPushMod *
-        inversePointerSpeedScale *
+        // breathingPushMod *
+        (1 - breathingPushMod) *
+        idlePointerScale *
         pushSpeedFactor
       primaryCellWeight = primaryCell.weight = easedMinLerp(
         primaryCell.weight,
         primaryCellWeight,
         primaryCellWeight > primaryCell.weight
-          ? defaultLerpFactor * sqrt(inversePointerSpeedScale)
+          ? defaultLerpFactor * sqrt(idlePointerScale)
           : defaultLerpFactor * 3,
       )
 
@@ -359,8 +362,18 @@ export const omniForce = ({
       cell = cells[i]
 
       // origin force
-      cell.vx += (cell.ix - cell.x) * originStrength * alpha * originXFactor
-      cell.vy += (cell.iy - cell.y) * originStrength * alpha * originYFactor
+      cell.vx +=
+        (cell.ix - cell.x) *
+        originStrength *
+        alpha *
+        originXFactor *
+        (1 - (1 - breathingPushMod) * 3)
+      cell.vy +=
+        (cell.iy - cell.y) *
+        originStrength *
+        alpha *
+        originYFactor *
+        (1 - (1 - breathingPushMod) * 3)
 
       if (primaryCell) {
         isPrimaryCell = i === primaryCell.index
@@ -470,8 +483,14 @@ export const omniForce = ({
             configPushXMod *
             cellTypePushXMod *
             alignmentPushXMod *
-            centerXStretchMod
-          cell.vy += y * configPushYMod * cellTypePushYMod * alignmentPushYMod
+            centerXStretchMod *
+            breathingPushMod
+          cell.vy +=
+            y *
+            configPushYMod *
+            cellTypePushYMod *
+            alignmentPushYMod *
+            (1 - (1 - sqrt(breathingPushMod)))
         }
       }
 
@@ -542,7 +561,14 @@ export const omniForce = ({
     y = target.y + target.initialVy - cell.y - cell.initialVy
 
     l = sqrt(x * x + y * y)
-    l = ((l - size) / l) * alpha * latticeStrength * strengthMod * 0.5
+    l =
+      ((l - size) / l) *
+      alpha *
+      latticeStrength *
+      strengthMod *
+      0.5 *
+      (1 - (1 - breathingPushMod) * 5)
+    // * (1 + 1 - breathingPushMod)
     x *= l * latticeXFactor
     y *= l * latticeYFactor
 

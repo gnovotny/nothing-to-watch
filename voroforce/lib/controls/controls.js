@@ -88,17 +88,26 @@ export default class Controls extends EventTarget {
     this.handleUpdate()
   }
 
+  getCellIndices(position, cb) {
+    this.display.getPositionCellIndices(position).then((indices) => {
+      const primaryIndex = indices?.[0]
+      if (primaryIndex === undefined) {
+        this.onPointerOut()
+        return false
+      }
+      cb(primaryIndex, indices)
+    })
+  }
+
   handleUpdate(targetPointer = this.targetPointer) {
     if (this.pointerFrozen) {
-      this.display.getCellIndicesByPointer(this.pointer).then((indices) => {
-        const index = indices?.[0]
-
+      this.getCellIndices(this.pointer, (primaryIndex, indices) => {
         Object.assign(this.pointer, {
           indices,
         })
 
-        if (this.cells.focusedIndex !== index) {
-          this.cells.focusedIndex = index
+        if (this.cells.focusedIndex !== primaryIndex) {
+          this.cells.focusedIndex = primaryIndex
           this.dispatchEvent(
             new CellFocusedEvent(this.cells.focused, this.cells),
           )
@@ -178,23 +187,14 @@ export default class Controls extends EventTarget {
       this.handlePointerMove()
     }
 
-    this.display.getCellIndicesByPointer(newPointerPosition).then((indices) => {
-      const index = indices?.[0]
-      if (index === undefined) {
-        this.onPointerOut()
-        return false
-      }
-
+    this.getCellIndices(newPointerPosition, (primaryIndex, indices) => {
       if (this.pointerFrozen) {
-        if (this.cells.focusedIndex === index) {
+        if (this.cells.focusedIndex === primaryIndex) {
           this.unfreezePointer()
-          Object.assign(this.pointer, {
-            indices,
-          })
         }
       } else {
-        if (this.cells.focusedIndex !== index) {
-          this.cells.focusedIndex = index
+        if (this.cells.focusedIndex !== primaryIndex) {
+          this.cells.focusedIndex = primaryIndex
           this.dispatchEvent(
             new CellFocusedEvent(this.cells.focused, this.cells),
           )
@@ -309,8 +309,9 @@ export default class Controls extends EventTarget {
   }
 
   handlePointerOut() {
-    this.freezePointer()
-    // if (this.cells.selected) return
+    if (this.cells.focused) {
+      this.freezePointer()
+    }
     this.targetPointer = undefined
     // this.cells.focusedIndex = undefined
     // this.dispatchEvent(new CellFocusedEvent(undefined, this.cells))

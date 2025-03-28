@@ -483,7 +483,7 @@ export default class BaseScene {
     })
   }
 
-  async getCellIndicesByPointer(pointer) {
+  async getPositionCellIndices(position) {
     const rt = this.renderTargets?.[0]
     if (!rt) return
 
@@ -497,8 +497,8 @@ export default class BaseScene {
     const data = new Uint32Array(4) // Float32Array texture but packed as uint
     await readPixelsAsync(
       this.gl,
-      pointer.x * (rt.width / this.dimensions.width),
-      rt.height - pointer.y * (rt.height / this.dimensions.height),
+      position.x * (rt.width / this.dimensions.width),
+      rt.height - position.y * (rt.height / this.dimensions.height),
       1,
       1,
       data,

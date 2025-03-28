@@ -14,6 +14,7 @@ export const forceSimulationStepPreviewConfig = {
       requestMediaVersions: true,
       manageWeights: true,
       // lerpCenterToPrimaryCellOnIdlePointer: false,
+      breathing: true,
       push: {
         // strength: 0.15,
         strength: 0.2,
@@ -21,7 +22,6 @@ export const forceSimulationStepPreviewConfig = {
         selector: 'focused',
         yFactor: 2.5,
         // yFactor: 3,
-        breathing: true,
         alignmentMaxLevelsX: 40,
         // centerXStretchMod: 1,
         // centerXStretchMod: 1.25,
