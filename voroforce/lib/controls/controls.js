@@ -30,6 +30,7 @@ export default class Controls extends EventTarget {
   prevY = 0
   prevTime = 0
   pointerFrozen = true
+  pointerFrozenUntilRefocus = true
 
   constructor(store, display) {
     super()
@@ -144,7 +145,7 @@ export default class Controls extends EventTarget {
 
       // Abort if outside of reaction radius
       if (distance > this.pointerRadius) {
-        this.freezePointer()
+        this.freezePointerUntilRefocus()
         return
       }
 
@@ -189,8 +190,14 @@ export default class Controls extends EventTarget {
 
     this.getCellIndices(newPointerPosition, (primaryIndex, indices) => {
       if (this.pointerFrozen) {
-        if (this.cells.focusedIndex === primaryIndex) {
-          this.unfreezePointer()
+        if (this.pointerFrozenUntilBlurAndRefocus) {
+          if (this.cells.focusedIndex !== primaryIndex) {
+            this.freezePointerUntilRefocus()
+          }
+        } else if (this.pointerFrozenUntilRefocus) {
+          if (this.cells.focusedIndex === primaryIndex) {
+            this.unfreezePointer()
+          }
         }
       } else {
         if (this.cells.focusedIndex !== primaryIndex) {
@@ -211,9 +218,23 @@ export default class Controls extends EventTarget {
     this.prevY = undefined
     this.pointer.speedScale = 0
     this.pointerFrozen = true
+    this.pointerFrozenUntilRefocus = true
+  }
+
+  freezePointerUntilRefocus() {
+    this.freezePointer()
+    this.pointerFrozenUntilRefocus = true
+    this.pointerFrozenUntilBlurAndRefocus = false
+  }
+
+  freezePointerUntilBlurAndRefocus() {
+    this.freezePointerUntilRefocus()
+    this.pointerFrozenUntilBlurAndRefocus = true
   }
 
   unfreezePointer() {
+    this.pointerFrozenUntilRefocus = false
+    this.pointerFrozenUntilBlurAndRefocus = false
     this.pointerFrozen = false
   }
 
@@ -310,7 +331,7 @@ export default class Controls extends EventTarget {
 
   handlePointerOut() {
     if (this.cells.focused) {
-      this.freezePointer()
+      this.freezePointerUntilRefocus()
     }
     this.targetPointer = undefined
     // this.cells.focusedIndex = undefined
@@ -377,7 +398,7 @@ export default class Controls extends EventTarget {
     this.maxPointerSpeed = this.config.maxPointerSpeed * dimensions.diagonal
     this.pointerRadius = this.activePointerRadiusScale * dimensions.diagonal
     if (this.cells.focused) {
-      this.freezePointer()
+      this.freezePointerUntilRefocus()
       Object.assign(this.pointer, {
         x: this.cells.focused.x,
         y: this.cells.focused.y,

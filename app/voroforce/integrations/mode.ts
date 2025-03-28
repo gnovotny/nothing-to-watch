@@ -37,7 +37,7 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
     //   },
     // })
     // controls.disableFocus()
-    controls.freezePointer()
+    // controls.freezePointerUntilBlurAndRefocus()
   } else if (mode === VOROFORCE_MODES.preview) {
     // controls.enableFocus()
   }
