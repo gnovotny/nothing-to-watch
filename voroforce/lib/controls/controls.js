@@ -114,7 +114,6 @@ export default class Controls extends EventTarget {
       const currentTime = performance.now()
       const deltaTime = Math.min(currentTime - this.prevTime, this.maxDeltaTime) // Cap the deltaTime to prevent jumps
 
-      // if this is the first move or if no time has passed
       if (
         this.prevTime === 0 ||
         deltaTime === 0 ||
@@ -124,6 +123,7 @@ export default class Controls extends EventTarget {
         this.prevX = targetPointer.x
         this.prevY = targetPointer.y
         this.prevTime = currentTime
+        return
       }
 
       // Calculate the raw movement
