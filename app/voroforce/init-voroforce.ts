@@ -4,7 +4,7 @@ import { initVoroforceIntegrations } from './integrations'
 import { type VoroforceInstance, store } from './store'
 import { getVoroforceConfigProps } from './utils'
 
-export const createVoroforce = (container: HTMLElement) => {
+export const initVoroforce = (container: HTMLElement) => {
   const configProps = getVoroforceConfigProps(store.getState())
   store.setState({
     container,

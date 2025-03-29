@@ -1,4 +1,4 @@
-import type { VOROFORCE_MODES } from '../store'
+import type { THEME, VOROFORCE_MODES } from '../store'
 import { MIN_LERP_EASING_TYPES, easedMinLerp } from './math'
 
 export type BaseConfigUniform =
@@ -19,6 +19,7 @@ export type BaseConfigUniform =
 
 export type ConfigUniform = BaseConfigUniform & {
   modes?: Record<VOROFORCE_MODES | 'default', BaseConfigUniform>
+  themes?: Record<THEME | 'default', BaseConfigUniform>
 }
 
 export type ConfigUniforms = Map<string, ConfigUniform>
@@ -79,6 +80,33 @@ export const updateUniformsByMode = (
     const uniformMode = uniform.modes?.[mode] ?? uniform.modes?.default
     if (uniformMode) {
       const value = uniformMode.value
+      if (
+        animatingUniforms &&
+        typeof value === 'number' &&
+        uniform.animatable
+      ) {
+        if (uniform.value !== value) {
+          uniform.targetValue = value
+          if (!animatingUniforms.has(key)) {
+            animatingUniforms.set(key, uniform)
+          }
+        }
+      } else {
+        uniform.value = value
+      }
+    }
+  })
+}
+
+export const updateUniformsByTheme = (
+  uniforms: ConfigUniforms,
+  theme: THEME,
+  animatingUniforms?: ConfigUniforms,
+) => {
+  uniforms.forEach((uniform, key) => {
+    const uniformTheme = uniform.themes?.[theme] ?? uniform.themes?.default
+    if (uniformTheme) {
+      const value = uniformTheme.value
       if (
         animatingUniforms &&
         typeof value === 'number' &&

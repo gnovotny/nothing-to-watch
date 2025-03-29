@@ -31,7 +31,15 @@ export enum VOROFORCE_MODES {
   intro = 'intro',
 }
 
+export enum THEME {
+  dark = 'dark',
+  light = 'light',
+  system = 'system',
+}
+
 export type VoroforceState = {
+  theme: THEME
+  setTheme: (theme: THEME) => void
   container: HTMLElement
   setContainer: (container: HTMLElement) => void
   instance: VoroforceInstance
@@ -66,10 +74,18 @@ export type VoroforceState = {
 const playedIntro = Boolean(localStorage.getItem('playedIntro'))
 // const playedIntro = false
 
+const THEME_STORAGE_KEY = 'theme'
+
 export const store = create(
   subscribeWithSelector<VoroforceState>(
     (set, get) =>
       ({
+        theme:
+          (localStorage.getItem(THEME_STORAGE_KEY) as THEME) || THEME.system,
+        setTheme: (theme: THEME) => {
+          localStorage.setItem(THEME_STORAGE_KEY, theme)
+          set({ theme })
+        },
         setInstance: (instance: VoroforceInstance) => set({ instance }),
         setConfig: (config: VoroforceInstance['config']) => set({ config }),
         setContainer: (container: HTMLElement) => set({ container }),

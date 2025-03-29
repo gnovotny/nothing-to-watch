@@ -20,13 +20,13 @@ export const FilmView = ({
   if (!film) return
   return (
     <div
-      className={cn(' landscape:h-full', className)}
+      className={cn(
+        'bg-center bg-cover bg-no-repeat landscape:h-full',
+        className,
+      )}
       style={{
-        backgroundPosition: 'center center',
         // backgroundPosition: 'calc((((50vw / 2.222222) - 20px) / 1.5) / 2) 0',
         backgroundImage: `url('${config.backdropBaseUrl}${film.backdrop}')`,
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
         // backgroundBlendMode: 'lighten',
       }}
     >
@@ -60,28 +60,34 @@ export const FilmView = ({
             // }}
           >
             {/*<FilmPoster film={film} className='aspect-[2/3] h-full rounded-sm' />*/}
-            <div className='flex flex-col justify-between gap-9'>
-              <div className='flex flex-col gap-3'>
+            <div className='flex w-full flex-col justify-between gap-9'>
+              <div className='flex w-full flex-col gap-3'>
                 <h3 className='font-black text-3xl lg:text-5xl'>
                   {film.title}
-                  <span className='font-medium text-foreground/50'>
-                    &nbsp;({film.year})
-                  </span>{' '}
+                  {film.year && (
+                    <span className='font-medium text-foreground/50'>
+                      &nbsp;({film.year})
+                    </span>
+                  )}
                 </h3>
-                <p className='text-base text-foreground/80 italic lg:text-xl'>
-                  {film.tagline}
-                </p>
-                <div className='flex flex-row gap-3 pt-2'>
-                  {film.genres?.map((genre) => (
-                    <Badge key={genre}>{genre}</Badge>
-                  ))}
-                </div>
-              </div>
-              <div className='flex flex-row items-center gap-3'>
-                <FilmRatingGauge value={film.rating} />
-                <div className='text-sm leading-none'>
-                  TMDB <br />
-                  Score
+                <div className='flex w-full flex-row justify-between gap-3'>
+                  <div className='flex flex-col gap-3'>
+                    <p className='text-base text-foreground/80 italic lg:text-xl'>
+                      {film.tagline}
+                    </p>
+                    <div className='flex flex-row gap-3 pt-2'>
+                      {film.genres?.map((genre) => (
+                        <Badge key={genre}>{genre}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className='flex flex-row-reverse items-center gap-3'>
+                    <FilmRatingGauge value={film.rating} />
+                    <div className='text-sm leading-none'>
+                      TMDB <br />
+                      Score
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -13,6 +13,18 @@ export default {
       uniforms: {
         iForceMaxNeighborLevel: { value: 0 },
         bForceMaxQuality: { value: false },
+        fBaseColor: {
+          value: [0, 0, 0],
+          animatable: true,
+          themes: {
+            default: {
+              value: [0, 0, 0],
+            },
+            light: {
+              value: [1, 1, 1],
+            },
+          },
+        },
         fRoundnessMod: {
           value: 1,
           animatable: true,
@@ -55,6 +67,18 @@ export default {
       enabled: true,
       fragmentShader: postFrag,
       uniforms: {
+        fBaseColor: {
+          value: [0.05, 0.05, 0.05],
+          animatable: true,
+          themes: {
+            default: {
+              value: [0.05, 0.05, 0.05],
+            },
+            light: {
+              value: [0.95, 0.95, 0.95],
+            },
+          },
+        },
         fAlphaStrength: {
           // value: 0.3,
           value: 1,

@@ -11,6 +11,7 @@ uniform vec3 iResolution; // Size of the viewport in pixels
 uniform float iTime; // Size of the viewport in pixels
 uniform float fAlphaStrength;
 uniform float fEdgeStrength;
+uniform vec3 fBaseColor;
 
 //in vec2 u;
 in vec2 vUv;
@@ -165,17 +166,22 @@ void main(){
     //
     // Texture sample with fake height information added.
 //    vec3 tx = texture(iChannel0, (p + n.xy*.125)*.25).xyz;
-    vec3 tx = texture(iChannel0, (p + n.xy*.125)).xyz;
+//    vec3 tx = texture(iChannel0, (p + n.xy*.125)).xyz;
+//    tx *= tx; // sRGB to linear.
+
 //    vec3 tx = vec3(0.2);
 //    vec3 tx = vec3(1.);
-    tx *= tx; // sRGB to linear.
+
 //    tx = smoothstep(0., .5, tx); // Accentuating the color a bit.
 
     // Object color. Initialize to the texture value.
 //    vec3 oCol = tx *.025;
-    vec3 oCol = tx *.05;
+//    vec3 oCol = tx *.05;
+//    vec3 oCol = tx *fBaseColor;
 //    vec3 oCol = tx *.15;
 //    vec3 oCol = tx *.9;
+
+    vec3 oCol = fBaseColor;
 
     bool isWeb = svObjID>.5;
 
