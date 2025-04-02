@@ -31,8 +31,8 @@ uniform float iTime;
 uniform bool bForceMaxQuality;
 uniform int iForceMaxNeighborLevel;
 uniform float fRoundnessMod;
-uniform float fEdgeMod;
-uniform float fEdgeSmoothnessMod;
+uniform float fEdge1Mod;
+uniform float fEdge0Mod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
@@ -59,7 +59,7 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define FISHEYE_TEST 0
+#define FISHEYE_TEST 1
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
@@ -818,8 +818,8 @@ void main() {
 //    }
 
     #if DRAW_EDGES == 1
-        float edge1 = EDGE_1 * fEdgeSmoothnessMod;
-        float edge2 = EDGE_2 * fEdgeMod;
+        float edge1 = EDGE_1 * fEdge0Mod;
+        float edge2 = EDGE_2 * fEdge1Mod;
         #if TRANSPARENT_BG == 1
             a = mix(
                 1.,

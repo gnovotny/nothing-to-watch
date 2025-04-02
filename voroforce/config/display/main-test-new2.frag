@@ -55,12 +55,12 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
 #define BICUBIC_MEDIA_FILTER 0
-#define DRAW_EDGES 1
+#define DRAW_EDGES 0
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
 #define FISHEYE_TEST 0
-#define DEBUG_MEDIA_BBOXES 1
+#define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
 #define WEIGHTED_DIST 1
@@ -73,12 +73,9 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 //#define X_DIST_SCALING 0
 #define BASE_X_DIST_SCALE 1.5
 #define WEIGHTED_X_DIST_SCALE 1.5
-//#define MEDIA_BBOX_SCALE 0.5 // TODO TMP
 #define MEDIA_BBOX_SCALE 1. // TODO TMP
-//#define MEDIA_BBOX_SCALE 2.45 // TODO TMP
 //#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
-//#define MEDIA_BBOX_ADJUSTMENT_SCALE 0.
 #define LOCK_MEDIA_ASPECT 1
 #define MEDIA_ASPECT 1.5
 #define PIXEL_SEARCH 1
@@ -94,10 +91,8 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 //#define EDGE_1 .005
 //#define EDGE_2 .001
 
-//#define EDGE_1 .009
-//#define EDGE_2 .0005
-#define EDGE_1 .0
-#define EDGE_2 .0
+#define EDGE_1 .009
+#define EDGE_2 .0005
 
 struct Data {
     uvec4 indices;
@@ -352,18 +347,13 @@ float calculateOrientation(vec2 left, vec2 right) {
     return angle;
 }
 
-void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index, vec4 mediaBbox) {
+void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index) {
     uint neighborsIndexStart = neighborsTexData(index*2u);
     float angle = calculateOrientation(fetchNormalizedCellCoords(neighborsTexData(neighborsIndexStart+3u)),fetchNormalizedCellCoords(neighborsTexData(neighborsIndexStart+4u)));
 
     // center origin
-    float aspect = iResolution.x / iResolution.y;
-//    float aspect = (mediaBbox.z - mediaBbox.x) / (mediaBbox.w - mediaBbox.y);
-//    vec2 centerUv = vec2(0.5);
     vec2 centerUv = vec2(0.5);
     vec2 pos = mediaTileUv - centerUv;
-
-    pos.x /= aspect;
 
     // rotate
     angle *= float(MEDIA_UV_ROTATE_FACTOR);
@@ -374,43 +364,17 @@ void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index, vec4 mediaBbox) {
         pos.x * sinAngle + pos.y * cosAngle
     );
 
-    // Revert aspect correction
-    rotatedUv.x *= aspect;
-
     // revert centered origin
     mediaTileUv = rotatedUv + centerUv;
 }
 
 vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
 
-//    uint neighborsIndexStart = neighborsTexData(index*2u);
-//    float angle = calculateOrientation(fetchNormalizedCellCoords(neighborsTexData(neighborsIndexStart+3u)),fetchNormalizedCellCoords(neighborsTexData(neighborsIndexStart+4u)));
-//    float cosAngle = cos(angle);
-//    float sinAngle = sin(angle);
-//
-//    vec2 center = (mediaBbox.zw - mediaBbox.xy)*0.5;
-//    vec2 pos = mediaBbox.xy + center;
-//
-//    mediaBbox.xy = vec2(
-//        pos.x * cosAngle - pos.y * sinAngle,
-//        pos.x * sinAngle + pos.y * cosAngle
-//    );
-//    mediaBbox.xy = mediaBbox.xy - center;
-//
-//    pos = mediaBbox.zw - center;
-//
-//    mediaBbox.zw = vec2(
-//        pos.x * cosAngle - pos.y * sinAngle,
-//        pos.x * sinAngle + pos.y * cosAngle
-//    );
-//    mediaBbox.zw = mediaBbox.zw + center;
-
-
     vec2 mediaTileUv = (p - mediaBbox.xy) / (mediaBbox.zw - mediaBbox.xy);
     mediaTileUv.y = 1. - mediaTileUv.y;
 
     #if MEDIA_UV_ROTATE_FACTOR != 0
-        rotateMediaTileUv(mediaTileUv, index, mediaBbox);
+        rotateMediaTileUv(mediaTileUv, index);
     #endif
 
     #if DEBUG_MEDIA_BBOXES == 1  // highlight bbox overflow in red
@@ -480,7 +444,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
         #else
             return texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
-    } else if (iMediaVersion == 3) {
+    }/* else if (iMediaVersion == 3) {
 
         #if BICUBIC_MEDIA_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
@@ -489,7 +453,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
         #else
             return texture(uMediaV3Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
-    }
+    }*/
     #if BICUBIC_MEDIA_FILTER == 1
         vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
         vec2 tileTexSize = texSize*tileSize;
@@ -535,14 +499,22 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
     //  minEdgeDists.x = smin( minEdgeDists.x, len, ROUNDNESS );
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS*min(scaleMod*5., 1.));
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS);
-//    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.1 + .1)*fRoundnessMod*ROUNDNESS);
-//    minEdgeDists.x = smin2(minEdgeDists.x, len, (len*.5 + .5)*fRoundnessMod*ROUNDNESS*scaleMod);
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*min(scaleMod, 1.));
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod*scaleMod*10.);
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*sqrt(scaleMod));
-    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod);
+
+
+    vec2 o = closeCellCoords - p;
+    o = abs(o);
+    len = (o.x + o.y)*.7071;
+
 //    minEdgeDists.x = smin2(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod);
-    minEdgeDists.y = min(minEdgeDists.y, len);
+//    minEdgeDists.y = min(minEdgeDists.y, len);
+
+
+    minEdgeDists.y = max(minEdgeDists.x, min(minEdgeDists.y, len));
+    minEdgeDists.x = min(minEdgeDists.x, len);
+
 }
 
 void sortClosest(
@@ -715,7 +687,6 @@ Data update(vec2 p) {
     closestIndex = indices.x;
 
     float scaleMod = 1.;
-    float roundnessScaleMod = 1.;
     // media bbox
     vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
     if (bMediaEnabled) {
@@ -766,14 +737,14 @@ Data update(vec2 p) {
 
         #if EDGE_SCALING == 1
 //            scaleMod = max(bbX, bbY) / 2.;
-            scaleMod = min(bbX, bbY) / 2.* fetchResolutionScale()/* * 1./float(iNumCells)*50000.*/;
+            scaleMod = min(bbX, bbY) / 2.;
 //            scaleMod = (bbX + bbY) / 2.;
 //        scaleMod *= scaleMod;
 //                    scaleMod = (bbX * bbY) / 4. * 20.;
 //            scaleMod = clamp(scaleMod, 0.15, 0.75);
 //            scaleMod = clamp(scaleMod, 0.05, 1.);
 //            scaleMod = clamp(sqrt(scaleMod), 0.0, 0.1);
-
+            scaleMod = clamp(sqrt(scaleMod), 0.025, 0.15)* fetchResolutionScale()/* * 1./float(iNumCells)*50000.*/;
         #endif
     }
     #if EDGE_SCALING == 1
@@ -784,21 +755,25 @@ Data update(vec2 p) {
     }
     #endif
 
-    roundnessScaleMod = clamp(sqrt(scaleMod), 0.025, 0.15);
-
     // edge calc using the other 3 indices
     vec2 cellCoords = fetchCellCoords(closestIndex);
     float weight = weightTexData(closestIndex);
     float weightOffset = weightOffsetScale * weight;
-    vec2 minEdgeDists = vec2(0.1);
-    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
-    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
-    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
+    vec2 minEdgeDists = vec2(1.);
+//    vec2 minEdgeDists = vec2(0.05);
+
+
+    calcMinEdgeDists(indices.x, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod); // todo tmp
+
+
+    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
     #if DOUBLE_INDEX_POOL == 1
-        calcMinEdgeDists(indices2.x, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
-        calcMinEdgeDists(indices2.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
-        calcMinEdgeDists(indices2.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
-        calcMinEdgeDists(indices2.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundnessScaleMod);
+        calcMinEdgeDists(indices2.x, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+        calcMinEdgeDists(indices2.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+        calcMinEdgeDists(indices2.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
+        calcMinEdgeDists(indices2.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
     #endif
 
     return Data(indices, indices2, minEdgeDists, mediaBbox, debugFlag, scaleMod);
@@ -808,72 +783,35 @@ void main() {
     vec2 p = fetchPCoords();
     vec2 mediaP = fetchNormalizedPCoords();
 
-//    p *= .5;
-//    p *= 1.5;
-
     #if FISHEYE_TEST == 1
         vec2 fragCoord = gl_FragCoord.xy;
-//        vec2 forceCenterPixel =vec2(fPointer.x, iResolution.y - fPointer.y);
-        vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
-        vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
-        float forceCenterDist = sqrt(dist(fragCoord, forceCenterPixel));
+        vec2 focusCenterPixel =vec2(fPointer.x, iResolution.y - fPointer.y);
+        vec2 focusCenter = (focusCenterPixel*2.0-iResolution.xy) / iResolution.y;
+        float focusCenterDist = sqrt(dist(fragCoord, focusCenterPixel));
         //    if (centerDist > 450.) {
         //        discard;
         //    }
         float aspect = iResolution.x / iResolution.y;
         vec2 screenCenter = vec2(0.5, 0.5 / aspect);
 
-        vec2 d = p - forceCenter;
-
-//        float power = ( PI2 / (sqrt(dot(forceCenter, forceCenter))) ) * -0.0125;
-//        float power = ( PI2 ) * -.25;
-//        float power = ( PI2 ) * -.55;
-    float power = ( PI2 ) * .555;
-//    float power = ( PI2 / (sqrt(dot(d, d))) ) * -0.325;
+        vec2 d = p - focusCenter;
+        float r = sqrt(dot(d, d));
+//            r *= 0.25;
+        r *= 0.5;
+//        r *= 0.75;
+        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.125;
 //        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.1;
 //        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.05;
 
-//        float bind = forceCenter.x;
-            float bind = screenCenter.x;
+        float bind = screenCenter.x;
+        //    float bind = screenCenter.y;
         //    float bind = sqrt(dot(screenCenter, screenCenter));
-//            float bind = sqrt(dot(forceCenter, forceCenter));
+        //    float bind = sqrt(dot(focusCenter, focusCenter));
 
-        float r = sqrt(dot(d, d));
-        //            r *= 0.25;
-        r *= 0.5;
-//        r *= 0.125;
-        //        r *= 0.75;
-//        p = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-        p = forceCenter + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
+        p = focusCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
 //            p *= 0.75;
 //            p *= 3.;
     #endif
-
-
-//    #if FISHEYE_TEST == 1
-//        forceCenter = normalizeCoords(forceCenterPixel);
-//        screenCenter = vec2(0.5, 0.5);
-//
-//        d = mediaP - forceCenter;
-//
-//        power = ( PI2 / (sqrt(dot(forceCenter, forceCenter))) ) * -0.0125;
-//        //        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.1;
-//        //        float power = ( PI2 / (sqrt(dot(screenCenter, screenCenter))) ) * -0.05;
-//
-//        bind = forceCenter.x;
-//        //            float bind = screenCenter.x;
-//        //    float bind = sqrt(dot(screenCenter, screenCenter));
-////        bind = sqrt(dot(forceCenter, forceCenter));
-//
-//        r = sqrt(dot(d, d));
-//        //            r *= 0.25;
-//        r *= 0.5;
-//        //        r *= 0.125;
-//        //        r *= 0.75;
-//        mediaP = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-//        //            p *= 0.75;
-//        //            p *= 3.;
-//    #endif
 
     Data data = update(p);
     uvec4 indices = data.indices;
@@ -885,9 +823,8 @@ void main() {
 //    float scaleMod = data.scaleMod*data.scaleMod*data.scaleMod;
     float scaleMod = data.scaleMod;
     #if EDGE_SCALING
-//        scaleMod = clamp(scaleMod, 0.05, 0.5);
-//        scaleMod *= 10.;
-//        scaleMod = clamp(sqrt(scaleMod), 0.025, 0.15);
+        scaleMod = clamp(scaleMod, 0.05, 0.5);
+        scaleMod *= 10.;
     #endif
 
 //    float scaleMod = sqrt(sqrt(data.scaleMod));
@@ -910,8 +847,7 @@ void main() {
             c = mix(
                 c,
                 fBaseColor,
-                smoothstep(edge1*scaleMod, edge2*scaleMod, data.minEdgeDists.x)
-//                smoothstep(edge1*scaleMod, edge2*scaleMod, data.minEdgeDists.x)
+                smoothstep(edge1, edge2, data.minEdgeDists.x)
 //                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
             );
         #endif
@@ -919,8 +855,8 @@ void main() {
 
     voroIndexBufferColor = uintBitsToFloat(indices + 1u);
 
-//    if (forceCenterDist > 425.) {
-//    if (forceCenterDist > 725.) {
+//    if (focusCenterDist > 425.) {
+//    if (focusCenterDist > 725.) {
 //        c = fBaseColor;
 //    }
     outputColor = vec4(c, a);
@@ -930,7 +866,12 @@ void main() {
 //    outputColor = vec4(vec3(smoothstep(edge1*scaleMod*5., edge2*scaleMod*50., data.minEdgeDists.x)), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1*scaleMod, edge2*scaleMod*10., data.minEdgeDists.x)), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)), 1.);
-    voroEdgeBufferColor = vec3(data.minEdgeDists.x, data.minEdgeDists.y, data.scaleMod);
+
+
+//    voroEdgeBufferColor = vec3(data.minEdgeDists.x, data.minEdgeDists.y, data.scaleMod);
+
+    float r = (data.minEdgeDists.y - data.minEdgeDists.x);
+    voroEdgeBufferColor = vec3(r, data.minEdgeDists.x, data.scaleMod);
     #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
         voroIndexBuffer2Color = uintBitsToFloat(indices2 + 1u);
     #endif

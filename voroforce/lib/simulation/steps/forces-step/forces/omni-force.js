@@ -188,8 +188,8 @@ export const omniForce = ({
 
     if (requestMediaVersions) {
       if (pointerSpeedScale < mediaV2SpeedLimit) {
-        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 3)
-        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
+        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 3)
+        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
       }
     }
 
@@ -323,8 +323,8 @@ export const omniForce = ({
       primaryCellWeight =
         clamp(0, 1, (1 - distRatio) ** 2) *
         // breathingPushMod ** 2 *
-        // breathingPushMod *
-        (1 - breathingPushMod) *
+        breathingPushMod *
+        // (1 - breathingPushMod) *
         idlePointerScale *
         pushSpeedFactor
       primaryCellWeight = primaryCell.weight = easedMinLerp(

@@ -8,6 +8,7 @@ export const baseLatticeConfig = {
   enabled: true,
   aspect: 2 / 3,
   // latticeAspect: 'min',
+  // targetCellSizeViewportPercentage: 0.025,
 }
 
 export const introModeLatticeConfig = mergeConfigs(baseLatticeConfig, {

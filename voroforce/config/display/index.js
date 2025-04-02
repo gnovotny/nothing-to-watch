@@ -1,6 +1,12 @@
-import mainFrag from './main.frag'
+// import mainFrag from './main.frag'
+// import mainFrag from './main-test.frag'
+import mainFrag from './main-test-new.frag'
+// import mainFrag from './main-test-new2.frag'
 // import mainFrag from './main-fisheye-test.frag'
-import postFrag from './post.frag'
+// import postFrag from './post.frag'
+// import postFrag from './post-test.frag'
+// import postFrag from './post-test-new.frag'
+import postFrag from './post-test-new2.frag'
 // import postFrag from './post-fisheye-test.frag'
 
 export default {
@@ -37,7 +43,7 @@ export default {
             },
           },
         },
-        fEdgeMod: {
+        fEdge1Mod: {
           value: 1,
           animatable: true,
           modes: {
@@ -49,7 +55,7 @@ export default {
             },
           },
         },
-        fEdgeSmoothnessMod: {
+        fEdge0Mod: {
           value: 1.5,
           animatable: true,
           modes: {
@@ -68,14 +74,14 @@ export default {
       fragmentShader: postFrag,
       uniforms: {
         fBaseColor: {
-          value: [0.05, 0.05, 0.05],
+          value: [0.005, 0.005, 0.005],
           animatable: true,
           themes: {
             default: {
-              value: [0.05, 0.05, 0.05],
+              value: [0.005, 0.005, 0.005],
             },
             light: {
-              value: [0.95, 0.95, 0.95],
+              value: [0.995, 0.995, 0.995],
             },
           },
         },
@@ -111,6 +117,11 @@ export default {
           src: '/assets/rust.jpg',
           width: 512,
           height: 512,
+        },
+        iChannel1: {
+          src: '/assets/noise.png',
+          width: 256,
+          height: 256,
         },
       },
     },

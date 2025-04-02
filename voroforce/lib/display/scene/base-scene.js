@@ -413,8 +413,8 @@ export default class BaseScene {
       bForceMaxQuality: { value: false },
       iForceMaxNeighborLevel: { value: 0 },
       fRoundnessMod: { value: 1 },
-      fEdgeMod: { value: 1 },
-      fEdgeSmoothnessMod: { value: 1 },
+      fEdge1Mod: { value: 1 },
+      fEdge0Mod: { value: 1 },
       fBaseColor: { value: [0, 0, 0] },
     }
     return {

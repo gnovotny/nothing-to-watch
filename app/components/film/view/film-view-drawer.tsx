@@ -61,7 +61,7 @@ export const FilmViewDrawer = () => {
         <DrawerPrimitive.Content
           ref={ref}
           className={cn(
-            '!pointer-events-auto fixed not-landscape:inset-x-0 not-landscape:top-0 z-50 not-landscape:mb-24 not-landscape:h-auto p-6 landscape:top-0 landscape:left-0 landscape:h-full landscape:max-h-[36rem] landscape:max-w-[40%]',
+            '!pointer-events-auto fixed not-landscape:inset-x-0 not-landscape:top-0 z-50 not-landscape:mb-24 not-landscape:h-auto p-6 focus-visible:outline-none landscape:top-0 landscape:left-0 landscape:h-full landscape:max-h-[36rem] landscape:max-w-[40%]',
           )}
         >
           <div className='relative flex h-full w-full not-landscape:flex-col-reverse overflow-hidden not-landscape:rounded-b-3xl border bg-background landscape:flex-row-reverse landscape:rounded-3xl'>
