@@ -67,6 +67,7 @@ export const getConfig = async (state: VoroforceState) => {
   if (!preset) {
     const isSmallScreen = matchMediaQuery(down('md')).matches
     preset = isSmallScreen ? VOROFORCE_PRESET.low : VOROFORCE_PRESET.mid
+    setPreset(preset)
   }
 
   if (presetOverrideParam && VOROFORCE_PRESET[presetOverrideParam]) {
