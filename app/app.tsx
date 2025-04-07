@@ -5,10 +5,11 @@ import { Intro } from './components/intro/intro'
 import { Navbar } from './components/layout/navbar'
 import { ThemeProvider } from './components/layout/theme'
 import { Settings } from './components/settings/settings'
+import { THEME } from './voroforce'
 
 function App() {
   return (
-    <ThemeProvider defaultTheme='dark' storageKey='theme'>
+    <ThemeProvider defaultTheme={THEME.dark} storageKey='theme'>
       <div className='pointer-events-none relative z-10 h-full w-full'>
         <Navbar />
         <div className='relative h-screen w-full overflow-hidden'>
