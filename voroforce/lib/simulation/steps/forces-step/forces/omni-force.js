@@ -188,8 +188,8 @@ export const omniForce = ({
 
     if (requestMediaVersions) {
       if (pointerSpeedScale < mediaV2SpeedLimit) {
-        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 3)
-        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
+        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 3)
+        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
       }
     }
 

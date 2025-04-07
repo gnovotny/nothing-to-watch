@@ -25,6 +25,7 @@
     "@tweakpane/plugin-essentials": "^0.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "detect-gpu": "^5.0.70",
     "lucide-react": "^0.475.0",
     "ogl": "^1.0.11",
     "react": "^19.0.0",

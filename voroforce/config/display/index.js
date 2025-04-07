@@ -1,12 +1,16 @@
 // import mainFrag from './main.frag'
 // import mainFrag from './main-test.frag'
-import mainFrag from './main-test-new.frag'
+// import mainFrag from './main-test-new.frag'
+// import mainFrag from './main-castle-mountain.frag'
 // import mainFrag from './main-test-new2.frag'
+import mainFrag from './main-test-new3.frag'
 // import mainFrag from './main-fisheye-test.frag'
 // import postFrag from './post.frag'
 // import postFrag from './post-test.frag'
 // import postFrag from './post-test-new.frag'
-import postFrag from './post-test-new2.frag'
+// import postFrag from './post-castle-mountain.frag'
+// import postFrag from './post-test-new2.frag'
+import postFrag from './post-test-new3.frag'
 // import postFrag from './post-fisheye-test.frag'
 
 export default {
