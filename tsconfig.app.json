@@ -28,6 +28,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
+      "√": ["./voroforce"],
       "√/*": ["./voroforce/*"]
     }
   },

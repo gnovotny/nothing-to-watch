@@ -1,7 +1,7 @@
 import type { RectReadOnly } from 'react-use-measure'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type voroforce from '√/lib'
+import type voroforce from '√/index'
 import type {
   ConfigUniforms,
   Film,
@@ -25,10 +25,17 @@ export type VoroforceInstance = SafeVoroforceInstance & {
   dimensions: NonNullable<SafeVoroforceInstance['dimensions']>
 }
 
-export enum VOROFORCE_MODES {
+export enum VOROFORCE_MODE {
   preview = 'preview',
   select = 'select',
   intro = 'intro',
+}
+
+export enum VOROFORCE_PRESET {
+  mobile = 'mobile',
+  low = 'low',
+  mid = 'mid',
+  high = 'high',
 }
 
 export enum THEME {
@@ -49,8 +56,8 @@ export type VoroforceState = {
   film?: Film
   setFilm: (film?: Film) => void
   filmBatches: Map<number, FilmData[]>
-  mode: VOROFORCE_MODES
-  setMode: (mode: VOROFORCE_MODES) => void
+  mode: VOROFORCE_MODE
+  setMode: (mode: VOROFORCE_MODE) => void
   exitSelectMode: () => void
   isSelectMode: boolean
   isPreviewMode: boolean
@@ -60,6 +67,8 @@ export type VoroforceState = {
   setAboutOpen: (aboutOpen: boolean) => void
   playedIntro: boolean
   setPlayedIntro: (playedIntro: boolean) => void
+  preset?: VOROFORCE_PRESET
+  setPreset: (preset: VOROFORCE_PRESET) => void
   filmViewBounds?: RectReadOnly
   setFilmViewBounds: (filmViewBounds: RectReadOnly) => void
   userConfig: UserConfig
@@ -91,14 +100,14 @@ export const store = create(
         setContainer: (container: HTMLElement) => set({ container }),
         setFilm: (film?: Film) => set({ film }),
         filmBatches: new Map<number, FilmBatch>(),
-        mode: playedIntro ? VOROFORCE_MODES.preview : VOROFORCE_MODES.intro,
+        mode: playedIntro ? VOROFORCE_MODE.preview : VOROFORCE_MODE.intro,
         isPreviewMode: true,
         isSelectMode: false,
-        setMode: (mode: VOROFORCE_MODES) =>
+        setMode: (mode: VOROFORCE_MODE) =>
           set({
             mode,
-            isSelectMode: mode === VOROFORCE_MODES.select,
-            isPreviewMode: mode === VOROFORCE_MODES.preview,
+            isSelectMode: mode === VOROFORCE_MODE.select,
+            isPreviewMode: mode === VOROFORCE_MODE.preview,
           }),
         exitSelectMode: () => {
           get().instance?.controls?.deselect()
@@ -121,6 +130,15 @@ export const store = create(
             playedIntro,
           })
           localStorage.setItem('playedIntro', String(playedIntro))
+        },
+        preset: localStorage.getItem('preset')
+          ? (localStorage.getItem('preset') as VOROFORCE_PRESET)
+          : undefined,
+        setPreset: (preset: VOROFORCE_PRESET) => {
+          set({
+            preset,
+          })
+          localStorage.setItem('preset', preset)
         },
         setFilmViewBounds: (filmViewBounds: RectReadOnly) => {
           set({

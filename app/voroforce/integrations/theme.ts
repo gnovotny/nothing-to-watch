@@ -1,4 +1,3 @@
-import {} from '√/config'
 import { store, type THEME } from '../store'
 import { updateUniformsByTheme } from '../utils'
 

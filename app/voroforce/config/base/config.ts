@@ -1,0 +1,40 @@
+import { mergeConfigs } from '√'
+import controls from './controls'
+import display from './display'
+import media from './media'
+import simulation from './simulation'
+
+export const baseLatticeConfig = {
+  enabled: true,
+  aspect: 2 / 3,
+  // latticeAspect: 1,
+  // latticeAspectConstraints: 'min',
+  // targetCellSizeViewportPercentage: 0.025,
+}
+
+export const introModeLatticeConfig = mergeConfigs(baseLatticeConfig, {
+  autoTargetMediaVersion2SubgridCount: 10,
+  autoTargetMediaVersion1SubgridCount: 100,
+  targetCellSizeViewportPercentage: 0.075,
+})
+
+export default {
+  media,
+  controls,
+  display,
+  simulation,
+  cells: 50000,
+  multiThreading: {
+    enabled: false,
+    renderInParallel: true,
+  },
+  devTools: {
+    enabled: false,
+    expanded: false,
+  },
+  handleVisibilityChange: {
+    enabled: false,
+    hiddenDelay: 1000,
+  },
+  lattice: baseLatticeConfig,
+}

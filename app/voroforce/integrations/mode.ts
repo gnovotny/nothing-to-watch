@@ -1,5 +1,5 @@
-import { baseLatticeConfig, forceSimulationStepConfigs } from '√/config'
-import { VOROFORCE_MODES, store } from '../store'
+import { baseLatticeConfig, forceSimulationStepConfigs } from '../config/base'
+import { VOROFORCE_MODE, store } from '../store'
 import { type VoroforceCell, updateUniformsByMode } from '../utils'
 
 export const revealVoroforceContainer = () => {
@@ -8,7 +8,7 @@ export const revealVoroforceContainer = () => {
 
 let afterModeChangeTimeout: NodeJS.Timeout
 
-const handleModeChange = (mode: VOROFORCE_MODES): void => {
+const handleModeChange = (mode: VOROFORCE_MODE): void => {
   const {
     setMode,
     instance: { simulation },
@@ -25,7 +25,7 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
   forceStepConfig.parameters.velocityDecay =
     forceStepConfig.parameters.velocityDecayTransitionEnterMode
 
-  if (mode === VOROFORCE_MODES.select) {
+  if (mode === VOROFORCE_MODE.select) {
     // renderer.resizeScissor({
     //   offset: {
     //     left: 0,
@@ -34,7 +34,7 @@ const handleModeChange = (mode: VOROFORCE_MODES): void => {
     // })
     // controls.disableFocus()
     // controls.freezePointerUntilBlurAndRefocus()
-  } else if (mode === VOROFORCE_MODES.preview) {
+  } else if (mode === VOROFORCE_MODE.preview) {
     // controls.enableFocus()
   }
 
@@ -96,7 +96,7 @@ const handleIntro = () => {
     setPlayedIntro(true)
 
     setTimeout(() => {
-      handleModeChange(VOROFORCE_MODES.preview)
+      handleModeChange(VOROFORCE_MODE.preview)
 
       controls.targetPointer = {
         x:
@@ -115,7 +115,7 @@ export const handleMode = () => {
 
   const { loader, ticker } = instance
 
-  if (initialMode === VOROFORCE_MODES.intro) {
+  if (initialMode === VOROFORCE_MODE.intro) {
     if (config.media.enabled && loader.loadingMediaLayers !== 0) {
       loader.addEventListener(
         'idle',
@@ -159,8 +159,8 @@ export const handleMode = () => {
     cell,
   }: { cell: VoroforceCell }) => {
     const mode = store.getState().mode
-    if (mode === VOROFORCE_MODES.intro) return
-    const newMode = cell ? VOROFORCE_MODES.select : VOROFORCE_MODES.preview
+    if (mode === VOROFORCE_MODE.intro) return
+    const newMode = cell ? VOROFORCE_MODE.select : VOROFORCE_MODE.preview
     if (newMode === mode) return
     handleModeChange(newMode)
   }) as unknown as EventListener)

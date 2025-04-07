@@ -1,4 +1,4 @@
-import type { THEME, VOROFORCE_MODES } from '../store'
+import type { THEME, VOROFORCE_MODE } from '../store'
 import { MIN_LERP_EASING_TYPES, easedMinLerp } from './math'
 
 export type BaseConfigUniform =
@@ -18,7 +18,7 @@ export type BaseConfigUniform =
     }
 
 export type ConfigUniform = BaseConfigUniform & {
-  modes?: Record<VOROFORCE_MODES | 'default', BaseConfigUniform>
+  modes?: Record<VOROFORCE_MODE | 'default', BaseConfigUniform>
   themes?: Record<THEME | 'default', BaseConfigUniform>
 }
 
@@ -73,7 +73,7 @@ export const updateUniforms = (
 
 export const updateUniformsByMode = (
   uniforms: ConfigUniforms,
-  mode: VOROFORCE_MODES,
+  mode: VOROFORCE_MODE,
   animatingUniforms?: ConfigUniforms,
 ) => {
   uniforms.forEach((uniform, key) => {
