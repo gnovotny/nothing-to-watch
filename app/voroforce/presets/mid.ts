@@ -1,8 +1,8 @@
-import baseConfig from '../base/config'
-import postFrag from './post-test-new3.frag'
+import baseConfig from '../config/config'
+import postFrag from '../config/display/post.frag'
 
 export default {
-  cells: 50000,
+  cells: 25000,
   media: {
     versions: [
       ...baseConfig.media.versions,

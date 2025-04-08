@@ -1,4 +1,4 @@
-import { VOROFORCE_PRESET } from '../../store'
+import { VOROFORCE_PRESET } from '../store'
 import { default as mobile } from './mobile'
 import { default as low } from './low'
 import { default as mid } from './mid'

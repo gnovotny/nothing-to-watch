@@ -1,10 +1,9 @@
 import { getGPUTier } from 'detect-gpu'
 import { UAParser } from 'ua-parser-js'
 import { mergeConfigs } from '√'
-// biome-ignore lint/style/useImportType: <explanation>
-import baseConfig, { introModeLatticeConfig } from '../config/base'
-import presets from '../config/presets'
-import { forceSimulationStepIntroConfig } from '../config/base/simulation/force/intro'
+import baseConfig, { introModeLatticeConfig } from '../config'
+import presets from '../presets'
+import { forceSimulationStepIntroConfig } from '../config/simulation/force/intro'
 
 import { down, matchMediaQuery } from '../../utils/mq'
 

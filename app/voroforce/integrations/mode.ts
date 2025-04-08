@@ -1,4 +1,4 @@
-import { baseLatticeConfig, forceSimulationStepConfigs } from '../config/base'
+import { baseLatticeConfig, forceSimulationStepConfigs } from '../config'
 import { VOROFORCE_MODE, store } from '../store'
 import { type VoroforceCell, updateUniformsByMode } from '../utils'
 
