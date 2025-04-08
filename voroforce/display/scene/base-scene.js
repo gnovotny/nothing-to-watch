@@ -274,7 +274,7 @@ export default class BaseScene {
             width,
             height,
             length: layers,
-            // compression: 'etc', // or dds
+            compression: 'etc', // or dds
           }),
       )
 

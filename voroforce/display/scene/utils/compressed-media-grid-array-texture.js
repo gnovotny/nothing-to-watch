@@ -10,7 +10,6 @@ export class CompressedMediaGridArrayTexture extends Texture {
         // Extension not supported
         console.error('ETC1 texture compression not supported')
       }
-      console.log('ext', ext)
       internalFormat = ext.COMPRESSED_RGB_ETC1_WEBGL
     } else {
       ext = gl.getExtension('WEBGL_compressed_texture_s3tc')
