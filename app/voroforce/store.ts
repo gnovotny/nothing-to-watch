@@ -32,6 +32,7 @@ export enum VOROFORCE_MODE {
 }
 
 export enum VOROFORCE_PRESET {
+  mobile = 'mobile',
   low = 'low',
   mid = 'mid',
   high = 'high',

@@ -2,8 +2,7 @@ export default {
   enabled: true,
   baseUrl: import.meta.env.VITE_TEXTURES_BASE_URL ?? '/media',
   preload: 'first', // 'v0', 'first' or false
-  // compressionFormat: 'dds',
-  compressionFormat: 'ktx',
+  compressionFormat: 'dds', // or 'ktx'
   versions: [
     {
       cols: 512,
@@ -12,10 +11,8 @@ export default {
       height: 624,
       layers: 1,
       layerIndexStart: 0,
-      // layerSrcFormat: '/low/dds/{INDEX}.dds',
-      // layerSrcFormat: '/low/etc/0.etc',
-      layerSrcFormat: '/low/ktx/0.ktx',
-      // layerSrcFormat: '/low/dds/0.dds',
+      layerSrcFormat: '/low/{EXT}/{INDEX}.{EXT}',
+      // layerSrcFormat: '/low/{EXT}/0.{EXT}',
       type: 'compressed',
     },
     {
@@ -25,10 +22,8 @@ export default {
       height: 1980,
       layers: 10,
       layerIndexStart: 0,
-      // layerSrcFormat: '/mid/dds/{INDEX}.dds',
-      // layerSrcFormat: '/mid/etc/0.etc',
-      layerSrcFormat: '/mid/ktx/0.ktx',
-      // layerSrcFormat: '/mid/dds/0.dds',
+      layerSrcFormat: '/mid/{EXT}/{INDEX}.{EXT}',
+      // layerSrcFormat: '/mid/{EXT}/0.{EXT}',
       type: 'compressed',
     },
     {
@@ -38,10 +33,8 @@ export default {
       height: 1980,
       layers: 241,
       layerIndexStart: 0,
-      // layerSrcFormat: '/high/dds/{INDEX}.dds',
-      // layerSrcFormat: '/high/etc/0.etc',
-      layerSrcFormat: '/high/ktx/0.ktx',
-      // layerSrcFormat: '/high/dds/0.dds',
+      layerSrcFormat: '/high/{EXT}/{INDEX}.{EXT}',
+      // layerSrcFormat: '/high/{EXT}/0.{EXT}',
       type: 'compressed',
     },
   ],

@@ -1,4 +1,5 @@
 import { getGPUTier } from 'detect-gpu'
+import { UAParser } from 'ua-parser-js'
 import { mergeConfigs } from '√'
 // biome-ignore lint/style/useImportType: <explanation>
 import baseConfig, { introModeLatticeConfig } from '../config/base'
@@ -64,10 +65,15 @@ export const getConfig = async (state: VoroforceState) => {
   const cellsOverrideParam = urlParams.get('cells')
   const customLinkBase64Param = urlParams.get('customLinkBase64')
 
+  const ua = new UAParser()
+  const device = ua.getDevice()
+
   let preset = initialPreset
   if (!preset) {
     const isSmallScreen = matchMediaQuery(down('md')).matches
-    if (isSmallScreen) {
+    if (device.is('mobile') || device.is('tablet')) {
+      preset = VOROFORCE_PRESET.mobile
+    } else if (isSmallScreen) {
       preset = VOROFORCE_PRESET.low
     } else {
       const gpuTier = await getGPUTier()
