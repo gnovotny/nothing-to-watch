@@ -34,7 +34,7 @@ export class Loader extends EventTarget {
 
   preloadFirstMediaLayerAllGridVersions(onLoad) {
     const count = this.config.versions.filter(
-      ({ type }) => !type || type === 'default',
+      ({ type }) => !type || type === 'compressed',
     ).length
     let loaded = 0
     const onLoadLayer = () => {
@@ -46,7 +46,7 @@ export class Loader extends EventTarget {
     }
     for (let i = 0; i < count; i++) {
       const type = this.config.versions[i].type
-      if (type && type !== 'default') continue
+      if (type && type !== 'compressed') continue
       void this.loadMediaLayer(i, 0, onLoadLayer)
     }
   }
@@ -60,15 +60,15 @@ export class Loader extends EventTarget {
 
     const baseUrl = this.config.baseUrl
     const config = this.config.versions[versionIndex]
+    const ext = this.config.compressionFormat
 
     let src
     if (typeof config.layerSrcFormat === 'function') {
       src = await config.layerSrcFormat(layerIndex, this.store)
     } else {
-      src = `${config.layerSrcFormat.startsWith('/') ? baseUrl : ''}${config.layerSrcFormat.replace(
-        '{INDEX}',
-        `${config.layerIndexStart + layerIndex}`,
-      )}`
+      src = `${config.layerSrcFormat.startsWith('/') ? baseUrl : ''}${config.layerSrcFormat
+        .replace('{INDEX}', `${config.layerIndexStart + layerIndex}`)
+        .replace('{EXT}', ext)}`
     }
 
     if (!src) return
@@ -77,11 +77,13 @@ export class Loader extends EventTarget {
     this.sharedLoadedMediaVersionLayersData[versionIndex].data[layerIndex] = 1
 
     let bytes
-    const type = config.type ?? 'default'
-    const isDds = src.endsWith('.dds')
-    const isEtc = src.endsWith('.etc')
-    const compression = isDds ? 'dds' : isEtc ? 'etc' : undefined
-    const isDefault = type === 'default'
+    const type = config.type ?? 'compressed'
+
+    // const ext = src.split('.').pop().split('?')[0].toLowerCase()
+
+    const isDds = ext === 'dds'
+    const isKtx = ext === 'ktx'
+    const isEtc = ext === 'etc'
 
     if (isDds) {
       // DDS File format constants
@@ -123,6 +125,7 @@ export class Loader extends EventTarget {
 
       bytes = new Uint8Array(arrayBuffer, 128, size) // 128 is size of DDS header
     } else if (isEtc) {
+      // TODO incomplete
       const response = await fetch(src)
       const arrayBuffer = await response.arrayBuffer()
 
@@ -138,8 +141,7 @@ export class Loader extends EventTarget {
       const expectedMagic = 55727696 // 55727696
 
       if (magic !== expectedMagic) {
-        console.log('magic', magic)
-        throw new Error('Invalid ETC1 file format')
+        throw new Error('Invalid ETC file format')
       }
 
       const width = dataView.getUint16(offset, true)
@@ -153,10 +155,39 @@ export class Loader extends EventTarget {
 
       // Extract the compressed texture data
       bytes = new Uint8Array(arrayBuffer, offset, dataSize)
-      console.log('bytes', bytes)
-      console.log('width', width)
-      console.log('height', height)
-      console.log('dataSize', dataSize)
+    } else if (isKtx) {
+      const response = await fetch(src)
+      const arrayBuffer = await response.arrayBuffer()
+
+      const idCheck = [
+        0xab, 0x4b, 0x54, 0x58, 0x20, 0x31, 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]
+      const id = new Uint8Array(arrayBuffer, 0, 12)
+      for (let i = 0; i < id.length; i++)
+        if (id[i] !== idCheck[i])
+          return console.error('File missing KTX identifier')
+
+      const size = Uint32Array.BYTES_PER_ELEMENT
+      const head = new DataView(arrayBuffer, 12, 13 * size)
+      const littleEndian = head.getUint32(0, true) === 0x04030201
+      const glType = head.getUint32(size, littleEndian)
+      if (glType !== 0) {
+        throw new Error('only compressed formats currently supported')
+      }
+      // this.glInternalFormat = head.getUint32(4 * size, littleEndian)
+      // const width = head.getUint32(6 * size, littleEndian)
+      // const height = head.getUint32(7 * size, littleEndian)
+      // this.numberOfFaces = head.getUint32(10 * size, littleEndian)
+      // this.numberOfMipmapLevels = Math.max(
+      //   1,
+      //   head.getUint32(11 * size, littleEndian),
+      // )
+      const bytesOfKeyValueData = head.getUint32(12 * size, littleEndian)
+
+      let offset = 12 + 13 * 4 + bytesOfKeyValueData
+      const levelSize = new Int32Array(arrayBuffer, offset, 1)[0]
+      offset += 4 // levelSize field
+      bytes = new Uint8Array(arrayBuffer, offset, levelSize)
     } else {
       // const blob = await (
       //   await fetch(src, {

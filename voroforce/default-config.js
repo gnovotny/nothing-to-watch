@@ -21,7 +21,9 @@ export const defaultConfig = {
   },
   media: {
     enabled: false,
+    baseUrl: '/media',
     preload: 'v0', // 'v0', 'first' or false
+    compressionFormat: 'dds',
   },
   lattice: {
     enabled: true,

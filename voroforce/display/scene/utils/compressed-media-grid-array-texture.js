@@ -4,13 +4,22 @@ export class CompressedMediaGridArrayTexture extends Texture {
   constructor(gl, args) {
     let ext
     let internalFormat
-    if (args.compression === 'etc') {
-      ext = gl.getExtension('WEBGL_compressed_texture_etc1')
+    if (args.compressionFormat === 'etc') {
+      // ext = gl.getExtension('WEBGL_compressed_texture_etc1')
+      ext = gl.getExtension('WEBGL_compressed_texture_etc')
       if (!ext) {
         // Extension not supported
         console.error('ETC1 texture compression not supported')
       }
       internalFormat = ext.COMPRESSED_RGB_ETC1_WEBGL
+    } else if (args.compressionFormat === 'ktx') {
+      // ext = gl.getExtension('WEBGL_compressed_texture_etc1')
+      ext = gl.getExtension('WEBGL_compressed_texture_etc')
+      if (!ext) {
+        // Extension not supported
+        console.error('ETC texture compression not supported')
+      }
+      internalFormat = ext.COMPRESSED_RGB8_ETC2
     } else {
       ext = gl.getExtension('WEBGL_compressed_texture_s3tc')
       if (!ext) {
@@ -38,6 +47,7 @@ export class CompressedMediaGridArrayTexture extends Texture {
     })
 
     this.compressedTexExt = ext
+    this.internalFormat = internalFormat
 
     this.bind()
 
@@ -149,7 +159,8 @@ export class CompressedMediaGridArrayTexture extends Texture {
         this.height,
         1,
         // media.internalFormat,
-        this.compressedTexExt.COMPRESSED_RGB_S3TC_DXT1_EXT,
+        // this.compressedTexExt.COMPRESSED_RGB_S3TC_DXT1_EXT,
+        this.internalFormat,
         bytes,
       )
     })

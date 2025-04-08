@@ -257,29 +257,32 @@ export default class BaseScene {
     if (!this.globalConfig.media?.enabled) {
       const emptyTex = new Texture(this.gl, {})
       this.compressedMediaTextures = this.globalConfig.media.versions
-        .filter(({ type }) => !type || type === 'default')
+        .filter(({ type }) => !type || type === 'compressed')
         .map(() => emptyTex)
       this.mediaTextures = this.globalConfig.media.versions
-        .filter(({ type }) => type && type !== 'default')
+        .filter(({ type }) => type && type !== 'compressed')
         .map(() => emptyTex)
 
       return
     }
 
+    const compressionFormat = this.globalConfig.media.compressionFormat
     this.compressedMediaTextures = this.globalConfig.media.versions
-      .filter(({ type }) => !type || type === 'default')
+      .filter(({ type }) => !type || type === 'compressed')
       .map(
         ({ width, height, layers }) =>
           new CompressedMediaGridArrayTexture(this.gl, {
             width,
             height,
             length: layers,
-            compression: 'etc', // or dds
+            // compressionFormat: 'etc', // or dds
+            // compressionFormat: 'ktx', // or dds
+            compressionFormat,
           }),
       )
 
     this.mediaTextures = this.globalConfig.media.versions
-      .filter(({ type }) => type && type !== 'default')
+      .filter(({ type }) => type && type !== 'compressed')
       .map((mediaVersion) => {
         const { width, height, layers } = mediaVersion
         return new DynamicMediaGridArrayTexture(this.gl, {
@@ -293,7 +296,7 @@ export default class BaseScene {
     this.loader.addEventListener(
       'mediaLayerLoaded',
       ({ data: { versionIndex, layerIndex, bytes, type, compression } }) => {
-        if (!type || type === 'default') {
+        if (!type || type === 'compressed') {
           this.compressedMediaTextures[versionIndex].prepareLayerUpdate(
             layerIndex,
             bytes,
