@@ -2,15 +2,29 @@ import { Texture } from 'ogl'
 
 export class CompressedMediaGridArrayTexture extends Texture {
   constructor(gl, args) {
-    const ext = gl.getExtension('WEBGL_compressed_texture_s3tc')
-    if (!ext) {
-      // Extension not supported
-      console.error('S3TC texture compression not supported')
+    let ext
+    let internalFormat
+    if (args.compression === 'etc') {
+      ext = gl.getExtension('WEBGL_compressed_texture_etc1')
+      if (!ext) {
+        // Extension not supported
+        console.error('ETC1 texture compression not supported')
+      }
+      console.log('ext', ext)
+      internalFormat = ext.COMPRESSED_RGB_ETC1_WEBGL
+    } else {
+      ext = gl.getExtension('WEBGL_compressed_texture_s3tc')
+      if (!ext) {
+        // Extension not supported
+        console.error('S3TC texture compression not supported')
+      }
+      internalFormat = ext.COMPRESSED_RGB_S3TC_DXT1_EXT
     }
+
     super(gl, {
       ...args,
       target: gl.TEXTURE_2D_ARRAY,
-      internalFormat: ext.COMPRESSED_RGB_S3TC_DXT1_EXT,
+      internalFormat,
 
       // These are the key parameters for bilinear filtering
       minFilter: gl.LINEAR,
@@ -32,7 +46,7 @@ export class CompressedMediaGridArrayTexture extends Texture {
     gl.texStorage3D(
       gl.TEXTURE_2D_ARRAY,
       1, // mipmap levels
-      ext.COMPRESSED_RGB_S3TC_DXT1_EXT,
+      internalFormat,
       this.width,
       this.height,
       this.length, // (number of layers)

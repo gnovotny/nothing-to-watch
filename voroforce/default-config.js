@@ -3,10 +3,10 @@ import { defaultDisplayConfig } from './display'
 import { defaultSimulationConfig } from './simulation'
 
 export const defaultConfig = {
+  cells: 100,
   simulation: defaultSimulationConfig,
   display: defaultDisplayConfig,
   controls: defaultControlsConfig,
-  cells: 100,
   devTools: {
     enabled: false,
     expanded: false,

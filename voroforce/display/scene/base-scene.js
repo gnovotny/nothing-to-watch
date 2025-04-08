@@ -274,6 +274,7 @@ export default class BaseScene {
             width,
             height,
             length: layers,
+            // compression: 'etc', // or dds
           }),
       )
 
@@ -291,7 +292,7 @@ export default class BaseScene {
 
     this.loader.addEventListener(
       'mediaLayerLoaded',
-      ({ data: { versionIndex, layerIndex, bytes, type, isCompressed } }) => {
+      ({ data: { versionIndex, layerIndex, bytes, type, compression } }) => {
         if (!type || type === 'default') {
           this.compressedMediaTextures[versionIndex].prepareLayerUpdate(
             layerIndex,

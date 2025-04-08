@@ -1,5 +1,5 @@
 export default {
-  enabled: false,
+  enabled: true,
   baseUrl: import.meta.env.VITE_TEXTURES_BASE_URL ?? '/media',
   preload: 'first', // 'v0', 'first' or false
   versions: [
@@ -11,6 +11,7 @@ export default {
       layers: 1,
       layerIndexStart: 0,
       layerSrcFormat: '/low/dds/{INDEX}.dds',
+      // layerSrcFormat: '/low/etc/0.etc',
       type: 'default',
     },
     {
@@ -21,6 +22,7 @@ export default {
       layers: 10,
       layerIndexStart: 0,
       layerSrcFormat: '/mid/dds/{INDEX}.dds',
+      // layerSrcFormat: '/mid/etc/0.etc',
       type: 'default',
     },
     {
@@ -31,6 +33,7 @@ export default {
       layers: 241,
       layerIndexStart: 0,
       layerSrcFormat: '/high/dds/{INDEX}.dds',
+      // layerSrcFormat: '/high/etc/0.etc',
       type: 'default',
     },
   ],

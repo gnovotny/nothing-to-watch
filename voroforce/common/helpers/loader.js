@@ -78,10 +78,12 @@ export class Loader extends EventTarget {
 
     let bytes
     const type = config.type ?? 'default'
-    const isCompressed = src.endsWith('.dds')
+    const isDds = src.endsWith('.dds')
+    const isEtc = src.endsWith('.etc')
+    const compression = isDds ? 'dds' : isEtc ? 'etc' : undefined
     const isDefault = type === 'default'
 
-    if (isCompressed) {
+    if (isDds) {
       // DDS File format constants
       const MAGIC = 0x20534444
       const DDPF_FOURCC = 0x4
@@ -120,6 +122,41 @@ export class Loader extends EventTarget {
         (((Math.max(4, width) / 4) * Math.max(4, height)) / 4) * blockSize
 
       bytes = new Uint8Array(arrayBuffer, 128, size) // 128 is size of DDS header
+    } else if (isEtc) {
+      const response = await fetch(src)
+      const arrayBuffer = await response.arrayBuffer()
+
+      const dataView = new DataView(arrayBuffer)
+      let offset = 0
+
+      const magic = dataView.getUint32(offset, true)
+      offset += 4
+
+      // Validate magic bytes (replace with your format's identifier)
+      // const expectedMagic = 0x31435445 // "ETC1" in ASCII as uint32
+      // const expectedMagic = 0x3511010 // 55727696
+      const expectedMagic = 55727696 // 55727696
+
+      if (magic !== expectedMagic) {
+        console.log('magic', magic)
+        throw new Error('Invalid ETC1 file format')
+      }
+
+      const width = dataView.getUint16(offset, true)
+      offset += 2
+
+      const height = dataView.getUint16(offset, true)
+      offset += 2
+
+      // Calculate data size for ETC1 (4 bits per pixel)
+      const dataSize = Math.ceil(width / 4) * Math.ceil(height / 4) * 8
+
+      // Extract the compressed texture data
+      bytes = new Uint8Array(arrayBuffer, offset, dataSize)
+      console.log('bytes', bytes)
+      console.log('width', width)
+      console.log('height', height)
+      console.log('dataSize', dataSize)
     } else {
       // const blob = await (
       //   await fetch(src, {
@@ -157,7 +194,7 @@ export class Loader extends EventTarget {
         versionIndex,
         layerIndex,
         type,
-        isCompressed,
+        isCompressed: isDds,
       }),
     )
 

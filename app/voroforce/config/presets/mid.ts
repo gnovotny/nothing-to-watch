@@ -18,7 +18,7 @@ export default {
 
         layers: 50000, // real layers for 50000/54: 925.9 = 926
         layerIndexStart: 0,
-        layerSrcFormat: '/posters/{INDEX}.jpg',
+        layerSrcFormat: '/single/{INDEX}.jpg',
         // layerSrcFormat: async (
         //   layerIndex: number,
         //   voroforceStore: VoroforceInstance['store'],
