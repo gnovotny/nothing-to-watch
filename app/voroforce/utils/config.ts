@@ -1,7 +1,8 @@
+import { getGPUTier } from 'detect-gpu'
 import { mergeConfigs } from '√'
 // biome-ignore lint/style/useImportType: <explanation>
 import baseConfig, { introModeLatticeConfig } from '../config/base'
-import * as presets from '../config/presets'
+import presets from '../config/presets'
 import { forceSimulationStepIntroConfig } from '../config/base/simulation/force/intro'
 
 import { down, matchMediaQuery } from '../../utils/mq'
@@ -66,7 +67,21 @@ export const getConfig = async (state: VoroforceState) => {
   let preset = initialPreset
   if (!preset) {
     const isSmallScreen = matchMediaQuery(down('md')).matches
-    preset = isSmallScreen ? VOROFORCE_PRESET.low : VOROFORCE_PRESET.mid
+    if (isSmallScreen) {
+      preset = VOROFORCE_PRESET.low
+    } else {
+      const gpuTier = await getGPUTier()
+      switch (gpuTier.tier) {
+        case 3:
+          preset = VOROFORCE_PRESET.high
+          break
+        case 2:
+          preset = VOROFORCE_PRESET.mid
+          break
+        default:
+          preset = VOROFORCE_PRESET.low
+      }
+    }
     setPreset(preset)
   }
 

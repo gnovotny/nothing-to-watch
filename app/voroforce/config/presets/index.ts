@@ -1,2 +1,12 @@
-export { default as low } from './low'
-export { default as mid } from './mid'
+import { VOROFORCE_PRESET } from '../../store'
+import { default as low } from './low'
+import { default as mid } from './mid'
+import { default as high } from './high'
+
+const presets = {
+  [VOROFORCE_PRESET.low]: low,
+  [VOROFORCE_PRESET.mid]: mid,
+  [VOROFORCE_PRESET.high]: high,
+}
+
+export default presets
