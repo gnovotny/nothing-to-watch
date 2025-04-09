@@ -144,7 +144,6 @@ export const omniForce = ({
   // }
 
   function force(alpha) {
-    console.log('force')
     forceSetup(alpha)
     latticeForcePass(alpha) // lattice pass must run in isolation
     mainForcePass(alpha)
@@ -377,6 +376,9 @@ export const omniForce = ({
         (1 - (1 - breathingPushMod) * 3)
 
       if (primaryCell) {
+        if (i === 0) {
+          console.log('force')
+        }
         isPrimaryCell = i === primaryCell.index
 
         colLevelAdjacency = abs(cell.col - primaryCell.col)
