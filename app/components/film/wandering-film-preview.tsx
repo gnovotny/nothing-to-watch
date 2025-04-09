@@ -144,21 +144,14 @@ const WanderingFilmPreview = () => {
       innerRef.current.style.opacity = `${scaleRef.current}`
 
       if (frameRef.current % 60 === 0) {
-        // const bbox = innerRef.current.getBoundingClientRect()
-        // const bbox = containerRef.current.getBoundingClientRect()
-
         if (topNeighborCellRef.current.y - bounds.height < 0) {
-          // if (bbox.top < 0) {
           setReverseY(true)
-          // } else if (bbox.top + bbox.height > window.innerHeight) {
         } else if (reverseY) {
           setReverseY(false)
         }
 
         if (neighborCell.x - bounds.width * 0.25 < 0) {
-          // if (bbox.left < 0) {
           setReverseX(true)
-          // } else if (bbox.left + bbox.width > window.innerWidth) {
         } else if (reverseX) {
           setReverseX(false)
         }
@@ -188,15 +181,10 @@ const WanderingFilmPreview = () => {
     }
   }, [isSmallScreen, onCellFocused])
 
-  // useEffect(() => {
-  //   console.log('bounds', bounds)
-  // }, [bounds])
-
   return (
     <>
       {isPreviewMode && film && (
         <div
-          // ref={containerRef}
           ref={(element) => {
             containerRef.current = element
             measureRef(element)
@@ -211,10 +199,6 @@ const WanderingFilmPreview = () => {
         >
           <div
             ref={innerRef}
-            // ref={(element) => {
-            //   innerRef.current = element
-            //   measureRef(element)
-            // }}
             className={cn(
               'flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
               // 'md:-translate-y-full md:-translate-x-1/4',
