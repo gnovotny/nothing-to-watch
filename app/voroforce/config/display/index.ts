@@ -9,7 +9,7 @@ import mainFrag from './main-test-new3.frag'
 export default {
   scene: {
     dev: {
-      enabled: false,
+      enabled: true,
     },
     main: {
       fragmentShader: mainFrag,

@@ -376,9 +376,6 @@ export const omniForce = ({
         (1 - (1 - breathingPushMod) * 3)
 
       if (primaryCell) {
-        if (i === 0) {
-          console.log('force1')
-        }
         isPrimaryCell = i === primaryCell.index
 
         colLevelAdjacency = abs(cell.col - primaryCell.col)
