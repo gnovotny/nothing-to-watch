@@ -71,7 +71,14 @@ const WanderingFilmPreview = () => {
   )
 
   useEffect(() => {
-    if (isSmallScreen) return
+    if (isSmallScreen) {
+      if (!containerRef.current) return
+      if (!innerRef.current) return
+      containerRef.current.style.translate = ''
+      innerRef.current.style.scale = ''
+      innerRef.current.style.opacity = ''
+      return
+    }
     const {
       ticker,
       controls: { pointer },
@@ -146,7 +153,6 @@ const WanderingFilmPreview = () => {
           // } else if (bbox.top + bbox.height > window.innerHeight) {
         } else if (reverseY) {
           setReverseY(false)
-          onCellFocused()
         }
 
         if (neighborCell.x - bounds.width * 0.25 < 0) {
@@ -166,7 +172,7 @@ const WanderingFilmPreview = () => {
     return () => {
       ticker.removeEventListener('tick', onTick)
     }
-  }, [isSmallScreen, bounds, reverseY, reverseX, onCellFocused])
+  }, [isSmallScreen, bounds, reverseY, reverseX])
 
   useEffect(() => {
     if (isSmallScreen) return
