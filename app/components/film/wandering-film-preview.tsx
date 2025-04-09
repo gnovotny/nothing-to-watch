@@ -28,7 +28,7 @@ const WanderingFilmPreview = () => {
     })),
   )
 
-  const [active, setActive] = useState(true)
+  const [active] = useState(true)
   const [reverseX, setReverseX] = useState(false)
   const [reverseY, setReverseY] = useState(false)
 
