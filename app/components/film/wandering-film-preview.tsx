@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useMediaQuery } from '../../hooks/use-media-query'
 import { clamp } from '../../utils/math'
@@ -12,13 +12,14 @@ import {
 } from '../../voroforce'
 import { Badge } from '../ui/badge'
 import { FilmRatingGauge } from './shared/film-rating-gauge'
+import useMeasure from 'react-use-measure'
 
 const WanderingFilmPreview = () => {
-  const active = true
-  const reverse = false
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const isSmallScreen = useMediaQuery(down('md'))
+
+  const [measureRef, bounds] = useMeasure()
 
   const { film, isPreviewMode } = useVoroforce(
     useShallow((state) => ({
@@ -27,43 +28,89 @@ const WanderingFilmPreview = () => {
     })),
   )
 
-  const primaryCell = useRef<VoroforceCell>(null)
+  const [active, setActive] = useState(true)
+  const [reverseX, setReverseX] = useState(false)
+  const [reverseY, setReverseY] = useState(false)
+
+  const cellsRef = useRef<VoroforceCell[]>(null)
+  const primaryCellRef = useRef<VoroforceCell>(null)
   const voroforceRef = useRef(useVoroforce.getState().instance)
-  const targetPositionRef = useRef<{ x: number; y: number }>(undefined)
+  const topNeighborCellRef = useRef<{ x: number; y: number }>(undefined)
+  const bottomNeighborCellRef = useRef<{ x: number; y: number }>(undefined)
   const positionRef = useRef<{ x: number; y: number }>(undefined)
   const scaleRef = useRef<number>(0)
   const opacityRef = useRef<number>(0)
+  const frameRef = useRef<number>(0)
+
+  const onCellFocused = useCallback(
+    ({ cell }: { cell?: VoroforceCell } = {}) => {
+      if (cell) {
+        primaryCellRef.current = cell
+      }
+
+      if (primaryCellRef.current && cellsRef.current) {
+        const {
+          config: {
+            lattice: { cols },
+          },
+        } = voroforceRef.current
+        const topNeighborCell =
+          cellsRef.current[primaryCellRef.current.index - cols]
+        if (topNeighborCell) {
+          topNeighborCellRef.current = topNeighborCell
+        }
+
+        const bottomNeighborCell =
+          cellsRef.current[primaryCellRef.current.index + cols]
+        if (bottomNeighborCell) {
+          bottomNeighborCellRef.current = bottomNeighborCell
+        }
+      }
+    },
+    [],
+  )
 
   useEffect(() => {
     if (isSmallScreen) return
     const {
       ticker,
-      controls,
       controls: { pointer },
     } = voroforceRef.current
 
     let customSpeedScale = 0
 
     const onTick = () => {
-      if (!primaryCell.current) return
+      if (!primaryCellRef.current) return
       if (!containerRef.current) return
       if (!innerRef.current) return
-      if (!targetPositionRef.current) return
+      if (!topNeighborCellRef.current) return
+      if (!bottomNeighborCellRef.current) return
+
+      const neighborCell = reverseY
+        ? bottomNeighborCellRef.current
+        : topNeighborCellRef.current
+      const targetPosition = {
+        x:
+          neighborCell.x -
+          (reverseX ? bounds.width * 0.5 : bounds.width * 0.25),
+        y: neighborCell.y - (reverseY ? 0 : bounds.height),
+      }
+
       if (!positionRef.current) {
         positionRef.current = {
-          x: targetPositionRef.current.x,
-          y: targetPositionRef.current.y,
+          x: targetPosition.x,
+          y: targetPosition.y,
         }
       } else {
         positionRef.current.x = easedMinLerp(
           positionRef.current.x,
-          targetPositionRef.current.x,
+          targetPosition.x,
           0.1,
           MIN_LERP_EASING_TYPES.easeInOutQuad,
         )
         positionRef.current.y = easedMinLerp(
           positionRef.current.y,
-          targetPositionRef.current.y,
+          targetPosition.y,
           0.1,
           MIN_LERP_EASING_TYPES.easeInOutQuad,
         )
@@ -88,53 +135,86 @@ const WanderingFilmPreview = () => {
       containerRef.current.style.translate = `${positionRef.current.x}px ${positionRef.current.y}px`
       innerRef.current.style.scale = `${scaleRef.current}`
       innerRef.current.style.opacity = `${scaleRef.current}`
-    }
 
-    const onCellFocused = ({
-      cell,
-      cells,
-    }: { cell: VoroforceCell; cells: VoroforceCell[] }) => {
-      if (cell) {
-        primaryCell.current = cell
-        const {
-          config: {
-            lattice: { cols },
-          },
-        } = voroforceRef.current
-        const neighborCell = cells[cell.index - cols]
-        if (neighborCell) {
-          targetPositionRef.current = neighborCell
+      if (frameRef.current % 60 === 0) {
+        // const bbox = innerRef.current.getBoundingClientRect()
+        // const bbox = containerRef.current.getBoundingClientRect()
+
+        if (topNeighborCellRef.current.y - bounds.height < 0) {
+          // if (bbox.top < 0) {
+          setReverseY(true)
+          // } else if (bbox.top + bbox.height > window.innerHeight) {
+        } else if (reverseY) {
+          setReverseY(false)
+          onCellFocused()
+        }
+
+        if (neighborCell.x - bounds.width * 0.25 < 0) {
+          // if (bbox.left < 0) {
+          setReverseX(true)
+          // } else if (bbox.left + bbox.width > window.innerWidth) {
+        } else if (reverseX) {
+          setReverseX(false)
         }
       }
+
+      frameRef.current++
     }
+
     ticker.addEventListener('tick', onTick)
-    controls.addEventListener('focused', onCellFocused)
 
     return () => {
       ticker.removeEventListener('tick', onTick)
+    }
+  }, [isSmallScreen, bounds, reverseY, reverseX, onCellFocused])
+
+  useEffect(() => {
+    if (isSmallScreen) return
+    const { controls, cells } = voroforceRef.current
+    if (!cellsRef.current) {
+      cellsRef.current = cells as VoroforceCell[]
+    }
+
+    controls.addEventListener('focused', onCellFocused)
+
+    return () => {
       controls.removeEventListener('focused', onCellFocused)
     }
-  }, [isSmallScreen])
+  }, [isSmallScreen, onCellFocused])
+
+  // useEffect(() => {
+  //   console.log('bounds', bounds)
+  // }, [bounds])
 
   return (
     <>
       {isPreviewMode && film && (
         <div
-          ref={containerRef}
+          // ref={containerRef}
+          ref={(element) => {
+            containerRef.current = element
+            measureRef(element)
+          }}
           className={cn(
             'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-6 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
             {
-              'right-0 left-auto': reverse,
+              'right-0 left-auto': reverseX,
               '!opacity-100': active,
             },
           )}
         >
           <div
             ref={innerRef}
+            // ref={(element) => {
+            //   innerRef.current = element
+            //   measureRef(element)
+            // }}
             className={cn(
-              'md:-translate-y-full md:-translate-x-1/4 flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
+              'flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
+              // 'md:-translate-y-full md:-translate-x-1/4',
               {
-                'flex-row-reverse': reverse,
+                'flex-row-reverse': reverseX,
+                // 'md:!translate-y-0': reverseY,
               },
             )}
           >
@@ -152,7 +232,8 @@ const WanderingFilmPreview = () => {
               className={cn(
                 'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',
                 {
-                  'items-end text-right': reverse,
+                  'items-end text-right': reverseX,
+                  'flex-col-reverse': reverseY,
                 },
               )}
             >
