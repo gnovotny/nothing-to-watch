@@ -1,5 +1,5 @@
 export default {
-  enabled: true,
+  enabled: false,
   baseUrl: import.meta.env.VITE_TEXTURES_BASE_URL ?? '/media',
   preload: 'first', // 'v0', 'first' or false
   compressionFormat: 'dds', // or 'ktx'
