@@ -49,6 +49,15 @@ export class Voroforce {
 
   handleMediaConfig() {
     this.mediaEnabled = this.config.media?.enabled
+    if (this.mediaEnabled) {
+      // limit the amount of texture memory being allocated
+      this.config.media.versions?.forEach((v) => {
+        v.layers = Math.min(
+          v.layers,
+          Math.ceil(this.config.cells / (v.cols * v.rows)),
+        )
+      })
+    }
   }
 
   initComponents() {
