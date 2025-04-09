@@ -12,7 +12,7 @@ function App() {
     <ThemeProvider defaultTheme={THEME.dark} storageKey='theme'>
       <div className='pointer-events-none relative z-10 h-full w-full'>
         <Navbar />
-        <div className='relative h-screen w-full overflow-hidden'>
+        <div className='relative h-dvh w-full overflow-hidden'>
           <Settings />
           <About />
           {/*<FilmPreview />*/}
