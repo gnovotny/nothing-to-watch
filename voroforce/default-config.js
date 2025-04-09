@@ -4,6 +4,7 @@ import { defaultSimulationConfig } from './simulation'
 
 export const defaultConfig = {
   cells: 100,
+  uniqueCells: undefined,
   simulation: defaultSimulationConfig,
   display: defaultDisplayConfig,
   controls: defaultControlsConfig,
@@ -24,6 +25,7 @@ export const defaultConfig = {
     baseUrl: '/media',
     preload: 'v0', // 'v0', 'first' or false
     compressionFormat: 'dds',
+    versions: [],
   },
   lattice: {
     enabled: true,

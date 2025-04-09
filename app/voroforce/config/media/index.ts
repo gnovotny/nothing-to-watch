@@ -9,7 +9,7 @@ export default {
       rows: 104,
       width: 2048,
       height: 624,
-      layers: 1,
+      layers: Number.parseInt(import.meta.env.VITE_MEDIA_VERSION_0_LAYERS) ?? 1,
       layerIndexStart: 0,
       layerSrcFormat: '/low/{EXT}/{INDEX}.{EXT}',
       // layerSrcFormat: '/low/{EXT}/0.{EXT}',
@@ -20,7 +20,8 @@ export default {
       rows: 60,
       width: 1980,
       height: 1980,
-      layers: 10,
+      layers:
+        Number.parseInt(import.meta.env.VITE_MEDIA_VERSION_1_LAYERS) ?? 10,
       layerIndexStart: 0,
       layerSrcFormat: '/mid/{EXT}/{INDEX}.{EXT}',
       // layerSrcFormat: '/mid/{EXT}/0.{EXT}',
@@ -31,7 +32,8 @@ export default {
       rows: 12,
       width: 1980,
       height: 1980,
-      layers: 241,
+      layers:
+        Number.parseInt(import.meta.env.VITE_MEDIA_VERSION_2_LAYERS) ?? 241,
       layerIndexStart: 0,
       layerSrcFormat: '/high/{EXT}/{INDEX}.{EXT}',
       // layerSrcFormat: '/high/{EXT}/0.{EXT}',

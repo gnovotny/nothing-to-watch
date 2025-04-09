@@ -24,6 +24,7 @@ export default {
   display,
   simulation,
   cells: 50000,
+  uniqueCells: 5,
   multiThreading: {
     enabled: false,
     renderInParallel: true,

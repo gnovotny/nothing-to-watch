@@ -90,7 +90,7 @@ export class Voroforce {
 
   handleLattice() {
     handleLattice(
-      this.config.lattice,
+      this.config,
       this.cells,
       this.dimensions.width,
       this.dimensions.height,

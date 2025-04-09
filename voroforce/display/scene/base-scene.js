@@ -369,6 +369,9 @@ export default class BaseScene {
         iNumCells: {
           value: this.cells.length,
         },
+        // iNumUniqueCells: {
+        //   value: this.globalConfig.uniqueCells ?? this.cells.length,
+        // },
         iTime: { value: 0 },
         fPointer: { value: this.getPointer() },
         fForceCenter: { value: this.getForceCenter() },

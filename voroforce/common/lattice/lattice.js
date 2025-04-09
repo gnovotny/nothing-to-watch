@@ -75,10 +75,13 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
   const centerRow = Math.floor(totalRows / 2)
   const centerCol = Math.floor(totalCols / 2)
 
+  const subgridConfig = latticeConfig.subgrid
+
   // Constants for subgrid dimensions
-  const SUBGRID_ROWS = 18
-  const SUBGRID_COLS = 12
+  const SUBGRID_ROWS = subgridConfig.rows // 18
+  const SUBGRID_COLS = subgridConfig.cols // 12
   const SUBGRID_SIZE = SUBGRID_ROWS * SUBGRID_COLS
+  const SUBGRID_MAX_SUPPORTED_CAPACITY = subgridConfig.totalCapacity
 
   // Result array to store coordinates
   const result = []
@@ -123,7 +126,7 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
           const cell = cells[cellIndex]
           if (cell) {
             result.push([row, col])
-            currentCellId++
+
             currentSubgrid = Math.floor(currentCellId / SUBGRID_SIZE)
             currentSubgridIndex = Math.floor(currentCellId % SUBGRID_SIZE)
             if (!cell.id) {
@@ -138,6 +141,10 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
               cell.targetMediaVersion = 1
             }
 
+            currentCellId++
+            if (currentCellId > SUBGRID_MAX_SUPPORTED_CAPACITY - 1) {
+              currentCellId = 0
+            }
             remainingElements--
           }
         }
@@ -318,15 +325,47 @@ function calculateOptimalLattice(
   return bestLayout
 }
 
-export const handleLattice = (latticeConfig, cells, width, height) => {
-  const prevRows = latticeConfig.rows
-  const prevCols = latticeConfig.cols
+export const handleLattice = (globalConfig, cells, width, height) => {
+  const config = globalConfig.lattice
+
+  // TODO
+  config.subgrid = globalConfig.media.versions
+    .filter(({ type }) => !type || type === 'compressed')
+    .reduce(
+      (prev, mediaVersion = {}) => {
+        const layerCapacity = mediaVersion.cols * mediaVersion.rows
+        const totalCapacity = Math.min(
+          prev.totalCapacity,
+          layerCapacity * mediaVersion.layers,
+        )
+
+        if (layerCapacity < prev.layerCapacity) {
+          return {
+            cols: mediaVersion.cols,
+            rows: mediaVersion.rows,
+            layers: mediaVersion.layers,
+            layerCapacity,
+            totalCapacity,
+          }
+        }
+
+        prev.totalCapacity = totalCapacity
+        return prev
+      },
+      {
+        layerCapacity: 9999999,
+        totalCapacity: 9999999,
+      },
+    )
+
+  const prevRows = config.rows
+  const prevCols = config.cols
 
   let containerWidth = width
   let containerHeight = height
 
   // TODO
-  if (latticeConfig.latticeAspect === 1 && latticeConfig.latticeAspectConstraints === 'min') {
+  if (config.latticeAspect === 1 && config.latticeAspectConstraints === 'min') {
     const min = Math.min(width, height)
     containerWidth = containerHeight = min
   }
@@ -335,50 +374,46 @@ export const handleLattice = (latticeConfig, cells, width, height) => {
   // console.log('containerHeight', containerHeight)
 
   Object.assign(
-    latticeConfig,
+    config,
     calculateOptimalLattice(
       containerWidth,
       containerHeight,
       cells.length,
-      latticeConfig.aspect,
-      latticeConfig.latticeAspect,
-      latticeConfig.latticeAspectConstraints,
+      config.aspect,
+      config.latticeAspect,
+      config.latticeAspectConstraints,
     ),
   )
 
   // TODO
-  latticeConfig.offsetX =
-    -(latticeConfig.latticeWidth - containerWidth) / 2 -
-    (containerWidth - width) / 2
-  latticeConfig.offsetY =
-    -(latticeConfig.latticeHeight - containerHeight) / 2 -
+  config.offsetX =
+    -(config.latticeWidth - containerWidth) / 2 - (containerWidth - width) / 2
+  config.offsetY =
+    -(config.latticeHeight - containerHeight) / 2 -
     (containerHeight - height) / 2
 
-  if (latticeConfig.targetCellSizeViewportPercentage) {
+  if (config.targetCellSizeViewportPercentage) {
     const landscape = width > height
     const targetCellSize =
-      (landscape ? width : height) *
-      latticeConfig.targetCellSizeViewportPercentage
+      (landscape ? width : height) * config.targetCellSizeViewportPercentage
     const factor =
-      targetCellSize / latticeConfig[landscape ? 'cellWidth' : 'cellHeight']
-    latticeConfig.cellWidth *= factor
-    latticeConfig.cellHeight *= factor
-    latticeConfig.latticeWidth *= factor
-    latticeConfig.latticeHeight *= factor
-    latticeConfig.offsetX =
-      -(latticeConfig.latticeWidth - containerWidth) / 2 +
-      (containerWidth - width) / 2
-    latticeConfig.offsetY =
-      -(latticeConfig.latticeHeight - containerHeight) / 2 +
+      targetCellSize / config[landscape ? 'cellWidth' : 'cellHeight']
+    config.cellWidth *= factor
+    config.cellHeight *= factor
+    config.latticeWidth *= factor
+    config.latticeHeight *= factor
+    config.offsetX =
+      -(config.latticeWidth - containerWidth) / 2 + (containerWidth - width) / 2
+    config.offsetY =
+      -(config.latticeHeight - containerHeight) / 2 +
       (containerHeight - height) / 2
   }
 
-  console.log('lattice config', latticeConfig)
+  console.log('lattice config', config)
 
-  generateCenterOutwardSubgridsAndAssignCellIds(latticeConfig, cells)
+  generateCenterOutwardSubgridsAndAssignCellIds(config, cells)
 
-  const immediate =
-    prevRows !== latticeConfig.rows || prevCols !== latticeConfig.cols
+  const immediate = prevRows !== config.rows || prevCols !== config.cols
 
-  packLattice(cells, latticeConfig, immediate)
+  packLattice(cells, config, immediate)
 }
