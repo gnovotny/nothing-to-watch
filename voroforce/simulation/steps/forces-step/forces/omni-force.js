@@ -377,7 +377,7 @@ export const omniForce = ({
 
       if (primaryCell) {
         if (i === 0) {
-          console.log('force')
+          console.log('force1')
         }
         isPrimaryCell = i === primaryCell.index
 
