@@ -144,6 +144,7 @@ export const omniForce = ({
   // }
 
   function force(alpha) {
+    console.log('force')
     forceSetup(alpha)
     latticeForcePass(alpha) // lattice pass must run in isolation
     mainForcePass(alpha)
