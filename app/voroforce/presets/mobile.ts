@@ -4,7 +4,7 @@ export default {
   cells: 5000,
   // cells: 100,
   multiThreading: {
-    enabled: false,
+    enabled: true,
   },
   devTools: {
     enabled: true,
