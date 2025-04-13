@@ -1,8 +1,10 @@
+import mainFrag from '../config/display/main-test-new3-mobile.frag'
+
 export default {
   cells: 5000,
   // cells: 100,
   multiThreading: {
-    enabled: true,
+    enabled: false,
   },
   devTools: {
     enabled: true,
@@ -14,6 +16,9 @@ export default {
   },
   display: {
     scene: {
+      main: {
+        fragmentShader: mainFrag,
+      },
       post: {
         enabled: false,
       },

@@ -9,7 +9,7 @@ import { defaultConfig } from './default-config'
 import Controls from './controls'
 import Display from './display'
 import { MultiThreadedSimulation, Simulation } from './simulation'
-import { isTouchDevice, mergeConfigs } from './utils'
+import { mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
 
 export class Voroforce {
@@ -167,7 +167,6 @@ export class Voroforce {
       this.config.devTools.enabled || window.location.hash === '#dev'
 
     if (!this.config.devTools.enabled) return
-    if (isTouchDevice) this.config.devTools.expanded = false
     this.devTools = new (await import('./common/dev-tools')).default(
       this.config.devTools,
     )
