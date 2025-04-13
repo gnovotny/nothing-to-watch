@@ -2,7 +2,7 @@ export const copyRenderTargetToCanvas = (gl, rt, canvas) => {
   gl.bindFramebuffer(gl.READ_FRAMEBUFFER, rt.buffer)
 
   if (rt.textures.length > 1) {
-    gl.readBuffer(gl.COLOR_ATTACHMENT0 + (rt.outputColorIndex ?? 0))
+    gl.readBuffer(gl.COLOR_ATTACHMENT0 + (rt.output?.index ?? 0))
   }
 
   gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null) // This binds the canvas as the draw framebuffer

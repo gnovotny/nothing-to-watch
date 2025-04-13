@@ -27,7 +27,7 @@ export const forceSimulationStepPreviewConfig = {
         // centerXStretchMod: 1,
         // centerXStretchMod: 1.25,
         // centerXStretchMod: 0.5,
-        // centerXStretchMod: 0.5,
+        // centerXStretchMod: 1.5,
         // centerXStretchMod: 0,
         speedFactor: 1,
       },

@@ -8,8 +8,8 @@ uniform sampler2D uVoroEdgeBufferTexture;
 uniform sampler2D iChannel0;
 uniform sampler2D iChannel1;
 
-uniform vec3 iResolution;
-uniform float iTime;
+uniform vec3 iResolution; // Size of the viewport in pixels
+uniform float iTime; // Size of the viewport in pixels
 uniform float fAlphaStrength;
 uniform float fEdgeStrength;
 uniform vec3 fBaseColor;
@@ -477,7 +477,7 @@ void main(){
     float d, t = 0.;
 
 //    for(int i=0; i<1;i++){
-    for(int i=0; i<40;i++){
+    for(int i=0; i<80;i++){
 
         d = m(o + r*t);
         // There isn't really a far plane to go beyond, but it's there anyway.
@@ -592,6 +592,7 @@ void main(){
         // Studio and outdoor.
         //float ambience = pow(length(sin(n*2.)*.45 + .5), 2.);
         float ambience = length(sin(n*2.)*.5 + .5)/sqrt(3.)*smoothstep(-1., 1., -n.z)*1.5;
+        //        float ambience = pow(dot(normalize(vec3(1)), n)*0.5+0.5, 3.0);
 
         // Make some of the flat tops metallic.
         float matType = hm<.55? 0. : 1.; // Dialectric or metallic.
@@ -633,7 +634,7 @@ void main(){
 
 
         // AO - The effect is probably too subtle, but I'm using it anyway.
-        c.xyz *= cAO(p, n);
+//        c.xyz *= cAO(p, n);
 
 
     }

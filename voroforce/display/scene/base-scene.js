@@ -3,7 +3,7 @@ import devPointFragmentShader from './shaders/dev/dev-points.frag'
 import devPointVertexShader from './shaders/dev/dev-points.vert'
 import { CompressedMediaGridArrayTexture } from './utils/compressed-media-grid-array-texture'
 import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
-import { CustomRenderTarget } from './utils/custom-render-target'
+import { NoDepthMultiRenderTarget } from './utils/no-depth-multi-render-target'
 import { DynamicMediaGridArrayTexture } from './utils/dynamic-media-grid-array-texture'
 import { readPixelsAsync } from './utils/read-pixels-async'
 
@@ -181,17 +181,17 @@ export default class BaseScene {
   updateMain() {
     if (!this.config.main?.enabled) return
 
-    if (this.renderTargets) {
+    if (this.activeRenderTarget) {
       this.app.renderer.instance.render({
         scene: this.mainMesh,
         camera: this.camera,
-        target: this.renderTargets[0],
+        target: this.activeRenderTarget,
       })
 
       if (!this.mainMesh.parent && !this.config.post?.enabled) {
         copyRenderTargetToCanvas(
           this.gl,
-          this.renderTargets[0],
+          this.activeRenderTarget,
           this.app.canvas,
         )
       }
@@ -206,11 +206,11 @@ export default class BaseScene {
     if (!this.config.dev?.enabled) return
     this.devPointsGeometry.attributes.position.needsUpdate = true
 
-    if (this.renderTargets && !this.config.post?.enabled) {
+    if (this.activeRenderTarget && !this.config.post?.enabled) {
       this.app.renderer.instance.render({
         scene: this.devPointsMesh,
         camera: this.camera,
-        target: this.renderTargets[0],
+        target: this.activeRenderTarget,
         clear: false,
       })
     }
@@ -232,16 +232,11 @@ export default class BaseScene {
     })
   }
 
-  initRenderTargets(
-    count = 1,
-    { outputColorIndex, voroIndexBufferColorIndex, ...options } = {},
-  ) {
-    this.renderTargets = [...Array(count)].map(() => {
-      const rt = new CustomRenderTarget(this.gl, options)
-      rt.outputColorIndex = outputColorIndex
-      rt.voroIndexBufferColorIndex = voroIndexBufferColorIndex
-      return rt
-    })
+  initRenderTargets(count = 1, options = {}) {
+    this.renderTargets = [...Array(count)].map(
+      () => new NoDepthMultiRenderTarget(this.gl, options),
+    )
+    this.activeRenderTarget = this.renderTargets[0]
     return this.renderTargets
   }
 
@@ -253,12 +248,26 @@ export default class BaseScene {
     ]
   }
 
+  getCompressedMediaVersions() {
+    const compressedMediaVersions = this.globalConfig.media.versions.filter(
+      ({ type }) => !type || type === 'compressed',
+    )
+    compressedMediaVersions.length = 3
+    return compressedMediaVersions
+  }
+
+  getUnCompressedMediaVersions() {
+    return this.globalConfig.media.versions.filter(
+      ({ type }) => type && type !== 'compressed',
+    )
+  }
+
   initMedia() {
     if (!this.globalConfig.media?.enabled) {
       const emptyTex = new Texture(this.gl, {})
-      this.compressedMediaTextures = this.globalConfig.media.versions
-        .filter(({ type }) => !type || type === 'compressed')
-        .map(() => emptyTex)
+      this.compressedMediaTextures = this.getCompressedMediaVersions().map(
+        () => emptyTex,
+      )
       this.mediaTextures = this.globalConfig.media.versions
         .filter(({ type }) => type && type !== 'compressed')
         .map(() => emptyTex)
@@ -266,24 +275,21 @@ export default class BaseScene {
       return
     }
 
-    const compressionFormat = this.globalConfig.media.compressionFormat
-    this.compressedMediaTextures = this.globalConfig.media.versions
-      .filter(({ type }) => !type || type === 'compressed')
-      .map(
-        ({ width, height, layers }) =>
-          new CompressedMediaGridArrayTexture(this.gl, {
-            width,
-            height,
-            length: layers,
-            // compressionFormat: 'etc', // or dds
-            // compressionFormat: 'ktx', // or dds
-            compressionFormat,
-          }),
-      )
+    this.compressedMediaTextures = this.getCompressedMediaVersions().map(
+      (mediaVersion) => {
+        if (!mediaVersion) return new Texture(this.gl, {})
+        const { width, height, layers } = mediaVersion
+        return new CompressedMediaGridArrayTexture(this.gl, {
+          width,
+          height,
+          length: layers,
+          compressionFormat: this.globalConfig.media.compressionFormat,
+        })
+      },
+    )
 
-    this.mediaTextures = this.globalConfig.media.versions
-      .filter(({ type }) => type && type !== 'compressed')
-      .map((mediaVersion) => {
+    this.mediaTextures = this.getUnCompressedMediaVersions().map(
+      (mediaVersion) => {
         const { width, height, layers } = mediaVersion
         return new DynamicMediaGridArrayTexture(this.gl, {
           width,
@@ -291,13 +297,14 @@ export default class BaseScene {
           length: layers,
           mediaVersion,
         })
-      })
+      },
+    )
 
     this.loader.addEventListener(
       'mediaLayerLoaded',
       ({ data: { versionIndex, layerIndex, bytes, type, compression } }) => {
         if (!type || type === 'compressed') {
-          this.compressedMediaTextures[versionIndex].prepareLayerUpdate(
+          this.compressedMediaTextures[versionIndex].prepareLayerUpdate?.(
             layerIndex,
             bytes,
           )
@@ -326,7 +333,7 @@ export default class BaseScene {
   }
 
   initBaseMediaUniforms() {
-    const stdMediaVersions = this.globalConfig.media.versions?.toSpliced(3)
+    const compressedMediaVersions = this.getCompressedMediaVersions()
     return {
       bMediaEnabled: { value: this.globalConfig.media?.enabled ?? false },
       uMediaV0Texture: { value: this.compressedMediaTextures[0] },
@@ -334,13 +341,13 @@ export default class BaseScene {
       uMediaV2Texture: { value: this.compressedMediaTextures[2] },
       uMediaV3Texture: { value: this.mediaTextures[0] },
       iStdNumMediaVersionCols: {
-        value: stdMediaVersions?.map(({ cols }) => cols) ?? [0, 0, 0],
+        value: compressedMediaVersions?.map((v) => v?.cols ?? 0) ?? [0, 0, 0],
       },
       iStdNumMediaVersionRows: {
-        value: stdMediaVersions?.map(({ rows }) => rows) ?? [0, 0, 0],
+        value: compressedMediaVersions?.map((v) => v?.rows ?? 0) ?? [0, 0, 0],
       },
       iStdNumMediaVersionLayers: {
-        value: stdMediaVersions?.map(({ layers }) => layers) ?? [0, 0, 0],
+        value: compressedMediaVersions?.map((v) => v?.layers ?? 0) ?? [0, 0, 0],
       },
     }
   }
@@ -369,9 +376,6 @@ export default class BaseScene {
         iNumCells: {
           value: this.cells.length,
         },
-        // iNumUniqueCells: {
-        //   value: this.globalConfig.uniqueCells ?? this.cells.length,
-        // },
         iTime: { value: 0 },
         fPointer: { value: this.getPointer() },
         fForceCenter: { value: this.getForceCenter() },
@@ -423,6 +427,7 @@ export default class BaseScene {
       fEdge1Mod: { value: 1 },
       fEdge0Mod: { value: 1 },
       fBaseColor: { value: [0, 0, 0] },
+      bPostEnabled: { value: this.config.post?.enabled },
     }
     return {
       ...this.initBaseUniforms(),
@@ -498,7 +503,7 @@ export default class BaseScene {
 
     if (rt.textures.length > 1) {
       this.gl.readBuffer(
-        this.gl.COLOR_ATTACHMENT0 + (rt.voroIndexBufferColorIndex ?? 0),
+        this.gl.COLOR_ATTACHMENT0 + (rt.voroIndexBuffer?.index ?? 0),
       )
     }
     const data = new Uint32Array(4) // Float32Array texture but packed as uint

@@ -93,6 +93,9 @@ export default class MultiThreadedSimulation extends BaseSimulation {
       case 'resized':
         this.onWorkerResized()
         break
+      // TODO TMP
+      default:
+        console.log('Unknown type ' + type)
     }
   }
 

@@ -36,6 +36,7 @@ uniform float fEdge0Mod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
+uniform bool bPostEnabled;
 
 in vec2 vUv;
 
@@ -55,7 +56,7 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
 #define BICUBIC_MEDIA_FILTER 0
-#define DRAW_EDGES 0
+#define DRAW_EDGES 1
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
@@ -814,7 +815,6 @@ void main() {
 
     Data data = update(p);
     uvec4 indices = data.indices;
-    uvec4 indices2 = data.indices2;
     vec3 c = bMediaEnabled ? mediaColor(mediaP, indices.x, data.mediaBbox) : randomColor(indices.x);
     float a = 1.;
 
@@ -834,25 +834,30 @@ void main() {
 //    }
 
     #if DRAW_EDGES == 1
-        float edge1 = EDGE_1 * fEdge0Mod;
-        float edge2 = EDGE_2 * fEdge1Mod;
-        #if TRANSPARENT_BG == 1
-            a = mix(
-                1.,
-                0.,
-                smoothstep(edge1, edge2, data.minEdgeDists.x)
-            );
-        # else
-            c = mix(
-                c,
-                fBaseColor,
-                smoothstep(edge1, edge2, data.minEdgeDists.x)
-//                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
-            );
-        #endif
+        if (!bPostEnabled) {
+            float edge1 = EDGE_1 * fEdge0Mod;
+            float edge2 = EDGE_2 * fEdge1Mod;
+            #if TRANSPARENT_BG == 1
+                a = mix(
+                    1.,
+                    0.,
+                    smoothstep(edge1, edge2, data.minEdgeDists.x)
+                );
+            # else
+                c = mix(
+                    c,
+                    fBaseColor,
+                    smoothstep(edge1, edge2, data.minEdgeDists.x)
+                    //                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
+                );
+            #endif
+        }
     #endif
 
     voroIndexBufferColor = uintBitsToFloat(indices + 1u);
+    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
+        voroIndexBuffer2Color = uintBitsToFloat(indices2 + 1u);
+    #endif
 
 //    if (focusCenterDist > 425.) {
 //    if (focusCenterDist > 725.) {
@@ -867,11 +872,11 @@ void main() {
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)), 1.);
 
 
-    voroEdgeBufferColor = vec3(data.minEdgeDists.x, data.minEdgeDists.y, data.scaleMod);
+    if (bPostEnabled) {
+        voroEdgeBufferColor = vec3(data.minEdgeDists.x, data.minEdgeDists.y, data.scaleMod);
+    }
 
 //    float r = (data.minEdgeDists.y - data.minEdgeDists.x);
 //    voroEdgeBufferColor = vec3(r, data.minEdgeDists.x, data.scaleMod);
-    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
-        voroIndexBuffer2Color = uintBitsToFloat(indices2 + 1u);
-    #endif
+
 }

@@ -26,7 +26,7 @@ export default {
   cells: 50000,
   uniqueCells: 5,
   multiThreading: {
-    enabled: false,
+    enabled: true,
     renderInParallel: true,
   },
   devTools: {

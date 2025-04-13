@@ -38,7 +38,7 @@ export default {
   display: {
     scene: {
       post: {
-        enabled: true,
+        enabled: false,
         fragmentShader: postFrag,
         uniforms: {
           fBaseColor: {

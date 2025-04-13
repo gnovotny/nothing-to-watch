@@ -3,7 +3,7 @@ import { defaultSceneConfig } from './scene'
 export const defaultDisplayConfig = {
   scene: defaultSceneConfig,
   renderer: {
-    depth: true,
+    depth: false,
     preserveDrawingBuffer: false,
     alpha: true,
     premultipliedAlpha: false,
