@@ -37,6 +37,7 @@ uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
 uniform bool bPostEnabled;
+uniform bool bPixelSearch;
 
 in vec2 vUv;
 
@@ -645,25 +646,28 @@ Data update(vec2 p) {
 
     // pixel search
     #if PIXEL_SEARCH == 1
-        vec2 rad = vec2(PIXEL_SEARCH_RADIUS);
-        #if PIXEL_SEARCH_RANDOM_DIR == 1
-            uint seed = uint(fragCoord.x) + uint(fragCoord.y);
-            rad *= randomDir(seed);
-        #endif
+        if (bPixelSearch) {
+            vec2 rad = vec2(PIXEL_SEARCH_RADIUS);
+            #if PIXEL_SEARCH_RANDOM_DIR == 1
+                uint seed = uint(fragCoord.x) + uint(fragCoord.y);
+                rad *= randomDir(seed);
+            #endif
 
-        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 0., 1.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2(-1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
-        fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 0.,-1.) * rad, p, weightOffsetScale, prevMaxWeight);
+            fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord, p, weightOffsetScale, prevMaxWeight);
+            fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
+            fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 0., 1.) * rad, p, weightOffsetScale, prevMaxWeight);
+            fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2(-1., 0.) * rad, p, weightOffsetScale, prevMaxWeight);
+            fetchAndSortIndices(distances, distances2, indices, indices2, fragCoord + vec2( 0.,-1.) * rad, p, weightOffsetScale, prevMaxWeight);
 
-        #if PIXEL_SEARCH_FULL_RANDOM == 1
-            rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
-            for (int i = 0; i < 16; i++) {
-                sortClosest(distances, distances2, indices, indices2, wrap1d(nextUint()), p, weightOffsetScale, prevMaxWeight);
-            }
-        #endif
-
+            #if PIXEL_SEARCH_FULL_RANDOM == 1
+                rngSeed = murmur3(uint(fragCoord.x)) ^ murmur3(floatBitsToUint(fragCoord.y)) ^ murmur3(floatBitsToUint(iTime));
+                for (int i = 0; i < 16; i++) {
+                    sortClosest(distances, distances2, indices, indices2, wrap1d(nextUint()), p, weightOffsetScale, prevMaxWeight);
+                }
+            #endif
+        } else {
+            sortClosest(distances, distances2, indices, indices2, closestIndex, p, weightOffsetScale, prevMaxWeight);
+        }
     # else
         sortClosest(distances, distances2, indices, indices2, closestIndex, p, weightOffsetScale, prevMaxWeight);
     #endif

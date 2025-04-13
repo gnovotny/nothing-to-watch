@@ -1,11 +1,5 @@
-import mainFrag from '../config/display/main-test-new3-mobile.frag'
-
 export default {
   cells: 5000,
-  // cells: 100,
-  multiThreading: {
-    enabled: true,
-  },
   devTools: {
     enabled: true,
     expanded: true,
@@ -17,7 +11,7 @@ export default {
   display: {
     scene: {
       main: {
-        fragmentShader: mainFrag,
+        bPixelSearch: { value: false },
       },
       post: {
         enabled: false,

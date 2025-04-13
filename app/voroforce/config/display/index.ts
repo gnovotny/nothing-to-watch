@@ -16,6 +16,7 @@ export default {
       uniforms: {
         iForceMaxNeighborLevel: { value: 0 },
         bForceMaxQuality: { value: false },
+        bPixelSearch: { value: true },
         fBaseColor: {
           value: [0, 0, 0],
           animatable: true,
