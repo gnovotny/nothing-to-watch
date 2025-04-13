@@ -154,7 +154,6 @@ export const omniForce = ({
 
   function forceSetup(alpha) {
     newPrimaryCell = selectPrimary(cells)
-    newPrimaryCell = cells[2000]
     if (newPrimaryCell?.index !== primaryCell?.index) {
       prevPrimaryCell = primaryCell
       primaryCell = newPrimaryCell
