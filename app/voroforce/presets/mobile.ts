@@ -7,7 +7,9 @@ export default {
   display: {
     scene: {
       main: {
-        bPixelSearch: { value: false },
+        uniforms: {
+          bPixelSearch: { value: false },
+        },
       },
       post: {
         enabled: false,
