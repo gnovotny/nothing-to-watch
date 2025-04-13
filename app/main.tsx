@@ -1,16 +1,3 @@
-// const g =
-//   (typeof globalThis !== 'undefined' && globalThis) ||
-//   (typeof self !== 'undefined' && self) ||
-//   (typeof global !== 'undefined' && global) ||
-//   {}
-//
-// const originalFetch = fetch
-// // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-// ;(g as any).fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-//   console.log('input', input)
-//   return originalFetch(input, init)
-// }
-
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app'

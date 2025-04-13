@@ -9,6 +9,18 @@ export default {
       main: {
         uniforms: {
           bPixelSearch: { value: false },
+          fRoundnessMod: {
+            value: 8,
+            animatable: true,
+            modes: {
+              default: {
+                value: 8,
+              },
+              select: {
+                value: 8,
+              },
+            },
+          },
         },
       },
       post: {

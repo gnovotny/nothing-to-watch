@@ -29,6 +29,35 @@ export default class Display {
 
   initRenderer() {
     this.renderer = new Renderer(this)
+    this.gl = this.renderer.gl
+    this.handleRendererCompatibility()
+  }
+
+  handleRendererCompatibility() {
+    this.mediaEnabled = this.globalConfig.media?.enabled
+    if (this.mediaEnabled) {
+      if (this.globalConfig.media.compressionFormat === 'dds') {
+        if (!this.gl.getExtension('WEBGL_compressed_texture_s3tc')) {
+          this.globalConfig.media.compressionFormat = 'ktx'
+          if (!this.gl.getExtension('WEBGL_compressed_texture_etc')) {
+            throw new Error(
+              'WEBGL_compressed_texture_s3tc & WEBGL_compressed_texture_etc are both not supported',
+            )
+          }
+        }
+      }
+
+      if (this.globalConfig.media.compressionFormat === 'ktx') {
+        if (!this.gl.getExtension('WEBGL_compressed_texture_etc')) {
+          this.globalConfig.media.compressionFormat = 'dds'
+          if (!this.gl.getExtension('WEBGL_compressed_texture_s3tc')) {
+            throw new Error(
+              'WEBGL_compressed_texture_s3tc & WEBGL_compressed_texture_etc are both not supported',
+            )
+          }
+        }
+      }
+    }
   }
 
   initScene() {

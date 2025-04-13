@@ -190,7 +190,7 @@ const WanderingFilmPreview = () => {
             measureRef(element)
           }}
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-6 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
+            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-3 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
             {
               'right-0 left-auto': reverseX,
               '!opacity-100': active,
@@ -200,7 +200,7 @@ const WanderingFilmPreview = () => {
           <div
             ref={innerRef}
             className={cn(
-              'flex origin-top-left flex-row gap-6 will-change-[transform,opacity] lg:gap-9',
+              'flex origin-top-left flex-row gap-3 lg:gap-9 lg:will-change-[transform,opacity]',
               // 'md:-translate-y-full md:-translate-x-1/4',
               {
                 'flex-row-reverse': reverseX,
@@ -220,29 +220,36 @@ const WanderingFilmPreview = () => {
             {/*/>*/}
             <div
               className={cn(
-                'flex basis-3/4 flex-col gap-3 lg:justify-start lg:gap-6',
+                'flex basis-full flex-row justify-between gap-3 lg:basis-3/4 lg:flex-col lg:justify-start lg:gap-6',
                 {
                   'items-end text-right': reverseX,
                   'flex-col-reverse': reverseY,
                 },
               )}
             >
-              <p className='landscape:line-clamp- line-clamp-2 hidden font-medium text-base text-foreground/90 leading-none md:inline-block lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
-                {film.tagline}
-              </p>
-              <h3
-                // className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'
-                className='line-clamp-2.2 font-black text-3xl lg:line-clamp-1.1 lg:text-5xl landscape:line-clamp-1.1'
-              >
-                {film.title}
-                <span className='font-normal text-foreground/50'>
-                  &nbsp;({film.year})
-                </span>
-              </h3>
-              <div className='flex flex-row gap-3 pt-2'>
-                {film.genres?.map((genre) => (
-                  <Badge key={genre}>{genre}</Badge>
-                ))}
+              <div className='flex flex-col gap-3 lg:justify-start lg:gap-6'>
+                <p className='landscape:line-clamp- line-clamp-2 hidden font-medium text-base text-foreground/90 leading-none md:inline-block lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
+                  {film.tagline}
+                </p>
+                <h3
+                  // className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'
+                  className='line-clamp-2.2 font-black text-2xl leading-none lg:line-clamp-1.1 lg:text-5xl landscape:line-clamp-1.1'
+                >
+                  {film.title}
+                  <span className='font-normal text-foreground/50 text-xl leading-none lg:text-3xl'>
+                    &nbsp;({film.year})
+                  </span>
+                </h3>
+                <div className='flex flex-row flex-wrap gap-3 lg:flex-nowrap lg:pt-2'>
+                  {film.genres?.map((genre) => (
+                    <Badge
+                      key={genre}
+                      className='text-[0.6rem] leading-none lg:text-xs'
+                    >
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
               </div>
               <FilmRatingGauge value={film.rating} />
             </div>

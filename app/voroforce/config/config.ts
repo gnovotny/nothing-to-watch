@@ -30,8 +30,8 @@ export default {
     renderInParallel: true,
   },
   devTools: {
-    enabled: true,
-    expanded: true,
+    enabled: false,
+    expanded: false,
   },
   handleVisibilityChange: {
     enabled: false,
