@@ -42,7 +42,12 @@ export class Voroforce {
   }
 
   handleMultiThreadingConfig() {
-    this.multiThreading = this.config.multiThreading?.enabled
+    this.multiThreading =
+      this.config.multiThreading?.enabled &&
+      typeof SharedArrayBuffer !== 'undefined'
+
+    console.log('multiThreading', this.multiThreading)
+
     this.parallelDisplay =
       this.multiThreading && this.config.multiThreading?.renderInParallel
   }
