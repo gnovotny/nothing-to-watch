@@ -42,9 +42,8 @@ export class Voroforce {
   }
 
   handleMultiThreadingConfig() {
-    this.multiThreading =
-      this.config.multiThreading?.enabled &&
-      typeof SharedArrayBuffer !== 'undefined'
+    this.multiThreading = this.config.multiThreading?.enabled /* &&
+      typeof SharedArrayBuffer !== 'undefined'*/
 
     console.log('multiThreading', this.multiThreading)
 
