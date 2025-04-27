@@ -131,30 +131,37 @@ export default class BaseScene {
   initDev() {
     if (!this.config.dev?.enabled) return
 
-    this.devPointsGeometry = new Geometry(this.gl, {
-      position: {
-        size: 2,
-        data: this.store.get('sharedCellCoords'),
-      },
-    })
+    if (!this.devPointsMesh) {
+      this.devPointsGeometry = new Geometry(this.gl, {
+        position: {
+          size: 2,
+          data: this.store.get('sharedCellCoords'),
+        },
+      })
 
-    this.devPointsProgram = new Program(this.gl, {
-      vertex: devPointVertexShader,
-      fragment: devPointFragmentShader,
-      uniforms: {
-        iResolution: { value: this.resolutionUniform },
-      },
-      transparent: true,
-    })
+      this.devPointsProgram = new Program(this.gl, {
+        vertex: devPointVertexShader,
+        fragment: devPointFragmentShader,
+        uniforms: {
+          iResolution: { value: this.resolutionUniform },
+        },
+        transparent: true,
+      })
 
-    this.devPointsMesh = new Mesh(this.gl, {
-      geometry: this.devPointsGeometry,
-      program: this.devPointsProgram,
-      mode: this.gl.POINTS,
-    })
+      this.devPointsMesh = new Mesh(this.gl, {
+        geometry: this.devPointsGeometry,
+        program: this.devPointsProgram,
+        mode: this.gl.POINTS,
+      })
+    }
 
     if (!this.renderTargets || this.config.post?.enabled)
       this.devPointsMesh.setParent(this.instance)
+  }
+
+  stopDev() {
+    if (!this.devPointsMesh) return
+    this.devPointsMesh.setParent(null)
   }
 
   resizeMain() {

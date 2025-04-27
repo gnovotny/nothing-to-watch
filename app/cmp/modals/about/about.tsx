@@ -37,6 +37,20 @@ const Link = ({ children, href }: PropsWithChildren<{ href: string }>) => (
   </a>
 )
 
+const ToggleVoroforceDevMode = () => {
+  const { voroforceDevModeEnabled, setVoroforceDevModeEnabled } = store()
+
+  return (
+    <Button
+      onClick={() => setVoroforceDevModeEnabled(!voroforceDevModeEnabled)}
+      size='sm'
+      className='mx-1 cursor-pointer'
+    >
+      Toggle
+    </Button>
+  )
+}
+
 const items = [
   {
     title: 'About',
@@ -84,10 +98,12 @@ const items = [
         <p>
           It should be noted that this is not a standard voronoi diagram, with
           the focused cell having a slightly higher weight. Additionally, the
-          distance metric Y-Component has a 1.5x bias.
+          distance metric for the Y-Component has a 1.5x bias.
         </p>
         <br />
-        <p>You can TOGGLE here to see the cell seeds.</p>
+        <p>
+          You can <ToggleVoroforceDevMode /> to see the voronoi cell seeds.
+        </p>
       </>
     ),
   },
