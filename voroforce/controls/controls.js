@@ -1,4 +1,5 @@
 import { clamp, easedMinLerp, isTouchDevice, setStyles } from '../utils'
+import { CustomEventTarget } from '../utils/custom-event-target'
 
 const TMP_TOUCH_DRAG_MODE = true
 
@@ -25,7 +26,7 @@ class CellSelectedEvent extends Event {
   }
 }
 
-export default class Controls extends EventTarget {
+export default class Controls extends CustomEventTarget {
   prevX = 0
   prevY = 0
   prevTime = 0

@@ -1,3 +1,5 @@
+import { CustomEventTarget } from '../../utils/custom-event-target'
+
 class DimensionsEvent extends Event {
   constructor(data = {}) {
     super('resize')
@@ -13,7 +15,7 @@ function debounce(func, wait) {
   }
 }
 
-export class Dimensions extends EventTarget {
+export class Dimensions extends CustomEventTarget {
   #state
   handleResize
 

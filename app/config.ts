@@ -5,4 +5,6 @@ export default {
   posterBaseUrl: 'https://media.themoviedb.org/t/p/w300_and_h450_bestv2',
   githubUrl: 'https://github.com/gnovotny/nothing-to-watch',
   tmdbUrl: 'https://themoviedb.org',
+  tmdbFilmBaseUrl: 'https://www.themoviedb.org/movie/',
+  imdbFilmBaseUrl: 'https://imdb.com/title/',
 }

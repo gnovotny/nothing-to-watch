@@ -1,3 +1,5 @@
+import { CustomEventTarget } from '../../utils/custom-event-target'
+
 class TickEvent extends Event {
   constructor({ current, elapsed, delta }) {
     super('tick')
@@ -7,7 +9,7 @@ class TickEvent extends Event {
   }
 }
 
-export class Ticker extends EventTarget {
+export class Ticker extends CustomEventTarget {
   nextRequested = false
   frozen = false
   constructor() {

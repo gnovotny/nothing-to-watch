@@ -35,5 +35,6 @@
   "include": [
     "app",
     "voroforce"
-  ]
+  ],
+  "exclude": ["node_modules"]
 }

@@ -1,18 +1,21 @@
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react-swc'
+// import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import glsl from 'vite-plugin-glsl'
+import analyzer from 'vite-bundle-analyzer'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
     plugins: [
-      react(),
+      react({}),
       tailwindcss(),
       glsl({
-        compress: Boolean(env.COMPRESS_GLSL),
+        minify: Boolean(env.COMPRESS_GLSL),
       }),
+      ...(env.ANALYZE_BUNDLE ? [analyzer()] : []),
     ],
     build: {
       rollupOptions: {
@@ -31,7 +34,7 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
       port: 3000,
       headers: {
-        'Cross-Origin-Embedder-Policy': 'require-corp', // should be 'require-corp' but 'credentialless' allows for img hotlinking
+        'Cross-Origin-Embedder-Policy': 'credentialless', // should be 'require-corp' but 'credentialless' allows for img hotlinking
         'Cross-Origin-Opener-Policy': 'same-origin',
       },
     },

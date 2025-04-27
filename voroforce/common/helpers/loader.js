@@ -1,3 +1,5 @@
+import { CustomEventTarget } from '../../utils/custom-event-target'
+
 class LoaderEvent extends Event {
   constructor(name, data) {
     super(name ?? 'loaded')
@@ -5,7 +7,7 @@ class LoaderEvent extends Event {
   }
 }
 
-export class Loader extends EventTarget {
+export class Loader extends CustomEventTarget {
   constructor(sharedLoadedMediaVersionLayersData, config) {
     super()
 

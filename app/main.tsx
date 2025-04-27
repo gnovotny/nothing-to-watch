@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app'
-import { animateHtmlTitleSuffix } from './utils/anim'
-import { initVoroforce } from './voroforce'
-import './index.css'
+import { animateHtmlTitleSuffix } from '@/utl/anim'
+import { initVoroforce } from './vf'
+import './styles.css'
 
 window.addEventListener('load', async () => {
   try {

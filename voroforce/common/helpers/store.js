@@ -6,6 +6,7 @@ import {
   SharedPointer,
 } from '../data'
 import { Dimensions } from './dimensions'
+import { CustomEventTarget } from '../../utils/custom-event-target'
 
 function stripFunctions(obj) {
   if (typeof obj !== 'object' || obj === null) return obj
@@ -37,7 +38,7 @@ class CustomStoreEvent extends Event {
   }
 }
 
-export class Store extends EventTarget {
+export class Store extends CustomEventTarget {
   #state
 
   constructor(initialState) {
