@@ -49,6 +49,8 @@ export type StoreState = {
   setPlayedIntro: (playedIntro: boolean) => void
   preset?: VOROFORCE_PRESET
   setPreset: (preset: VOROFORCE_PRESET) => void
+  recommendedPreset?: VOROFORCE_PRESET
+  setRecommendedPreset: (preset: VOROFORCE_PRESET) => void
   filmViewBounds?: RectReadOnly
   setFilmViewBounds: (filmViewBounds: RectReadOnly) => void
   userConfig: UserConfig
@@ -62,10 +64,11 @@ export type StoreState = {
 const THEME_STORAGE_KEY = 'theme'
 const PLAYED_INTRO_STORAGE_KEY = 'playedIntro'
 const PRESET_STORAGE_KEY = 'preset'
+const RECOMMENDED_PRESET_STORAGE_KEY = 'recommendedPreset'
 const USER_CONFIG_STORAGE_KEY = 'userConfig'
 
-const playedIntro = Boolean(localStorage.getItem(PLAYED_INTRO_STORAGE_KEY))
-// const playedIntro = false
+// const playedIntro = Boolean(localStorage.getItem(PLAYED_INTRO_STORAGE_KEY))
+const playedIntro = false
 
 export const store = create(
   subscribeWithSelector<StoreState>(
@@ -151,6 +154,20 @@ export const store = create(
             preset,
           })
           localStorage.setItem(PRESET_STORAGE_KEY, preset)
+        },
+        recommendedPreset: localStorage.getItem(RECOMMENDED_PRESET_STORAGE_KEY)
+          ? (localStorage.getItem(
+              RECOMMENDED_PRESET_STORAGE_KEY,
+            ) as VOROFORCE_PRESET)
+          : undefined,
+        setRecommendedPreset: (recommendedPreset: VOROFORCE_PRESET) => {
+          set({
+            recommendedPreset,
+          })
+          localStorage.setItem(
+            RECOMMENDED_PRESET_STORAGE_KEY,
+            recommendedPreset,
+          )
         },
         setFilmViewBounds: (filmViewBounds: RectReadOnly) => {
           set({

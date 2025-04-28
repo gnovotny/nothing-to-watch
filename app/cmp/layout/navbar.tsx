@@ -1,10 +1,11 @@
-import { Info, Settings } from 'lucide-react'
+import { GithubIcon, Info, Settings } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 
 import { store } from '@/store'
 import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
 import { cn } from '../../utl/tw'
+import config from '../../config'
 
 export const Navbar = () => {
   const { settingsOpen, toggleSettingsOpen, aboutOpen, toggleAboutOpen } =
@@ -17,8 +18,6 @@ export const Navbar = () => {
         setAboutOpen: state.setAboutOpen,
       })),
     )
-
-  console.log('aboutOpen', aboutOpen)
 
   const buttonClassnames =
     '!size-6 [&_svg]:!size-4 lg:!size-8 lg:[&_svg]:!size-5 pointer-events-auto rounded-full cursor-pointer'
@@ -64,6 +63,24 @@ export const Navbar = () => {
           event.stopPropagation()
         }}
       />
+      <Button
+        variant='ghost'
+        size='icon'
+        onClick={toggleSettingsOpen}
+        onPointerDown={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
+        className={cn(buttonClassnames)}
+      >
+        <a
+          href={config.githubUrl}
+          target='_blank'
+          rel='noreferrer noopener noreferer'
+        >
+          <GithubIcon />
+        </a>
+      </Button>
     </div>
   )
 }

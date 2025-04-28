@@ -6,11 +6,24 @@ import { store } from '../store'
 import { getVoroforceConfigProps } from './utils'
 
 export const initVoroforce = async (container: HTMLElement) => {
-  const configProps = await getVoroforceConfigProps(store.getState())
-  store.setState({
-    container,
-    voroforce: voroforce(container, configProps.config) as VoroforceInstance,
-    ...configProps,
-  })
-  initVoroforceIntegrations()
+  const state = store.getState()
+  const { config, configUniforms } = await getVoroforceConfigProps(state)
+  if (state.preset) {
+    store.setState({
+      container,
+      voroforce: voroforce(container, config) as VoroforceInstance,
+      config,
+      configUniforms,
+    })
+    initVoroforceIntegrations()
+  }
+}
+
+export const safeInitVoroforce = async () => {
+  try {
+    // biome-ignore lint/style/noNonNullAssertion: exists
+    await initVoroforce(document.getElementById('voroforce')!)
+  } catch (e) {
+    alert((e as Error).message)
+  }
 }

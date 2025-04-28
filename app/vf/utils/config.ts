@@ -62,7 +62,8 @@ export const getConfig = async (state: StoreState) => {
     userConfig,
     playedIntro,
     preset: initialPreset,
-    setPreset,
+    recommendedPreset: initialRecommendedPreset,
+    setRecommendedPreset,
     ua,
   } = state
   const urlParams = new URLSearchParams(window.location.search)
@@ -74,26 +75,29 @@ export const getConfig = async (state: StoreState) => {
   const device = ua.getDevice()
 
   let preset = initialPreset
-  if (!preset) {
+  let recommendedPreset = initialRecommendedPreset
+
+  if (!preset && !recommendedPreset) {
     const isSmallScreen = matchMediaQuery(down('md')).matches
     if (device.is('mobile') || device.is('tablet')) {
-      preset = VOROFORCE_PRESET.mobile
+      recommendedPreset = VOROFORCE_PRESET.mobile
     } else if (isSmallScreen) {
-      preset = VOROFORCE_PRESET.low
+      recommendedPreset = VOROFORCE_PRESET.low
     } else {
       const gpuTier = await getGPUTier()
       switch (gpuTier.tier) {
         case 3:
-          preset = VOROFORCE_PRESET.high
+          recommendedPreset = VOROFORCE_PRESET.high
           break
         case 2:
-          preset = VOROFORCE_PRESET.mid
+          recommendedPreset = VOROFORCE_PRESET.mid
           break
         default:
-          preset = VOROFORCE_PRESET.low
+          recommendedPreset = VOROFORCE_PRESET.low
       }
     }
-    setPreset(preset)
+    // setPreset(preset)
+    setRecommendedPreset(recommendedPreset)
   }
 
   if (presetOverrideParam && VOROFORCE_PRESET[presetOverrideParam]) {
@@ -102,7 +106,11 @@ export const getConfig = async (state: StoreState) => {
 
   const config = mergeConfigs(
     baseConfig,
-    (presets as unknown as Record<VOROFORCE_PRESET, typeof baseConfig>)[preset],
+    preset
+      ? (presets as unknown as Record<VOROFORCE_PRESET, typeof baseConfig>)[
+          preset
+        ]
+      : {},
     {
       ...(!playedIntro ? getIntroConfig() : {}),
     },
