@@ -23,7 +23,7 @@ export const Navbar = () => {
     '!size-6 [&_svg]:!size-4 lg:!size-8 lg:[&_svg]:!size-5 pointer-events-auto rounded-full cursor-pointer'
 
   return (
-    <div className='fixed inset-x-0 bottom-0 z-10 flex w-full flex-row items-center justify-between gap-1 p-3 lg:top-0 lg:bottom-auto lg:z-60 lg:justify-end lg:p-9'>
+    <div className='fixed inset-x-0 bottom-0 z-10 flex w-full flex-row items-center justify-between gap-1 p-3 lg:top-0 lg:bottom-auto lg:z-60 lg:justify-end lg:px-6 lg:py-9'>
       <Button
         variant='ghost'
         size='icon'
@@ -71,7 +71,7 @@ export const Navbar = () => {
           event.preventDefault()
           event.stopPropagation()
         }}
-        className={cn(buttonClassnames)}
+        className={cn(buttonClassnames, 'hidden lg:inline-flex')}
       >
         <a
           href={config.githubUrl}

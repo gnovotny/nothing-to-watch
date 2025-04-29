@@ -117,9 +117,8 @@ const items = [
           metric has a 1.5x bias on the y-component.
         </p>
         <br />
-        <p>
-          You can press <ToggleVoroforceDevMode /> to see the voronoi cell
-          seeds.
+        <p className='hidden md:inline-block'>
+          You can <ToggleVoroforceDevMode /> to see the voronoi cell seeds.
         </p>
       </>
     ),
@@ -153,8 +152,9 @@ const items = [
       <>
         <p>
           Much of the shader code is heavily inspired by - if not blatantly
-          copy-pasted - various brilliant creators on{' '}
-          <Link href='https://shadertoy.com'>Shadertoy</Link>
+          rehashed - various brilliant creators on{' '}
+          <Link href='https://shadertoy.com'>Shadertoy</Link>, though many of
+          their algorithms are in turn sourced from elsewhere.
         </p>
         <br />
       </>
@@ -185,9 +185,8 @@ const items = [
     content: (
       <>
         <p>
-          Much of the shader code is heavily inspired - if not blatantly
-          copy-pasted - by multiple brilliant creators on{' '}
-          <Link href='https://shadertoy.com'>Shadertoy</Link>
+          Much of the shader code is heavily inspired by multiple brilliant
+          creators on <Link href='https://shadertoy.com'>Shadertoy</Link>
         </p>
         <br />
         <p>

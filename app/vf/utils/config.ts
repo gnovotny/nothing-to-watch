@@ -64,6 +64,7 @@ export const getConfig = async (state: StoreState) => {
     preset: initialPreset,
     recommendedPreset: initialRecommendedPreset,
     setRecommendedPreset,
+    setPreset,
     ua,
   } = state
   const urlParams = new URLSearchParams(window.location.search)
@@ -85,9 +86,11 @@ export const getConfig = async (state: StoreState) => {
       recommendedPreset = VOROFORCE_PRESET.low
     } else {
       const gpuTier = await getGPUTier()
+      console.log('gpuTier', gpuTier)
       switch (gpuTier.tier) {
         case 3:
-          recommendedPreset = VOROFORCE_PRESET.high
+          // recommendedPreset = VOROFORCE_PRESET.high
+          recommendedPreset = VOROFORCE_PRESET.mid
           break
         case 2:
           recommendedPreset = VOROFORCE_PRESET.mid
@@ -96,7 +99,11 @@ export const getConfig = async (state: StoreState) => {
           recommendedPreset = VOROFORCE_PRESET.low
       }
     }
-    // setPreset(preset)
+
+    if (isSmallScreen) {
+      preset = recommendedPreset
+      setPreset(preset)
+    }
     setRecommendedPreset(recommendedPreset)
   }
 
