@@ -12,6 +12,7 @@ import {
   type VoroforceInstance,
 } from './vf'
 import { UAParser } from 'ua-parser-js'
+import type { PerformanceMonitorApi } from './vf/utils/performance-monitor'
 
 export enum THEME {
   dark = 'dark',
@@ -60,6 +61,8 @@ export type StoreState = {
     post: ConfigUniforms
     animating: ConfigUniforms
   }
+  performanceMonitor?: PerformanceMonitorApi
+  setPerformanceMonitor: (performanceMonitor: PerformanceMonitorApi) => void
 }
 const THEME_STORAGE_KEY = 'theme'
 const PLAYED_INTRO_STORAGE_KEY = 'playedIntro'
@@ -67,8 +70,8 @@ const PRESET_STORAGE_KEY = 'preset'
 const RECOMMENDED_PRESET_STORAGE_KEY = 'recommendedPreset'
 const USER_CONFIG_STORAGE_KEY = 'userConfig'
 
-// const playedIntro = Boolean(localStorage.getItem(PLAYED_INTRO_STORAGE_KEY))
-const playedIntro = false
+const playedIntro = Boolean(localStorage.getItem(PLAYED_INTRO_STORAGE_KEY))
+// const playedIntro = false
 
 export const store = create(
   subscribeWithSelector<StoreState>(
@@ -185,6 +188,11 @@ export const store = create(
             USER_CONFIG_STORAGE_KEY,
             JSON.stringify(userConfig),
           )
+        },
+        setPerformanceMonitor: (performanceMonitor) => {
+          set({
+            performanceMonitor,
+          })
         },
       }) as StoreState,
   ),

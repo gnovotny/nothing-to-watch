@@ -32,11 +32,11 @@ export class Ticker extends CustomEventTarget {
 
     // trigger event
     this.dispatchEvent(
-        new TickEvent({
-          delta: this.delta,
-          current: this.current,
-          elapsed: this.elapsed,
-        }),
+      new TickEvent({
+        delta: this.delta,
+        current: this.current,
+        elapsed: this.elapsed,
+      }),
     )
   }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Drawer as DrawerPrimitive } from 'vaul'
 
 import { useMediaQuery } from '@/hk/use-media-query'
-import { down, orientation } from '@/utl/mq'
+import { orientation } from '@/utl/mq'
 import { cn } from '@/utl/tw'
 import { Button } from '../../ui/button'
 import {
@@ -14,16 +14,28 @@ import {
   DrawerPortal,
   DrawerTitle,
 } from '../../ui/drawer'
+import { store } from '../../../store'
+import { useShallow } from 'zustand/react/shallow'
 
 export const LowFpsWarning = () => {
   const landscape = useMediaQuery(orientation('landscape'))
-  const isSmallScreen = useMediaQuery(down('md'))
+
+  const { performanceMonitor } = store(
+    useShallow((state) => ({
+      performanceMonitor: state.performanceMonitor,
+    })),
+  )
+
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    setOpen(isSmallScreen)
-  }, [isSmallScreen])
+    if (performanceMonitor) {
+      return performanceMonitor.subscribe({
+        onFallback: () => setOpen(true),
+      })
+    }
+  }, [performanceMonitor])
 
-  const [open, setOpen] = useState(isSmallScreen)
   return (
     <Drawer
       open={open}

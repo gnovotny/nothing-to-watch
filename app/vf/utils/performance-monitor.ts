@@ -1,7 +1,4 @@
-import type * as React from 'react'
-import { store } from '../../store'
-
-type PerformanceMonitorHookApi = {
+type PerformanceMonitorSubscriptionApi = {
   onIncline: (api: PerformanceMonitorApi) => void
   onDecline: (api: PerformanceMonitorApi) => void
   onChange: (api: PerformanceMonitorApi) => void
@@ -14,18 +11,17 @@ export type PerformanceMonitorApi = {
   /** Current performance factor, between 0 and 1 */
   factor: number
   /** Current highest fps, you can use this to determine device refresh rate */
-  refreshrate: number
+  refreshRate: number
   /** Fps samples taken over time  */
-  frames: number[]
+  samples: number[]
   /** Averages of frames taken over n iterations   */
   averages: number[]
   index: number
   flipped: number
   fallback: boolean
-  subscriptions: Map<symbol, Partial<PerformanceMonitorHookApi>>
-  subscribe: (
-    ref: React.MutableRefObject<Partial<PerformanceMonitorHookApi>>,
-  ) => () => void
+  subscriptions: Map<symbol, Partial<PerformanceMonitorSubscriptionApi>>
+  subscribe: (sub: Partial<PerformanceMonitorSubscriptionApi>) => () => void
+  onTick: () => void
 }
 
 type PerformanceMonitorProps = {
@@ -35,8 +31,8 @@ type PerformanceMonitorProps = {
   iterations?: number
   /** The percentage of iterations that are matched against the lower and upper bounds, 0.75 */
   threshold?: number
-  /** A function that receive the max device refreshrate to determine lower and upper bounds which create a margin where neither incline nor decline should happen, (refreshrate) => (refreshrate > 90 ? [50, 90] : [50, 60]) */
-  bounds?: (refreshrate: number) => [lower: number, upper: number]
+  /** A function that receive the max device refreshRate to determine lower and upper bounds which create a margin where neither incline nor decline should happen, (refreshRate) => (refreshRate > 90 ? [50, 90] : [50, 60]) */
+  bounds?: (refreshRate: number) => [lower: number, upper: number]
   /** How many times it can inline or decline before onFallback is called, Infinity */
   flipflops?: number
   /** The factor increases and decreases between 0-1, this prop sets the starting value, 0.5 */
@@ -51,11 +47,9 @@ type PerformanceMonitorProps = {
   onChange?: (api: PerformanceMonitorApi) => void
   /** Called after when the number of flipflops is reached, it indicates instability, use the function to set a fixed baseline */
   onFallback?: (api: PerformanceMonitorApi) => void
-  /** Children may use the usePerformanceMonitor hook */
-  children?: React.ReactNode
 }
 
-export function PerformanceMonitor(
+export function initPerformanceMonitor(
   {
     iterations = 10,
     // ms = 250,
@@ -64,7 +58,7 @@ export function PerformanceMonitor(
     step = 0.1,
     factor: _factor = 0.5,
     flipflops = Number.POSITIVE_INFINITY,
-    bounds = (refreshrate) => (refreshrate > 100 ? [60, 100] : [40, 60]),
+    bounds = (refreshRate) => (refreshRate > 100 ? [60, 100] : [40, 60]),
     onIncline,
     onDecline,
     onChange,
@@ -73,103 +67,80 @@ export function PerformanceMonitor(
 ) {
   // biome-ignore lint/style/useExponentiationOperator: <explanation>
   const decimalPlacesRatio = Math.pow(10, 0)
-  const api = {
+  let lastFactor = 0
+
+  const api: PerformanceMonitorApi = {
     fps: 0,
     index: 0,
     factor: _factor,
     flipped: 0,
-    refreshrate: 0,
+    refreshRate: 0,
     fallback: false,
-    frames: [],
+    samples: [],
     averages: [],
     subscriptions: new Map(),
-    subscribe: (ref) => {
+    subscribe: (sub) => {
       const key = Symbol()
-      api.subscriptions.set(key, ref.current)
+      api.subscriptions.set(key, sub)
       return () => void api.subscriptions.delete(key)
     },
-  } as PerformanceMonitorApi
+    onTick: () => {
+      const { samples, averages } = api
 
-  let lastFactor = 0
-  const onFrame = () => {
-    const { frames, averages } = api
+      if (api.fallback) return // If the fallback has been reached, abort
+      if (averages.length >= iterations) return
 
-    // If the fallback has been reached do not continue running samples
-    if (api.fallback) return
+      samples.push(performance.now())
+      const msPassed = samples[samples.length - 1] - samples[0]
 
-    if (averages.length < iterations) {
-      frames.push(performance.now())
-      const msPassed = frames[frames.length - 1] - frames[0]
-      if (msPassed >= ms) {
-        // console.log('test')
-        api.fps =
-          Math.round((frames.length / msPassed) * 1000 * decimalPlacesRatio) /
-          decimalPlacesRatio
+      if (msPassed < ms) return
 
-        api.refreshrate = Math.max(api.refreshrate, api.fps)
-        averages[api.index++ % iterations] = api.fps
-        if (averages.length === iterations) {
-          const [lower, upper] = bounds(api.refreshrate)
-          const upperBounds = averages.filter((value) => value >= upper)
-          const lowerBounds = averages.filter((value) => value < lower)
-          // Trigger incline when more than -threshold- avgs exceed the upper bound
-          if (upperBounds.length > iterations * threshold) {
-            api.factor = Math.min(1, api.factor + step)
-            api.flipped++
-            if (onIncline) onIncline(api)
-            api.subscriptions.forEach((value) => value.onIncline?.(api))
-          }
-          // Trigger decline when more than -threshold- avgs are below the lower bound
-          if (lowerBounds.length > iterations * threshold) {
-            api.factor = Math.max(0, api.factor - step)
-            api.flipped++
-            if (onDecline) onDecline(api)
-            api.subscriptions.forEach((value) => value.onDecline?.(api))
-          }
+      api.fps =
+        Math.round((samples.length / msPassed) * 1000 * decimalPlacesRatio) /
+        decimalPlacesRatio
 
-          if (lastFactor !== api.factor) {
-            lastFactor = api.factor
-            if (onChange) onChange(api)
-            api.subscriptions.forEach((value) => value.onChange?.(api))
-          }
+      api.samples = []
 
-          if (api.flipped > flipflops && !api.fallback) {
-            api.fallback = true
-            if (onFallback) onFallback(api)
-            api.subscriptions.forEach((value) => value.onFallback?.(api))
-          }
-          api.averages = []
+      api.refreshRate = Math.max(api.refreshRate, api.fps)
+      averages[api.index++ % iterations] = api.fps
 
-          // Resetting the refreshrate creates more problems than it solves atm
-          // api.refreshrate = 0
-        }
-        api.frames = []
+      if (averages.length !== iterations) return
 
-        console.log('api', api)
+      const [lower, upper] = bounds(api.refreshRate)
+      const upperBounds = averages.filter((value) => value >= upper)
+      const lowerBounds = averages.filter((value) => value < lower)
+      // Trigger incline when more than -threshold- avgs exceed the upper bound
+      if (upperBounds.length > iterations * threshold) {
+        api.factor = Math.min(1, api.factor + step)
+        api.flipped++
+        if (onIncline) onIncline(api)
+        api.subscriptions.forEach((sub) => sub.onIncline?.(api))
       }
-    }
+      // Trigger decline when more than -threshold- avgs are below the lower bound
+      if (lowerBounds.length > iterations * threshold) {
+        api.factor = Math.max(0, api.factor - step)
+        api.flipped++
+        if (onDecline) onDecline(api)
+        api.subscriptions.forEach((sub) => sub.onDecline?.(api))
+      }
+
+      if (lastFactor !== api.factor) {
+        lastFactor = api.factor
+        if (onChange) onChange(api)
+        api.subscriptions.forEach((sub) => sub.onChange?.(api))
+      }
+
+      if (api.flipped > flipflops && !api.fallback) {
+        api.fallback = true
+        if (onFallback) onFallback(api)
+        api.subscriptions.forEach((sub) => sub.onFallback?.(api))
+      }
+      api.averages = []
+
+      // Resetting the refreshRate creates more problems than it solves atm
+      // api.refreshRate = 0
+    },
   }
 
-  const {
-    voroforce: { ticker },
-  } = store.getState()
-
-  ticker.listen('tick', onFrame)
+  return api
 }
-
-// export function usePerformanceMonitor({
-//   onIncline,
-//   onDecline,
-//   onChange,
-//   onFallback,
-// }: Partial<PerformanceMonitorHookApi>) {
-//   const api = useContext(context)
-//   const ref = useRef({ onIncline, onDecline, onChange, onFallback })
-//   useLayoutEffect(() => {
-//     ref.current.onIncline = onIncline
-//     ref.current.onDecline = onDecline
-//     ref.current.onChange = onChange
-//     ref.current.onFallback = onFallback
-//   }, [onIncline, onDecline, onChange, onFallback])
-//   useLayoutEffect(() => api.subscribe(ref), [api])
-// }
