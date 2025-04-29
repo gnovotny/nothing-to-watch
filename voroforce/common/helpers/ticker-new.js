@@ -31,9 +31,24 @@ export class Ticker extends CustomEventTarget {
     this.current = this.lastFrameTime
   }
 
+  start() {
+    if (this.running) return
+    this.running = true
+    this.init()
+    this.tick()
+  }
+
+  stop() {
+    this.running = false
+  }
+
   // todo https://claude.ai/chat/5abf6755-34d5-4790-8932-d34981a1e9c1
   tick() {
+    if (!this.running) return
+
     this.nextRequested = false
+
+    requestAnimationFrame(this.tick)
 
     // update metrics
 
@@ -43,7 +58,7 @@ export class Ticker extends CustomEventTarget {
     this.current = currentTime
     this.elapsed = this.current - this.lastFrameTime
 
-    console.log('this.elapsed', this.elapsed)
+    // console.log('this.elapsed', this.elapsed)
     // console.log('this.frameInterval', this.frameInterval)
 
     // Only execute if enough time has passed for our target FPS
