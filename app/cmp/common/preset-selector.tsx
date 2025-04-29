@@ -8,7 +8,8 @@ import { useShallow } from 'zustand/react/shallow'
 import { Badge } from '../ui/badge'
 import { useState } from 'react'
 import { safeInitVoroforce, VOROFORCE_PRESET } from '../../vf'
-import { FadeTransition } from './transition'
+import { useMediaQuery } from '../../hk/use-media-query'
+import { down } from '../../utl/mq'
 
 const presets = [
   {
@@ -29,7 +30,7 @@ const presets = [
 ]
 
 export function PresetSelector({ className = '' }) {
-  const { recommendedPreset, storePreset, setStorePreset } = store(
+  const { recommendedPreset, setStorePreset } = store(
     useShallow((state) => ({
       setStorePreset: state.setPreset,
       recommendedPreset: state.recommendedPreset,
@@ -37,16 +38,18 @@ export function PresetSelector({ className = '' }) {
     })),
   )
 
+  const isSmallScreen = useMediaQuery(down('md'))
+
   const [selectedPreset, setSelectedPreset] = useState<
     VOROFORCE_PRESET | undefined
   >(
-    presets.find((p) => p.id === recommendedPreset)
+    isSmallScreen || presets.find((p) => p.id === recommendedPreset)
       ? recommendedPreset
       : undefined,
   )
 
   return (
-    <FadeTransition className={className} visible={!storePreset}>
+    <div className={className}>
       <div className='hidden md:block'>
         <div>
           <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
@@ -126,18 +129,19 @@ export function PresetSelector({ className = '' }) {
       <div className='flex flex-col gap-2'>
         <Button
           onClick={() => {
-            if (selectedPreset) {
-              setStorePreset(selectedPreset)
+            const preset = selectedPreset || recommendedPreset
+            if (preset) {
+              setStorePreset(preset)
               void safeInitVoroforce()
             }
           }}
           className='w-full cursor-pointer text-lg'
           size='lg'
-          disabled={!selectedPreset}
+          disabled={!isSmallScreen && !selectedPreset}
         >
           Continue
         </Button>
       </div>
-    </FadeTransition>
+    </div>
   )
 }

@@ -1,7 +1,6 @@
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react-swc'
-// import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import glsl from 'vite-plugin-glsl'
 import analyzer from 'vite-bundle-analyzer'
@@ -13,9 +12,9 @@ export default defineConfig(({ mode }) => {
       react({}),
       tailwindcss(),
       glsl({
-        minify: Boolean(env.COMPRESS_GLSL),
+        minify: Boolean(env.VITE_COMPRESS_GLSL),
       }),
-      ...(env.ANALYZE_BUNDLE ? [analyzer()] : []),
+      ...(env.VITE_ANALYZE_BUNDLE ? [analyzer()] : []),
     ],
     build: {
       rollupOptions: {

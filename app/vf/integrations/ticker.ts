@@ -1,5 +1,6 @@
 import { store } from '../../store'
 import { handleAnimatingUniforms } from '../utils'
+import { PerformanceMonitor } from '../utils/performance-monitor'
 
 export const handleTicker = () => {
   const {
@@ -12,4 +13,6 @@ export const handleTicker = () => {
     // console.log('tick')
     handleAnimatingUniforms(animatingUniforms)
   }) as unknown as EventListener)
+
+  PerformanceMonitor()
 }

@@ -5,8 +5,11 @@ import { useShallow } from 'zustand/react/shallow'
 import { FadeTransition } from '../common/transition'
 
 export const Intro = () => {
-  const visible = store(
-    useShallow((state) => !(state.playedIntro && Boolean(state.preset))),
+  const { visible, preset } = store(
+    useShallow((state) => ({
+      visible: !(state.playedIntro && Boolean(state.preset)),
+      preset: state.preset,
+    })),
   )
 
   return (
@@ -34,7 +37,9 @@ export const Intro = () => {
         </h1>
       </div>
       <div className='flex h-1/3 justify-center'>
-        <PresetSelector />
+        <FadeTransition visible={!preset}>
+          <PresetSelector />
+        </FadeTransition>
       </div>
     </FadeTransition>
   )

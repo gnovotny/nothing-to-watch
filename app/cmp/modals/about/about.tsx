@@ -58,8 +58,8 @@ const items = [
     content: (
       <>
         <p>
-          The silver screen's heyday is arguably behind us. Luckily, we have
-          over one hundred years of cinema to fall back on.
+          The silver screen's heyday is arguably behind us. Luckily, there's
+          over a hundred years of cinema to fall back on.
         </p>
         <br />
         <p>
@@ -263,7 +263,7 @@ export const About = () => {
             <Accordion
               type='multiple'
               className='w-full p-6 pr-10'
-              defaultValue={['0']}
+              defaultValue={['0', '1']}
             >
               {items.map(({ title, content }, index) => (
                 <AccordionItem

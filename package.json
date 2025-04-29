@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 3000 --host 0.0.0.0",
     "build": "tsc -b && vite build",
+    "analyze": "VITE_ANALYZE_BUNDLE=1 vite build",
     "preview": "vite preview",
     "lint": "biome lint .",
     "format": "biome format .",

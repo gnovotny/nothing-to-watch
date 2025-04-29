@@ -15,7 +15,7 @@ import {
   DrawerTitle,
 } from '../../ui/drawer'
 
-export const SmallScreenWarning = () => {
+export const LowFpsWarning = () => {
   const landscape = useMediaQuery(orientation('landscape'))
   const isSmallScreen = useMediaQuery(down('md'))
 
@@ -42,9 +42,7 @@ export const SmallScreenWarning = () => {
           <div className='not-landscape:w-full landscape:h-full'>
             <DrawerHeader>
               <DrawerTitle>Warning</DrawerTitle>
-              <DrawerDescription>
-                This website is best viewed on a larger device
-              </DrawerDescription>
+              <DrawerDescription>Low FPS detected</DrawerDescription>
             </DrawerHeader>
             <DrawerFooter>
               <Button variant='outline' onClick={() => setOpen(false)}>
