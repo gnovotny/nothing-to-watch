@@ -41,4 +41,7 @@ export const defaultConfig = {
     enabled: false,
     hiddenDelay: 0,
   },
+  ticker: {
+    mode: 'auto', // 'auto' or 'manual'
+  },
 }

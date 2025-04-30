@@ -1,1 +1,1 @@
-export { default } from './modals'
+export { default } from './modals-root'

@@ -52,8 +52,8 @@ type PerformanceMonitorProps = {
 export function initPerformanceMonitor(
   {
     iterations = 10,
-    // ms = 250,
-    ms = 1000,
+    ms = 250,
+    // ms = 1000,
     threshold = 0.75,
     step = 0.1,
     factor: _factor = 0.5,
@@ -104,6 +104,7 @@ export function initPerformanceMonitor(
       api.refreshRate = Math.max(api.refreshRate, api.fps)
       averages[api.index++ % iterations] = api.fps
 
+      // console.log('averages', averages)
       if (averages.length !== iterations) return
 
       const [lower, upper] = bounds(api.refreshRate)
@@ -111,6 +112,7 @@ export function initPerformanceMonitor(
       const lowerBounds = averages.filter((value) => value < lower)
       // Trigger incline when more than -threshold- avgs exceed the upper bound
       if (upperBounds.length > iterations * threshold) {
+        console.log('onIncline')
         api.factor = Math.min(1, api.factor + step)
         api.flipped++
         if (onIncline) onIncline(api)
@@ -118,6 +120,7 @@ export function initPerformanceMonitor(
       }
       // Trigger decline when more than -threshold- avgs are below the lower bound
       if (lowerBounds.length > iterations * threshold) {
+        console.log('onDecline')
         api.factor = Math.max(0, api.factor - step)
         api.flipped++
         if (onDecline) onDecline(api)
@@ -125,6 +128,7 @@ export function initPerformanceMonitor(
       }
 
       if (lastFactor !== api.factor) {
+        console.log('onChange')
         lastFactor = api.factor
         if (onChange) onChange(api)
         api.subscriptions.forEach((sub) => sub.onChange?.(api))

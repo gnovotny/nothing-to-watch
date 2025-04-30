@@ -4,11 +4,9 @@ import { Drawer as DrawerPrimitive } from 'vaul'
 import { useMediaQuery } from '@/hk/use-media-query'
 import { orientation } from '@/utl/mq'
 import { cn } from '@/utl/tw'
-import { Button } from '../../ui/button'
 import {
   Drawer,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
   DrawerPortal,
@@ -16,32 +14,51 @@ import {
 } from '../../ui/drawer'
 import { store } from '../../../store'
 import { useShallow } from 'zustand/react/shallow'
+import { VOROFORCE_PRESET } from '../../../vf'
+import { PresetSelector } from '../../common/preset-selector'
 
 export const LowFpsWarning = () => {
   const landscape = useMediaQuery(orientation('landscape'))
 
-  const { performanceMonitor } = store(
+  const { performanceMonitor, preset, ticker } = store(
     useShallow((state) => ({
       performanceMonitor: state.performanceMonitor,
+      preset: state.preset,
+      ticker: state.voroforce.ticker,
     })),
   )
 
+  const canLowerQuality = preset
+    ? [VOROFORCE_PRESET.mid, VOROFORCE_PRESET.high].includes(preset)
+    : false
+  const warnOnce = !canLowerQuality
+
   const [open, setOpen] = useState(false)
+  const [wasOpen, setWasOpen] = useState(false)
 
   useEffect(() => {
-    if (performanceMonitor) {
+    if (performanceMonitor && !(warnOnce && wasOpen)) {
+      console.log('subscribing to performance monitor')
       return performanceMonitor.subscribe({
-        onFallback: () => setOpen(true),
+        onDecline: () => {
+          ticker.freeze()
+          console.log('on decline')
+          setOpen(true)
+          setWasOpen(true)
+        },
       })
     }
-  }, [performanceMonitor])
+  }, [performanceMonitor, wasOpen, warnOnce, ticker])
 
   return (
     <Drawer
       open={open}
       direction={landscape ? 'right' : 'bottom'}
       disablePreventScroll
-      onClose={() => setOpen(false)}
+      onClose={() => {
+        setOpen(false)
+        ticker.unfreeze()
+      }}
     >
       <DrawerPortal>
         <DrawerOverlay />
@@ -56,11 +73,18 @@ export const LowFpsWarning = () => {
               <DrawerTitle>Warning</DrawerTitle>
               <DrawerDescription>Low FPS detected</DrawerDescription>
             </DrawerHeader>
-            <DrawerFooter>
-              <Button variant='outline' onClick={() => setOpen(false)}>
-                Continue
-              </Button>
-            </DrawerFooter>
+            <PresetSelector
+              onSetPreset={(newPreset: VOROFORCE_PRESET) => {
+                if (newPreset !== preset) {
+                  window.location.reload()
+                }
+              }}
+            />
+            {/*<DrawerFooter>*/}
+            {/*  <Button variant='outline' onClick={() => setOpen(false)}>*/}
+            {/*    Continue*/}
+            {/*  </Button>*/}
+            {/*</DrawerFooter>*/}
           </div>
         </DrawerPrimitive.Content>
       </DrawerPortal>

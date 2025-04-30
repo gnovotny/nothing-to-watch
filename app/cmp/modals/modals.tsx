@@ -1,29 +1,16 @@
-import {} from './film'
-import { store } from '../../store'
-import { useShallow } from 'zustand/react/shallow'
-import { FadeTransition } from '../common/transition'
-import { lazy } from 'react'
+import { Settings } from './settings'
+import { About } from './about'
+import { FilmPreview, FilmViewDrawer } from './film'
+import { LowFpsWarning } from './low-fps-warning'
 
-const ModalItems = lazy(() => import('./items'))
-
-function Modals() {
-  const { voroforceInitiated } = store(
-    useShallow((state) => ({
-      voroforceInitiated: Boolean(state.voroforce),
-    })),
-  )
-
-  return (
-    <FadeTransition
-      visible={voroforceInitiated}
-      className='relative h-dvh w-full overflow-hidden'
-      transitionOptions={{
-        timeout: 2000,
-      }}
-    >
-      {voroforceInitiated && <ModalItems />}
-    </FadeTransition>
-  )
-}
+const Modals = () => (
+  <>
+    <Settings />
+    <About />
+    <FilmPreview />
+    <FilmViewDrawer />
+    <LowFpsWarning />
+  </>
+)
 
 export default Modals

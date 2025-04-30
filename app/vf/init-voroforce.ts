@@ -24,6 +24,7 @@ export const safeInitVoroforce = async () => {
     // biome-ignore lint/style/noNonNullAssertion: exists
     await initVoroforce(document.getElementById('voroforce')!)
   } catch (e) {
+    console.error(e)
     alert((e as Error).message)
   }
 }

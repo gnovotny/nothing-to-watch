@@ -3,7 +3,7 @@ import {
   initSharedData,
   initSharedLoadedMediaVersionLayersData,
 } from './common/data'
-import { Dimensions, Loader, Store, Ticker } from './common/helpers'
+import { Dimensions, Loader, Store, AutoTicker } from './common/helpers'
 import { handleLattice } from './common/lattice'
 import { defaultConfig } from './default-config'
 import Controls from './controls'
@@ -11,12 +11,14 @@ import Display from './display'
 import { MultiThreadedSimulation, Simulation } from './simulation'
 import { mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
+import { ManualTicker } from './common/helpers/ticker'
 
 export class Voroforce {
   mediaEnabled = false
   multiThreading = false
   parallelDisplay = false
   simulationIsWarm = false
+  displayIsWarm = false
 
   constructor(container, config = {}) {
     this.config = mergeConfigs(defaultConfig, config)
@@ -33,12 +35,12 @@ export class Voroforce {
     this.initStore()
     this.initComponents()
     this.initEventListeners()
-    void this.initDevTools()
   }
 
   handleConfig() {
     this.handleMultiThreadingConfig()
     this.handleMediaConfig()
+    this.handleTickerConfig()
   }
 
   handleMultiThreadingConfig() {
@@ -65,6 +67,10 @@ export class Voroforce {
     }
   }
 
+  handleTickerConfig() {
+    this.tickerMode = this.config.ticker?.mode
+  }
+
   initComponents() {
     this.simulation = new (
       this.multiThreading ? MultiThreadedSimulation : Simulation
@@ -76,8 +82,12 @@ export class Voroforce {
   }
 
   initHelpers() {
+    void this.initDevTools()
     this.dimensions = new Dimensions(this.container)
-    this.ticker = new Ticker()
+    this.ticker = new (this.tickerMode === 'auto' ? AutoTicker : ManualTicker)(
+      this.devTools?.fpsGraph,
+    )
+
     this.loader = new Loader(
       this.sharedLoadedMediaVersionLayersData,
       this.config,
@@ -130,7 +140,6 @@ export class Voroforce {
   start() {
     this.simulationIsWarm = false
     this.displayIsWarm = false
-    // this.ticker.next()
     this.ticker.start()
     return this
   }
@@ -176,11 +185,13 @@ export class Voroforce {
     this.devTools = new (await import('./common/dev-tools')).default(
       this.config.devTools,
     )
+    this.ticker.fpsGraph = this.devTools.fpsGraph
     this.store.set('devTools', this.devTools)
   }
 
   // multithreaded simulation step workers must complete before triggering resize
   deferredResize() {
+    if (this.tickerMode === 'auto') this.ticker.stop()
     this.handleLattice()
     const dimensions = this.store.get('dimensions').get()
     this.simulation.resize(dimensions, () => {
@@ -213,19 +224,22 @@ export class Voroforce {
 
     if (!this.parallelDisplay) this.updateDisplay()
 
+    // multithreaded simulation step workers must complete before triggering resize
     if (this.pendingResize) {
       this.deferredResize()
       return
     }
 
-    this.devTools?.fpsGraph?.end()
-    // this.ticker.next()
+    // this.devTools?.fpsGraph?.end()
+    if (this.tickerMode === 'manual') this.ticker.next()
   }
 
   updateDisplay() {
-    if (!this.simulationIsWarm) return
-    this.display.update()
-    this.displayIsWarm = true
+    if (this.simulationIsWarm) {
+      this.display.update()
+      this.displayIsWarm = true
+    }
+    if (this.tickerMode === 'manual') this.ticker.next()
   }
 
   updateControls() {

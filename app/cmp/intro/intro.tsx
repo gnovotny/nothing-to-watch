@@ -3,6 +3,7 @@ import { store } from '@/store'
 import { PresetSelector } from '../common/preset-selector'
 import { useShallow } from 'zustand/react/shallow'
 import { FadeTransition } from '../common/transition'
+import { safeInitVoroforce } from '../../vf'
 
 export const Intro = () => {
   const { visible, preset } = store(
@@ -38,7 +39,7 @@ export const Intro = () => {
       </div>
       <div className='flex h-1/3 justify-center'>
         <FadeTransition visible={!preset}>
-          <PresetSelector />
+          <PresetSelector onSetPreset={() => void safeInitVoroforce()} />
         </FadeTransition>
       </div>
     </FadeTransition>

@@ -1,33 +1,24 @@
-import { CustomEventTarget } from '../../utils/custom-event-target'
+import { CustomEventTarget } from '../../../utils/custom-event-target'
+import { TickEvent } from './utils'
 
-class TickEvent extends Event {
-  constructor({ current, elapsed, delta }) {
-    super('tick')
-    this.current = current
-    this.elapsed = elapsed
-    this.delta = delta
-  }
-}
-
-export class Ticker extends CustomEventTarget {
-  nextRequested = false
-  frozen = false
+export class AutoTicker extends CustomEventTarget {
   initiated = false
-  constructor(fps = 60) {
+  constructor(fpsGraph, fpsCap = 60) {
     super()
+    this.fpsGraph = fpsGraph
     this.elapsed = 0
     this.delta = 16
     this.tick = this.tick.bind(this)
 
-    this.fps = fps
-    this.frameInterval = 1000 / this.fps // milliseconds per frame
+    this.fpsCap = fpsCap
+    this.frameInterval = 1000 / this.fpsCap // milliseconds per frame
     this.lastFrameTime = 0
     this.current = 0
   }
 
   init() {
     this.initiated = true
-    this.lastFrameTime = performance.now() - 17
+    this.lastFrameTime = performance.now()
     this.current = this.lastFrameTime
   }
 
@@ -35,7 +26,7 @@ export class Ticker extends CustomEventTarget {
     if (this.running) return
     this.running = true
     this.init()
-    this.tick()
+    requestAnimationFrame(this.tick)
   }
 
   stop() {
@@ -46,23 +37,20 @@ export class Ticker extends CustomEventTarget {
   tick() {
     if (!this.running) return
 
-    this.nextRequested = false
-
     requestAnimationFrame(this.tick)
 
     // update metrics
-
-    // const currentTime = Date.now()
     const currentTime = performance.now()
     this.delta = currentTime - this.current
     this.current = currentTime
     this.elapsed = this.current - this.lastFrameTime
 
     // console.log('this.elapsed', this.elapsed)
-    // console.log('this.frameInterval', this.frameInterval)
 
     // Only execute if enough time has passed for our target FPS
     if (this.elapsed >= this.frameInterval) {
+      this.fpsGraph?.begin()
+
       // Adjust lastFrameTime to maintain consistent timing
       // This prevents time drift by accounting for actual elapsed time
       this.lastFrameTime = currentTime - (this.elapsed % this.frameInterval)
@@ -75,23 +63,16 @@ export class Ticker extends CustomEventTarget {
           elapsed: this.elapsed,
         }),
       )
+
+      this.fpsGraph?.end()
     }
   }
 
-  next() {
-    if (this.frozen) return
-    if (this.nextRequested) return
-    this.nextRequested = true
-    if (!this.initiated) this.init()
-    requestAnimationFrame(this.tick)
-  }
-
   freeze() {
-    this.frozen = true
+    this.stop()
   }
 
   unfreeze() {
-    this.init()
-    this.frozen = false
+    this.start()
   }
 }

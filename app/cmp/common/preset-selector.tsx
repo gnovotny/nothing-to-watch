@@ -7,7 +7,7 @@ import { store } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { Badge } from '../ui/badge'
 import { useState } from 'react'
-import { safeInitVoroforce, VOROFORCE_PRESET } from '../../vf'
+import { VOROFORCE_PRESET } from '../../vf'
 import { useMediaQuery } from '../../hk/use-media-query'
 import { down } from '../../utl/mq'
 
@@ -29,7 +29,10 @@ const presets = [
   },
 ]
 
-export function PresetSelector({ className = '' }) {
+export function PresetSelector({
+  className = '',
+  onSetPreset,
+}: { className?: string; onSetPreset?: (preset: VOROFORCE_PRESET) => void }) {
   const { recommendedPreset, setStorePreset } = store(
     useShallow((state) => ({
       setStorePreset: state.setPreset,
@@ -121,8 +124,7 @@ export function PresetSelector({ className = '' }) {
           <div>Warning</div>
         </div>
         <p className='text-base text-zinc-600 dark:text-zinc-300'>
-          This website is best viewed on a larger device like a desktop or
-          laptop.
+          This page is best viewed on a larger device like a desktop or laptop.
         </p>
       </div>
 
@@ -132,7 +134,7 @@ export function PresetSelector({ className = '' }) {
             const preset = selectedPreset || recommendedPreset
             if (preset) {
               setStorePreset(preset)
-              void safeInitVoroforce()
+              onSetPreset?.(preset)
             }
           }}
           className='w-full cursor-pointer text-lg'
