@@ -370,9 +370,6 @@ export const handleLattice = (globalConfig, cells, width, height) => {
     containerWidth = containerHeight = min
   }
 
-  // console.log('containerWidth', containerWidth)
-  // console.log('containerHeight', containerHeight)
-
   Object.assign(
     config,
     calculateOptimalLattice(
@@ -408,8 +405,6 @@ export const handleLattice = (globalConfig, cells, width, height) => {
       -(config.latticeHeight - containerHeight) / 2 +
       (containerHeight - height) / 2
   }
-
-  console.log('lattice config', config)
 
   generateCenterOutwardSubgridsAndAssignCellIds(config, cells)
 

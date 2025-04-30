@@ -1,6 +1,6 @@
-import { Intro } from '@/cmp/intro'
-import { Navbar, ThemeProvider } from '@/cmp/layout'
-import Modals from './cmp/modals'
+import { Intro } from './cmps/intro'
+import { Navbar, ThemeProvider } from './cmps/layout'
+import Modals from './cmps/modals'
 
 const App = () => (
   <ThemeProvider>

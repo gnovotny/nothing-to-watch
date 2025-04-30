@@ -1,0 +1,188 @@
+import * as v from 'valibot'
+import { valibotResolver } from '@hookform/resolvers/valibot'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../../../ui/dialog'
+
+import { Button } from '../../../ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '../../../ui/form'
+import { Input } from '../../../ui/input'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../ui/select'
+import { Switch } from '../../../ui/switch'
+import { store } from '../../../../store'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../ui/tooltip'
+
+enum Property {
+  Title = 'title',
+  ImdbId = 'imdbId',
+  TmdbId = 'tmdbId',
+}
+
+const formSchema = v.object({
+  name: v.string(),
+  baseUrl: v.string(),
+  property: v.enum(Property),
+  slug: v.boolean(),
+})
+
+type FormData = v.InferOutput<typeof formSchema>
+
+export function AddCustomLinkDialog() {
+  const userConfig = store((state) => state.userConfig)
+  const setUserConfig = store((state) => state.setUserConfig)
+
+  const form = useForm<FormData>({
+    resolver: valibotResolver(formSchema),
+    defaultValues: {
+      property: Property.Title,
+      slug: false,
+    },
+  })
+
+  function onSubmit(values: FormData) {
+    const customLinks = userConfig.customLinks ?? []
+    const sameNameIndex = customLinks.findIndex(
+      ({ name }) => name === values.name,
+    )
+    if (sameNameIndex === -1) {
+      customLinks.push(values)
+    } else {
+      customLinks[sameNameIndex] = values
+    }
+    setUserConfig({
+      ...userConfig,
+      customLinks: [...customLinks],
+    })
+    form.reset()
+    setOpen(false)
+  }
+
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <DialogTrigger asChild>
+          <TooltipTrigger asChild>
+            <Button
+              size='icon'
+              className='hidden cursor-pointer rounded-lg border-foreground md:inline-flex md:backdrop-blur-lg'
+              variant='outline'
+            >
+              <Plus />
+            </Button>
+          </TooltipTrigger>
+        </DialogTrigger>
+        <TooltipContent>
+          <p>Add new link type</p>
+        </TooltipContent>
+      </Tooltip>
+      <DialogContent className='sm:max-w-[425px] md:sm:max-w-[625px]'>
+        <DialogHeader>
+          <DialogTitle>Add new link type</DialogTitle>
+          <DialogDescription className='hidden'>
+            Add a custom link to an external service
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+            <div className='grid gap-4 py-4'>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem className='grid grid-cols-4 items-center gap-4'>
+                    <FormLabel className='m-0 text-right'>Name</FormLabel>
+                    <FormControl className='col-span-3'>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='baseUrl'
+                render={({ field }) => (
+                  <FormItem className='grid grid-cols-4 items-center gap-4'>
+                    <FormLabel className='m-0 text-right'>Base URL</FormLabel>
+                    <FormControl className='col-span-3'>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='property'
+                render={({ field }) => (
+                  <FormItem className='grid grid-cols-4 items-center gap-4'>
+                    <FormLabel className='m-0 text-right'>Property</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className='col-span-3 m-0'>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='title'>Movie Title</SelectItem>
+                        <SelectItem value='tmdbId'>TMDB ID</SelectItem>
+                        <SelectItem value='imdbId'>IMDB ID</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='slug'
+                render={({ field }) => (
+                  <FormItem className='grid grid-cols-4 items-center gap-4'>
+                    <FormLabel className='m-0 text-right'>
+                      Slugify value
+                    </FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        aria-readonly
+                        className='m-0 h-7 w-12'
+                        thumbClassName='h-6 w-6'
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type='submit'>Add</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}

@@ -13,6 +13,7 @@ import {
 } from './vf'
 import { UAParser } from 'ua-parser-js'
 import type { PerformanceMonitorApi } from './vf/utils/performance-monitor'
+import { useShallow } from 'zustand/react/shallow'
 
 export enum THEME {
   dark = 'dark',
@@ -197,3 +198,6 @@ export const store = create(
       }) as StoreState,
   ),
 )
+
+export const useShallowState = <U>(selector: (state: StoreState) => U) =>
+  store(useShallow(selector))

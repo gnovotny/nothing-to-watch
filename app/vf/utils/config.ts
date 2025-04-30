@@ -4,7 +4,7 @@ import baseConfig, { introModeLatticeConfig } from '../config'
 import presets from '../presets'
 import { forceSimulationStepIntroConfig } from '../config/simulation/force/intro'
 
-import { down, matchMediaQuery } from '@/utl/mq'
+import { down, matchMediaQuery } from '../../utls/mq'
 
 import type { StoreState } from '../../store'
 import type { ConfigUniform } from './uniforms'

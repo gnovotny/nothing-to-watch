@@ -33,7 +33,6 @@ export class AutoTicker extends CustomEventTarget {
     this.running = false
   }
 
-  // todo https://claude.ai/chat/5abf6755-34d5-4790-8932-d34981a1e9c1
   tick() {
     if (!this.running) return
 

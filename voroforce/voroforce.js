@@ -48,8 +48,6 @@ export class Voroforce {
       this.config.multiThreading?.enabled &&
       typeof SharedArrayBuffer !== 'undefined'
 
-    console.log('multiThreading', this.multiThreading)
-
     this.parallelDisplay =
       this.multiThreading && this.config.multiThreading?.renderInParallel
   }
@@ -57,7 +55,7 @@ export class Voroforce {
   handleMediaConfig() {
     this.mediaEnabled = this.config.media?.enabled
     if (this.mediaEnabled) {
-      // limit the amount of texture memory being allocated
+      // potentially limit the amount of texture memory being allocated
       this.config.media.versions?.forEach((v) => {
         v.layers = Math.min(
           v.layers,
