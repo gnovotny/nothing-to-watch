@@ -90,13 +90,11 @@ export const FilmViewFooter = ({
                 </a>
 
                 <Tooltip>
-                  <TooltipTrigger
-                    onClick={(event) => {
-                      event.preventDefault()
-                    }}
-                    className='-bottom-2 -end-2 absolute inline-flex size-5 items-center justify-center rounded-full border border-white bg-blue-500 font-bold text-white text-xs opacity-0 transition-opacity duration-300 group-hover:opacity-100'
-                  >
-                    <Copy
+                  <TooltipTrigger asChild>
+                    <Button
+                      size='icon'
+                      variant='unstyled'
+                      className='-bottom-2 -end-2 absolute inline-flex size-5 items-center justify-center rounded-full border border-white bg-blue-500 font-bold text-white text-xs opacity-0 transition-opacity duration-300 group-hover:opacity-100'
                       onClick={() => {
                         void navigator?.clipboard?.writeText(
                           `${window.location.href.split('?')[0]}?customLinkBase64=${window.btoa(JSON.stringify({ name, baseUrl, slug, property }))}`,
@@ -104,8 +102,9 @@ export const FilmViewFooter = ({
                         setCopiedCustomLink(true)
                         setTimeout(() => setCopiedCustomLink(false), 2000)
                       }}
-                      className='!size-3'
-                    />
+                    >
+                      <Copy className='!size-3' />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent
                     // onPointerDownOutside={(event) => {

@@ -74,8 +74,6 @@ export function AddCustomLinkModal() {
     setNewLinkTypeOpen(false)
   }
 
-  // const [open, setOpen] = useState(false)
-
   return (
     <Modal
       rootProps={{
@@ -90,24 +88,6 @@ export function AddCustomLinkModal() {
       innerContentProps={{
         className: 'bg-background p-6 xl:p-9 border',
       }}
-      // trigger={
-      //   <Tooltip>
-      //     <DrawerTrigger asChild>
-      //       <TooltipTrigger asChild>
-      //         <Button
-      //           size='icon'
-      //           className='hidden cursor-pointer rounded-lg border-foreground md:inline-flex md:backdrop-blur-lg'
-      //           variant='outline'
-      //         >
-      //           <Plus />
-      //         </Button>
-      //       </TooltipTrigger>
-      //     </DrawerTrigger>
-      //     <TooltipContent>
-      //       <p>Add new link type</p>
-      //     </TooltipContent>
-      //   </Tooltip>
-      // }
       overlay
       portal={false}
       handle={false}
