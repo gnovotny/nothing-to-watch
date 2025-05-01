@@ -57,10 +57,10 @@ export const Intro = () => {
             </p>
           </div>
           <PresetSelector onSetPreset={() => void safeInitVoroforce()} />
-          <small className='text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
+          <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
             Contains information from Kaggle's "Full TMDB Movies Dataset" which
             is made available under the ODC Attribution License.
-          </small>
+          </span>
         </FadeTransition>
       </div>
     </FadeTransition>

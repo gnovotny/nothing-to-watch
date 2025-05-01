@@ -1,12 +1,10 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import config from '@/config'
 import { cn } from '../../../../utls/tw'
 import type { Film } from '@/vf'
 import { Badge } from '../../../ui/badge'
 import { FilmRatingGauge } from '../shared/film-rating-gauge'
-import {} from 'lucide-react'
 import { store } from '@/store'
-import {} from '../../../ui/tooltip'
-import { useEffect, useMemo, useRef, useState } from 'react'
 
 export const FilmView = ({
   film,

@@ -28,18 +28,15 @@ export const AnimateHeightChange: React.FC<AnimateHeightChangeProps> = ({
   const [height, setHeight] = useState<number | 'auto'>('auto')
 
   useEffect(() => {
-    if (!enabled) return
-    if (containerRef.current) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        const observedHeight = entries[0].contentRect.height
-        setHeight(observedHeight)
-      })
+    if (!enabled || !containerRef.current) return
+    const resizeObserver = new ResizeObserver((entries) => {
+      setHeight(entries[0].contentRect.height)
+    })
 
-      resizeObserver.observe(containerRef.current)
+    resizeObserver.observe(containerRef.current)
 
-      return () => {
-        resizeObserver.disconnect()
-      }
+    return () => {
+      resizeObserver.disconnect()
     }
   }, [enabled])
 

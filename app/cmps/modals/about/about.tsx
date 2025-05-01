@@ -68,8 +68,7 @@ const items = [
           Much of the shader code is heavily inspired - if not blatantly
           copy-pasted - by various brilliant creators on{' '}
           <Link href='https://shadertoy.com'>Shadertoy</Link>. Many of the
-          employed algorithms on Shadertoy are in turn sourced from other
-          authors.
+          algorithms they use are in turn rehashed from other sources.
         </p>
       </>
     ),
