@@ -1,5 +1,4 @@
 import { GithubIcon } from 'lucide-react'
-import { Drawer as DrawerPrimitive } from 'vaul'
 
 import {
   Accordion,
@@ -11,20 +10,11 @@ import {
 import { useMediaQuery } from '../../../hks/use-media-query'
 import { orientation } from '../../../utls/mq'
 import config from '../../../config'
-import { cn } from '../../../utls/tw'
 import { Button } from '../../ui/button'
-import {
-  Drawer,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerPortal,
-  DrawerTitle,
-} from '../../ui/drawer'
 import { store, useShallowState } from '@/store'
-import { type PropsWithChildren, useState } from 'react'
+import type { PropsWithChildren } from 'react'
 import { ScrollArea } from '../../ui/scroll-area'
+import { AppDrawer } from '../../common/app-drawer'
 
 const Link = ({ children, href }: PropsWithChildren<{ href: string }>) => (
   <a
@@ -79,13 +69,25 @@ const items = [
   {
     title: 'Technical TL;DR',
     content: (
-      <p>
-        This is an experimental gallery that can visualize tens of thousands of
-        images as a voronoi diagram. The voronoi seeds are generated via a
-        custom grid-constrained force graph layout. The simulation layer runs in
-        javascript and supports multithreading while the visualization layer
-        uses webgl2
-      </p>
+      <>
+        <p>
+          This is an experimental gallery that can visualize tens of thousands
+          of images as a voronoi diagram. The voronoi seeds are generated via a
+          custom grid-constrained force graph layout. The simulation layer runs
+          in javascript and supports multithreading while the visualization
+          layer uses webgl2
+        </p>
+        <br />
+        <Button variant='default' asChild>
+          <a
+            href={config.sourceCodeUrl}
+            target='_blank'
+            rel='noreferrer noopener noreferer'
+          >
+            <GithubIcon /> Source code
+          </a>
+        </Button>
+      </>
     ),
   },
   {
@@ -229,74 +231,54 @@ export const About = () => {
     setOpen: state.setAboutOpen,
   }))
 
-  const [isDragging, setIsDragging] = useState(false)
-
   return (
-    <Drawer
-      open={open}
-      direction={landscape ? 'right' : 'bottom'}
-      disablePreventScroll
-      shouldScaleBackground={false}
-      onClose={() => setOpen(false)}
-      onDrag={() => setIsDragging(true)}
-      onRelease={() => setIsDragging(false)}
+    <AppDrawer
+      rootProps={{
+        open: open,
+        onClose: () => setOpen(false),
+        direction: landscape ? 'right' : 'bottom',
+      }}
+      overlay
+      header={
+        <div className='flex h-18 w-full bg-gradient-to-t from-0% from-transparent via-60% via-background to-100% to-background' />
+      }
+      footer={
+        <div className='flex w-full flex-row justify-between gap-3 bg-gradient-to-b from-0% from-transparent via-60% via-background to-100% to-background p-6 pt-24 md:gap-6'>
+          <Button
+            variant='outline'
+            onClick={() => setOpen(false)}
+            className='pointer-events-auto'
+          >
+            Close
+          </Button>
+        </div>
+      }
     >
-      <DrawerPortal>
-        <DrawerOverlay />
-        <DrawerPrimitive.Content
-          className={cn(
-            '!pointer-events-auto fixed not-landscape:inset-x-0 not-landscape:bottom-0 z-50 not-landscape:mt-24 flex not-landscape:h-auto cursor-grab not-landscape:flex-col not-landscape:rounded-t-lg border bg-background lg:w-[800px] lg:max-w-1/2 landscape:inset-y landscape:top-0 landscape:right-0 landscape:h-full landscape:flex-row landscape:rounded-l-lg',
-            {
-              'cursor-grabbing': isDragging,
-            },
-          )}
+      <ScrollArea
+        className='not-landscape:w-full not-landscape:rounded-t-3xl bg-background/60 lg:w-full lg:rounded-3xl landscape:h-full landscape:rounded-l-3xl'
+        innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
+      >
+        <Accordion
+          type='multiple'
+          className='w-full p-6 pr-10 lg:pt-12 lg:pb-24'
+          defaultValue={['0', '1']}
         >
-          <div className='not-landscape:mx-auto not-landscape:mt-4 not-landscape:h-2 not-landscape:w-[100px] rounded-full bg-muted landscape:my-auto landscape:ml-4 landscape:h-[100px] landscape:w-2' />
-          <ScrollArea className='not-landscape:w-full lg:w-full lg:pt-12 landscape:h-full'>
-            <DrawerHeader className='sr-only'>
-              <DrawerTitle>About</DrawerTitle>
-              <DrawerDescription>About</DrawerDescription>
-            </DrawerHeader>
-            <Accordion
-              type='multiple'
-              className='w-full p-6 pr-10'
-              defaultValue={['0', '1']}
+          {items.map(({ title, content }, index) => (
+            <AccordionItem
+              key={index}
+              value={`${index}`}
+              className='w-full cursor-auto'
             >
-              {items.map(({ title, content }, index) => (
-                <AccordionItem
-                  key={index}
-                  value={`${index}`}
-                  className='w-full cursor-auto'
-                >
-                  <AccordionTrigger className='w-full cursor-pointer font-bold text-lg uppercase underline-offset-3 [&>svg]:size-6'>
-                    {title}
-                  </AccordionTrigger>
-                  <AccordionContent className='text-base'>
-                    {content}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-            <div className='flex flex-col gap-3 p-4 pb-0'>
-              <Button
-                variant='ghost'
-                size='icon'
-                asChild
-                className='!size-8 [&_svg]:!size-6 pointer-events-auto rounded-full'
-              >
-                <Link href={config.githubUrl}>
-                  <GithubIcon />
-                </Link>
-              </Button>
-            </div>
-            <DrawerFooter>
-              <Button variant='outline' onClick={() => setOpen(false)}>
-                Close
-              </Button>
-            </DrawerFooter>
-          </ScrollArea>
-        </DrawerPrimitive.Content>
-      </DrawerPortal>
-    </Drawer>
+              <AccordionTrigger className='w-full cursor-pointer font-bold text-lg uppercase underline-offset-3 [&>svg]:size-6'>
+                {title}
+              </AccordionTrigger>
+              <AccordionContent className='text-base'>
+                {content}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </ScrollArea>
+    </AppDrawer>
   )
 }

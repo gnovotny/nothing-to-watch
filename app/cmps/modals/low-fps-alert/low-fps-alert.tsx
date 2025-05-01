@@ -17,7 +17,7 @@ import { VOROFORCE_PRESET } from '../../../vf'
 import { PresetSelector } from '../../common/preset-selector'
 import { reload } from '../../../utls/misc'
 
-export const LowFpsWarning = () => {
+export const LowFpsAlert = () => {
   const landscape = useMediaQuery(orientation('landscape'))
 
   const { performanceMonitor, preset, ticker } = useShallowState((state) => ({

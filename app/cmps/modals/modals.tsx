@@ -1,7 +1,7 @@
 import { Settings } from './settings'
 import { About } from './about'
 import { FilmPreview, FilmViewDrawer } from './film'
-import { LowFpsWarning } from './low-fps-warning'
+import { LowFpsAlert } from './low-fps-alert'
 
 const Modals = () => (
   <>
@@ -9,7 +9,7 @@ const Modals = () => (
     <About />
     <FilmPreview />
     <FilmViewDrawer />
-    <LowFpsWarning />
+    <LowFpsAlert />
   </>
 )
 
