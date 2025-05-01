@@ -3,6 +3,7 @@ import { useShallowState } from '@/store'
 import { PresetSelector } from '../common/preset-selector'
 import { FadeTransition } from '../common/transition'
 import { safeInitVoroforce } from '../../vf'
+import { Settings, TriangleAlert } from 'lucide-react'
 
 export const Intro = () => {
   const { visible, preset } = useShallowState((state) => ({
@@ -36,6 +37,25 @@ export const Intro = () => {
       </div>
       <div className='flex h-1/3 justify-center'>
         <FadeTransition visible={!preset}>
+          <div className='hidden md:block'>
+            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+              <Settings className='h-5 w-5 text-zinc-900 dark:text-white' />
+              What best describes the device you're using?
+            </div>
+            <p className='text-sm text-zinc-600 dark:text-zinc-300'>
+              You can change this later
+            </p>
+          </div>
+          <div className='flex flex-col gap-2 py-4 md:hidden'>
+            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+              <TriangleAlert className='h-5 w-5 text-amber-500 ' />
+              <div>Warning</div>
+            </div>
+            <p className='text-base text-zinc-600 dark:text-zinc-300'>
+              This page is best viewed on a larger device like a desktop or
+              laptop.
+            </p>
+          </div>
           <PresetSelector onSetPreset={() => void safeInitVoroforce()} />
         </FadeTransition>
       </div>

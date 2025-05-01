@@ -7,4 +7,5 @@ export default {
   tmdbUrl: 'https://themoviedb.org',
   tmdbFilmBaseUrl: 'https://www.themoviedb.org/movie/',
   imdbFilmBaseUrl: 'https://imdb.com/title/',
+  relayEmail: '96j0o1ivb@mozmail.com',
 }

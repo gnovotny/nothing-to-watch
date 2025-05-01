@@ -6,9 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../../ui/accordion'
-
-import { useMediaQuery } from '../../../hks/use-media-query'
-import { orientation } from '../../../utls/mq'
 import config from '../../../config'
 import { Button } from '../../ui/button'
 import { store, useShallowState } from '@/store'
@@ -42,6 +39,40 @@ const ToggleVoroforceDevMode = () => {
 }
 
 const items = [
+  {
+    title: 'Copyright Disclaimer',
+    content: (
+      <>
+        <p>
+          <b>This is not a commercial project</b>. The content used is intended
+          for educational and informational purposes only. All rights to the
+          materials used belong to their respective owners. I do not claim
+          ownership over any content used. If you are the rightful owner of any
+          material used and have a concern about its use, please{' '}
+          <Link href={`mailto:${config.relayEmail}`}>contact</Link> me and I
+          will address it promptly.
+        </p>
+        <br />
+        <p>
+          The Dataset is made available under the{' '}
+          <Link href='http://opendatacommons.org/licenses/by/1.0/'>
+            Open Data Commons Attribution License
+          </Link>{' '}
+          and sourced from{' '}
+          <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/data'>
+            Kaggle's TMDB Movies Dataset
+          </Link>
+        </p>
+        <br />
+        <p>
+          Much of the shader code is heavily inspired - if not blatantly
+          copy-pasted - by various brilliant creators on{' '}
+          <Link href='https://shadertoy.com'>Shadertoy</Link>. Many of the
+          employed algorithms are in turn sourced from other unknown authors.
+        </p>
+      </>
+    ),
+  },
   {
     title: 'About',
     content: (
@@ -181,51 +212,9 @@ const items = [
       </>
     ),
   },
-  {
-    title: 'Acknowledgements',
-    content: (
-      <>
-        <p>
-          Much of the shader code is heavily inspired by multiple brilliant
-          creators on <Link href='https://shadertoy.com'>Shadertoy</Link>
-        </p>
-        <br />
-        <p>
-          <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/data'>
-            Kaggle's TMDB Movies Dataset
-          </Link>
-        </p>
-      </>
-    ),
-  },
-  {
-    title: 'Disclaimer',
-    content: (
-      <>
-        <p>
-          Much of the shader code is heavily inspired - if not blatantly
-          copy-pasted - by various brilliant creators on{' '}
-          <Link href='https://shadertoy.com'>Shadertoy</Link>
-        </p>
-        <br />
-        <p>
-          The Dataset is made available under the{' '}
-          <Link href='http://opendatacommons.org/licenses/by/1.0/'>
-            Open Data Commons Attribution License
-          </Link>{' '}
-          and sourced from{' '}
-          <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/data'>
-            Kaggle's TMDB Movies Dataset
-          </Link>
-        </p>
-      </>
-    ),
-  },
 ]
 
 export const About = () => {
-  const landscape = useMediaQuery(orientation('landscape'))
-
   const { open, setOpen } = useShallowState((state) => ({
     open: state.aboutOpen,
     setOpen: state.setAboutOpen,
@@ -236,7 +225,6 @@ export const About = () => {
       rootProps={{
         open: open,
         onClose: () => setOpen(false),
-        direction: landscape ? 'right' : 'bottom',
       }}
       overlay
       header={
@@ -244,11 +232,7 @@ export const About = () => {
       }
       footer={
         <div className='flex w-full flex-row justify-between gap-3 bg-gradient-to-b from-0% from-transparent via-60% via-background to-100% to-background p-6 pt-24 md:gap-6'>
-          <Button
-            variant='outline'
-            onClick={() => setOpen(false)}
-            className='pointer-events-auto'
-          >
+          <Button variant='outline' onClick={() => setOpen(false)}>
             Close
           </Button>
         </div>
@@ -261,7 +245,7 @@ export const About = () => {
         <Accordion
           type='multiple'
           className='w-full p-6 pr-10 lg:pt-12 lg:pb-24'
-          defaultValue={['0', '1']}
+          defaultValue={['1', '2']}
         >
           {items.map(({ title, content }, index) => (
             <AccordionItem

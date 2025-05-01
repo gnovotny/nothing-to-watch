@@ -28,7 +28,8 @@ export const FilmView = ({
   return (
     <div
       className={cn(
-        'relative bg-center bg-cover bg-no-repeat landscape:h-full',
+        'landscape:h-full',
+        // 'bg-center bg-cover bg-no-repeat',
         className,
       )}
       // style={{
@@ -40,7 +41,7 @@ export const FilmView = ({
       {!isIOS && (
         <img
           className={cn(
-            'absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-[opacity,height] duration-300 will-change-[opacity,height]',
+            'absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-[opacity] duration-500 will-change-[opacity]',
             {
               '!w-0 !h-0': backdropErrored,
               '!opacity-50': !backdropHidden,
@@ -66,7 +67,7 @@ export const FilmView = ({
       >
         <div
           className={cn(
-            ' h-52 w-full md:h-auto',
+            'max-h-52 w-full md:max-h-auto',
             // 'bg-background/60',
             {},
           )}
@@ -80,7 +81,7 @@ export const FilmView = ({
           // }}
         >
           <div
-            className='flex h-full w-full flex-row gap-6 p-6 lg:p-9'
+            className='flex h-full w-full flex-row gap-6 p-4 md:p-6 lg:p-9'
             // style={{
             //   backgroundImage:
             //     'linear-gradient(to right, var(--background) calc((25vw - 170px) - 340px), color-mix(in oklab, var(--background) 64%, transparent) 50%, color-mix(in oklab, var(--background) 64%, transparent) 100%)',
@@ -90,7 +91,7 @@ export const FilmView = ({
             <div className='flex w-full flex-col justify-between gap-9'>
               <div className='flex w-full flex-col gap-3'>
                 <div className='relative flex w-full flex-row items-start justify-between gap-3 pr-28'>
-                  <h3 className='font-black text-3xl lg:text-5xl'>
+                  <h3 className='font-black text-2xl leading-none md:text-3xl lg:text-5xl'>
                     {film.title}
                     {film.year && (
                       <span className='font-medium text-foreground/50'>
@@ -122,8 +123,10 @@ export const FilmView = ({
             </div>
           </div>
         </div>
-        <div className='full p-6 pb-24 lg:p-9 lg:pb-24'>
-          <p className='text-base leading-tight lg:text-xl'>{film.overview}</p>
+        <div className='full mb-15 px-4 pb-6 md:px-6 md:pt-6 lg:p-9'>
+          <p className='text-base leading-tight max-md:line-clamp-4 lg:text-xl'>
+            {film.overview}
+          </p>
         </div>
       </div>
     </div>

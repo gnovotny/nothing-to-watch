@@ -1,127 +1,120 @@
-import { Drawer as DrawerPrimitive } from 'vaul'
-
-import { useMediaQuery } from '../../../hks/use-media-query'
-import { orientation } from '../../../utls/mq'
-import { cn } from '../../../utls/tw'
-import { Badge } from '../../ui/badge'
 import { Button } from '../../ui/button'
-import {
-  Drawer,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerPortal,
-  DrawerTitle,
-} from '../../ui/drawer'
-import { Label } from '../../ui/label'
-import { Switch } from '../../ui/switch'
-import { store, useShallowState } from '@/store'
+import { useShallowState } from '@/store'
+import { ScrollArea } from '../../ui/scroll-area'
+import { AppDrawer } from '../../common/app-drawer'
+import { PresetSelector } from '../../common/preset-selector'
+import { Infinity, Settings as SettingsIcon, TriangleAlert } from 'lucide-react'
+import type { VOROFORCE_PRESET } from '../../../vf'
 import { reload } from '../../../utls/misc'
+import { Badge } from '../../ui/badge'
+import { cn } from '../../../utls/tw'
+import { Switch } from '../../ui/switch'
+import { Label } from '../../ui/label'
 
-const NUM_CELL_OPTIONS = [5000, 25000, 50000]
+const NUM_CELL_OPTIONS = [5000, 10000, 25000, 50000, 100000]
 
 export const Settings = () => {
-  const landscape = useMediaQuery(orientation('landscape'))
-
-  const { open, setOpen, userConfig, setVConfig, setPlayedIntro } =
+  const { open, setOpen, preset, userConfig, setVConfig, setPlayedIntro } =
     useShallowState((state) => ({
       open: state.settingsOpen,
       setOpen: state.setSettingsOpen,
+      preset: state.preset,
       userConfig: state.userConfig,
       setVConfig: state.setUserConfig,
       setPlayedIntro: state.setPlayedIntro,
     }))
 
-  const forceHigherQuality = store(
-    (state) => state.userConfig.forceHigherQuality,
-  )
-
-  const noPostEffects = store((state) => state.userConfig.noPostEffects)
-
   return (
-    <Drawer
-      open={open}
-      direction={landscape ? 'right' : 'bottom'}
-      disablePreventScroll
-      shouldScaleBackground={false}
-      onClose={() => setOpen(false)}
+    <AppDrawer
+      rootProps={{
+        open: open,
+        onClose: () => setOpen(false),
+      }}
+      overlay
+      footer={
+        <div className='flex w-full flex-row justify-between gap-3 p-6 md:gap-6'>
+          <Button variant='outline' onClick={() => setOpen(false)}>
+            Close
+          </Button>
+        </div>
+      }
     >
-      <DrawerPortal>
-        <DrawerOverlay />
-        <DrawerPrimitive.Content
-          className={cn(
-            '!pointer-events-auto fixed not-landscape:inset-x-0 not-landscape:bottom-0 z-50 not-landscape:mt-24 flex not-landscape:h-auto not-landscape:flex-col not-landscape:rounded-t-lg border bg-background landscape:inset-y landscape:top-0 landscape:right-0 landscape:h-full landscape:flex-row landscape:rounded-l-lg',
-          )}
-        >
-          <div className='not-landscape:mx-auto not-landscape:mt-4 not-landscape:h-2 not-landscape:w-[100px] rounded-full bg-muted landscape:my-auto landscape:ml-4 landscape:h-[100px] landscape:w-2' />
-          <div className='not-landscape:w-full landscape:h-full'>
-            <DrawerHeader>
-              <DrawerTitle>Settings</DrawerTitle>
-              {/*<DrawerDescription>Settings</DrawerDescription>*/}
-            </DrawerHeader>
-            <div className='flex flex-col gap-3 p-4 pb-0'>
-              <div className='flex flex-col gap-1'>
-                <div>Movie limit</div>
-                <div className='flex flex-row gap-1'>
-                  {NUM_CELL_OPTIONS.map((option) => (
-                    <Badge
-                      key={option}
-                      onClick={() => {
-                        userConfig.cells = option
-                        setVConfig(userConfig)
-                        reload()
-                      }}
-                      className={cn({
-                        'bg-primary/80': userConfig.cells !== option,
-                      })}
-                    >
-                      {option}
-                    </Badge>
-                  ))}
-                </div>
+      <ScrollArea
+        className='not-landscape:w-full not-landscape:rounded-t-3xl bg-background/60 lg:w-full lg:rounded-3xl landscape:h-full landscape:rounded-l-3xl'
+        innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
+      >
+        <div className='flex w-full flex-col gap-6 p-6 pr-10 lg:pt-12 lg:pb-24'>
+          <div>
+            <div className='hidden md:block'>
+              <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+                <SettingsIcon className='h-5 w-5 text-zinc-900 dark:text-white' />
+                Quality Settings
               </div>
-              <div className='flex flex-col gap-1'>
-                <div className='flex flex-row gap-1'>
-                  <Switch
-                    id='higher-quality'
-                    checked={Boolean(forceHigherQuality)}
-                    onCheckedChange={(checked) => {
-                      userConfig.forceHigherQuality = checked
-                      setVConfig(userConfig)
-                    }}
-                  />
-                  <Label htmlFor='higher-quality'>Force higher quality</Label>
-                </div>
-                <div className='flex flex-row gap-1'>
-                  <Switch
-                    id='no-post-effects'
-                    checked={Boolean(noPostEffects)}
-                    onCheckedChange={(checked) => {
-                      userConfig.noPostEffects = checked
-                      setVConfig(userConfig)
-                      reload()
-                    }}
-                  />
-                  <Label htmlFor='no-post-effects'>No post effects</Label>
-                </div>
-              </div>
-              <Button
-                onClick={() => {
-                  setPlayedIntro(false)
-                  reload()
-                }}
-              >
-                Replay Intro
-              </Button>
             </div>
-            <DrawerFooter>
-              <Button variant='outline' onClick={() => setOpen(false)}>
-                Close
-              </Button>
-            </DrawerFooter>
+            <div className='flex flex-col gap-2 py-4 md:hidden'>
+              <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+                <TriangleAlert className='h-5 w-5 text-amber-500 ' />
+                <div>Warning</div>
+              </div>
+              <p className='text-base text-zinc-600 dark:text-zinc-300'>
+                This page is best viewed on a larger device like a desktop or
+                laptop.
+              </p>
+            </div>
+            <PresetSelector
+              onSetPreset={(newPreset: VOROFORCE_PRESET) => {
+                if (newPreset !== preset) reload()
+              }}
+              submitLabel='Apply'
+            />
           </div>
-        </DrawerPrimitive.Content>
-      </DrawerPortal>
-    </Drawer>
+          <div className='flex flex-col gap-1'>
+            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+              <Infinity className='h-5 w-5 text-zinc-900 dark:text-white' />
+              Cell limit override
+            </div>
+            <div className='flex flex-row gap-1'>
+              {NUM_CELL_OPTIONS.map((option) => (
+                <Badge
+                  key={option}
+                  onClick={() => {
+                    userConfig.cells = option
+                    setVConfig(userConfig)
+                    reload()
+                  }}
+                  className={cn('cursor-pointer hover:bg-primary', {
+                    'bg-primary/80': userConfig.cells !== option,
+                  })}
+                >
+                  {option}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <Button
+            size='lg'
+            className='text-lg'
+            onClick={() => {
+              setPlayedIntro(false)
+              reload()
+            }}
+          >
+            Replay Intro
+          </Button>
+          <div className='flex flex-row items-center gap-2'>
+            <Switch
+              id='dev-mode'
+              // checked={Boolean(noPostEffects)}
+              onCheckedChange={(checked) => {
+                userConfig.noPostEffects = checked
+                setVConfig(userConfig)
+                reload()
+              }}
+            />
+            <Label htmlFor='dev-mode'>Dev Mode</Label>
+          </div>
+        </div>
+      </ScrollArea>
+    </AppDrawer>
   )
 }

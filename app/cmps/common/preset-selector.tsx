@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, Settings, TriangleAlert } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { Check } from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
@@ -32,98 +32,85 @@ const PRESETS = [
 export function PresetSelector({
   className = '',
   onSetPreset,
-}: { className?: string; onSetPreset?: (preset: VOROFORCE_PRESET) => void }) {
-  const { recommendedPreset, setStorePreset } = useShallowState((state) => ({
-    setStorePreset: state.setPreset,
-    recommendedPreset: state.recommendedPreset,
-  }))
+  submitLabel = 'Continue',
+}: {
+  className?: string
+  onSetPreset?: (preset: VOROFORCE_PRESET) => void
+  submitLabel?: string | ReactNode
+}) {
+  const { recommendedPreset, setStorePreset, storePreset } = useShallowState(
+    (state) => ({
+      setStorePreset: state.setPreset,
+      recommendedPreset: state.recommendedPreset,
+      storePreset: state.preset,
+    }),
+  )
 
   const isSmallScreen = useMediaQuery(down('md'))
 
   const [selectedPreset, setSelectedPreset] = useState<
     VOROFORCE_PRESET | undefined
   >(
-    isSmallScreen || PRESETS.find((p) => p.id === recommendedPreset)
-      ? recommendedPreset
-      : undefined,
+    storePreset ??
+      (isSmallScreen || PRESETS.find((p) => p.id === recommendedPreset)
+        ? recommendedPreset
+        : undefined),
   )
 
   return (
     <div className={className}>
-      <div className='hidden md:block'>
-        <div>
-          <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-            <Settings className='h-5 w-5 text-zinc-900 dark:text-white' />
-            What best describes the device you're using?
-          </div>
-          <p className='text-sm text-zinc-600 dark:text-zinc-300'>
-            You can change this later
-          </p>
-        </div>
-
-        <RadioGroup
-          defaultValue={selectedPreset}
-          onValueChange={(p: VOROFORCE_PRESET) => setSelectedPreset(p)}
-          className='flex flex-col gap-4 py-4 md:flex-row'
-        >
-          {PRESETS.map((preset) => (
-            <label
-              htmlFor={preset.id}
-              key={preset.id}
-              className={`relative flex flex-1 cursor-pointer flex-col rounded-xl border-2 p-4 transition-all ${
-                selectedPreset === preset.id
-                  ? 'border-zinc-900 bg-zinc-50 dark:border-white dark:bg-zinc-800/50'
-                  : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700'
-              }`}
-            >
-              {preset.id === recommendedPreset && (
-                <Badge className='-translate-y-1/2 -translate-x-1/2 !text-background absolute top-0 left-1/2 text-xxs hover:bg-primary'>
-                  Recommended
-                </Badge>
-              )}
-              <RadioGroupItem
-                id={preset.id}
-                value={preset.id}
-                className='sr-only'
-              />
-              <div className='flex items-start justify-between'>
-                <div>
-                  <h3 className='font-semibold text-lg text-zinc-900 dark:text-white'>
-                    {preset.name}
-                  </h3>
-                </div>
+      <RadioGroup
+        defaultValue={selectedPreset}
+        onValueChange={(p: VOROFORCE_PRESET) => setSelectedPreset(p)}
+        className='hidden flex-col gap-4 py-4 md:flex md:flex-row'
+      >
+        {PRESETS.map((preset) => (
+          <label
+            htmlFor={preset.id}
+            key={preset.id}
+            className={`relative flex flex-1 cursor-pointer flex-col rounded-xl border-2 p-4 transition-all ${
+              selectedPreset === preset.id
+                ? 'border-zinc-900 bg-zinc-50 dark:border-white dark:bg-zinc-800/50'
+                : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700'
+            }`}
+          >
+            {preset.id === recommendedPreset && (
+              <Badge className='-translate-y-1/2 -translate-x-1/2 !text-background absolute top-0 left-1/2 text-xxs hover:bg-primary'>
+                Recommended
+              </Badge>
+            )}
+            <RadioGroupItem
+              id={preset.id}
+              value={preset.id}
+              className='sr-only'
+            />
+            <div className='flex items-start justify-between'>
+              <div>
+                <h3 className='font-semibold text-lg text-zinc-900 dark:text-white'>
+                  {preset.name}
+                </h3>
               </div>
-              <ul className='mt-4 list-disc space-y-0 pl-3'>
-                {preset.features.map((feature, index) => (
-                  <li
-                    key={index}
-                    className='whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-300'
-                  >
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              {selectedPreset === preset.id && (
-                <div className='-top-2 -right-2 absolute'>
-                  <span className='flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 dark:bg-white'>
-                    <Check className='h-3 w-3 text-white dark:text-zinc-900' />
-                  </span>
-                </div>
-              )}
-            </label>
-          ))}
-        </RadioGroup>
-      </div>
-
-      <div className='flex flex-col gap-2 py-4 md:hidden'>
-        <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-          <TriangleAlert className='h-5 w-5 text-amber-500 ' />
-          <div>Warning</div>
-        </div>
-        <p className='text-base text-zinc-600 dark:text-zinc-300'>
-          This page is best viewed on a larger device like a desktop or laptop.
-        </p>
-      </div>
+            </div>
+            <ul className='mt-4 list-disc space-y-0 pl-3'>
+              {preset.features.map((feature, index) => (
+                <li
+                  key={index}
+                  className='whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-300'
+                >
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            {selectedPreset === preset.id && (
+              <div className='-top-2 -right-2 absolute'>
+                <span className='flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 dark:bg-white'>
+                  <Check className='h-3 w-3 text-white dark:text-zinc-900' />
+                </span>
+              </div>
+            )}
+          </label>
+        ))}
+      </RadioGroup>
 
       <div className='flex flex-col gap-2'>
         <Button
@@ -138,7 +125,7 @@ export function PresetSelector({
           size='lg'
           disabled={!isSmallScreen && !selectedPreset}
         >
-          Continue
+          {submitLabel}
         </Button>
       </div>
     </div>

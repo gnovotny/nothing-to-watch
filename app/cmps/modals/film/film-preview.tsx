@@ -184,7 +184,7 @@ export const FilmPreview = () => {
             measureRef(element)
           }}
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-3 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
+            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-4 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
             {
               'right-0 left-auto': reverseX,
               '!opacity-100': active,

@@ -22,7 +22,7 @@ const AppDrawerHandle = ({
 }) => (
   <div
     className={cn(
-      'not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 landscape:-translate-x-1/2 absolute not-landscape:top-0 not-landscape:left-1/2 not-landscape:h-2.5 not-landscape:w-[100px] not-landscape:translate-y-1/2 cursor-grab rounded-full bg-background landscape:top-1/2 landscape:left-0 landscape:h-[100px] landscape:w-2.5',
+      'not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 landscape:-translate-x-1/2 absolute not-landscape:top-0 not-landscape:left-1/2 not-landscape:h-2.5 not-landscape:w-[100px] not-landscape:translate-y-1/2 cursor-grab rounded-full bg-background/80 landscape:top-1/2 landscape:left-0 landscape:h-[100px] landscape:w-2.5',
       {
         'not-landscape:-translate-x-1/2 landscape:right-0 landscape:left-auto landscape:translate-x-1/2':
           direction === 'left',
@@ -62,7 +62,7 @@ const AppDrawerContentInner = ({
 }: PropsWithChildren<{ className?: string }>) => (
   <div
     className={cn(
-      'pointer-events-auto relative not-landscape:w-full cursor-grab overflow-hidden not-landscape:rounded-b-xl bg-background md:rounded-xl landscape:h-full landscape:rounded-xl landscape:lg:h-full landscape:lg:max-h-[calc(100vh-var(--spacing)*6*2)]',
+      'pointer-events-auto relative not-landscape:w-full cursor-grab overflow-hidden not-landscape:rounded-b-3xl bg-background/70 transition-colors duration-500 md:rounded-xl not-landscape:md:rounded-b-xl landscape:h-full landscape:rounded-xl landscape:lg:h-full landscape:lg:max-h-[calc(100vh-var(--spacing)*6*2)]',
       className,
     )}
   >
@@ -99,6 +99,7 @@ const AppDrawerFooter = ({
 export const AppDrawer = ({
   rootProps,
   contentProps,
+  innerContentProps,
   headerProps,
   footerProps,
   handleProps,
@@ -109,6 +110,7 @@ export const AppDrawer = ({
 }: {
   rootProps?: React.ComponentProps<typeof DrawerPrimitive.Root>
   contentProps?: React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
+  innerContentProps?: React.HTMLAttributes<HTMLDivElement>
   headerProps?: React.HTMLAttributes<HTMLDivElement>
   footerProps?: React.HTMLAttributes<HTMLDivElement>
   handleProps?: React.HTMLAttributes<HTMLDivElement>
@@ -144,7 +146,8 @@ export const AppDrawer = ({
             <DrawerDescription />
           </DrawerHeader>
           <AppDrawerContentInner
-            className={cn({
+            {...innerContentProps}
+            className={cn(innerContentProps?.className, {
               'cursor-grabbing': isDragging,
             })}
           >

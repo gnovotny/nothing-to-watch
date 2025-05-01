@@ -30,7 +30,7 @@ export const FilmViewFooter = ({
   return (
     <div
       className={cn(
-        'flex w-full flex-row justify-between gap-3 p-6 md:gap-6 lg:p-9',
+        'flex w-full flex-row justify-between gap-3 px-4 py-6 md:gap-6 md:p-6 lg:p-9',
         className,
         {},
       )}

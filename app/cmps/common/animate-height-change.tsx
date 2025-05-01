@@ -4,12 +4,14 @@ import type { CSSProperties } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '../../utls/tw'
 
-interface AnimateHeightChangeProps {
+type AnimateHeightChangeProps = React.HTMLAttributes<HTMLDivElement> & {
   children: React.ReactNode
   className?: string
   innerClassName?: string
   enabled?: boolean
   style?: CSSProperties
+  duration?: number
+  delay?: number
 }
 
 export const AnimateHeightChange: React.FC<AnimateHeightChangeProps> = ({
@@ -18,6 +20,9 @@ export const AnimateHeightChange: React.FC<AnimateHeightChangeProps> = ({
   innerClassName,
   enabled = true,
   style,
+  duration = 300,
+  delay = 0,
+  ...props
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [height, setHeight] = useState<number | 'auto'>('auto')
@@ -40,11 +45,14 @@ export const AnimateHeightChange: React.FC<AnimateHeightChangeProps> = ({
 
   return (
     <div
+      {...props}
       className={cn(
-        'overflow-hidden transition-[height] duration-300 ease-out will-change-[height]',
+        'relative overflow-hidden transition-[height] duration-300 ease-out will-change-[height]',
         className,
       )}
       style={{
+        transitionDuration: `${duration}ms`,
+        transitionDelay: `${delay}ms`,
         ...style,
         height,
       }}
