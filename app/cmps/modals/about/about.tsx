@@ -141,12 +141,12 @@ const items = [
         </p>
         <br />
         <p>
-          It should be noted that this is not a typical voronoi diagram. The
-          cells are constrained to a grid, making them extremely uniform. The
-          focused "center" cell has a slightly higher weight to reduce the
-          enlargement of neighboring cells. In order to account for the additive
-          weighting while also maintaining cell aspect ratio, the distance
-          metric has a 1.5x bias on the y-component.
+          It should be noted that this is not a standard voronoi diagram. The
+          cell seeds are constrained to a grid, making them the resulting cells
+          extremely uniform. The focused center cell has a slightly higher
+          weight to reduce the enlargement of neighboring cells. In order to
+          account for the additive weighting while also maintaining cell aspect
+          ratio, the distance metric has a 1.5x bias on the y-component.
         </p>
         <br />
         <p className='hidden md:inline-block'>
