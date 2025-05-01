@@ -234,7 +234,14 @@ export const FilmPreview = () => {
                     &nbsp;({film.year})
                   </span>
                 </h3>
-                <div className='flex flex-row flex-wrap gap-3 lg:flex-nowrap lg:pt-2'>
+                <div
+                  className={cn(
+                    'flex flex-row flex-wrap gap-3 lg:flex-nowrap lg:pt-2',
+                    {
+                      'justify-end': reverseX,
+                    },
+                  )}
+                >
                   {film.genres?.map((genre) => (
                     <Badge
                       key={genre}

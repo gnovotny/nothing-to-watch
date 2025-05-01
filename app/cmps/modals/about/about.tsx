@@ -11,7 +11,7 @@ import { Button } from '../../ui/button'
 import { store, useShallowState } from '@/store'
 import type { PropsWithChildren } from 'react'
 import { ScrollArea } from '../../ui/scroll-area'
-import { AppDrawer } from '../../common/app-drawer'
+import { Modal } from '../../common/modal'
 
 const Link = ({ children, href }: PropsWithChildren<{ href: string }>) => (
   <a
@@ -68,7 +68,8 @@ const items = [
           Much of the shader code is heavily inspired - if not blatantly
           copy-pasted - by various brilliant creators on{' '}
           <Link href='https://shadertoy.com'>Shadertoy</Link>. Many of the
-          employed algorithms are in turn sourced from other unknown authors.
+          employed algorithms on Shadertoy are in turn sourced from other
+          authors.
         </p>
       </>
     ),
@@ -221,14 +222,14 @@ export const About = () => {
   }))
 
   return (
-    <AppDrawer
+    <Modal
       rootProps={{
         open: open,
         onClose: () => setOpen(false),
       }}
       overlay
       header={
-        <div className='flex h-18 w-full bg-gradient-to-t from-0% from-transparent via-60% via-background to-100% to-background' />
+        <div className='flex h-18 w-full bg-gradient-to-t from-0% from-transparent via-60% via-background to-100% to-background max-md:hidden' />
       }
       footer={
         <div className='flex w-full flex-row justify-between gap-3 bg-gradient-to-b from-0% from-transparent via-60% via-background to-100% to-background p-6 pt-24 md:gap-6'>
@@ -244,7 +245,7 @@ export const About = () => {
       >
         <Accordion
           type='multiple'
-          className='w-full p-6 pr-10 lg:pt-12 lg:pb-24'
+          className='w-full p-6 pb-18 md:pr-10 lg:pt-12 lg:pb-24'
           defaultValue={['1', '2']}
         >
           {items.map(({ title, content }, index) => (
@@ -253,7 +254,7 @@ export const About = () => {
               value={`${index}`}
               className='w-full cursor-auto'
             >
-              <AccordionTrigger className='w-full cursor-pointer font-bold text-lg uppercase underline-offset-3 [&>svg]:size-6'>
+              <AccordionTrigger className='w-full cursor-pointer font-bold text-lg uppercase leading-none underline-offset-3 [&>svg]:size-6'>
                 {title}
               </AccordionTrigger>
               <AccordionContent className='text-base'>
@@ -263,6 +264,6 @@ export const About = () => {
           ))}
         </Accordion>
       </ScrollArea>
-    </AppDrawer>
+    </Modal>
   )
 }

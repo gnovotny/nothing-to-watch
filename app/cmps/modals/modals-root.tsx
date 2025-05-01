@@ -5,17 +5,19 @@ import { lazy } from 'react'
 const Modals = lazy(() => import('./modals'))
 
 function ModalsRoot() {
-  const isIntro = useShallowState(({ mode }) => mode === 'intro')
+  const canLoad = useShallowState(
+    ({ mode, preset }) => mode !== 'intro' && Boolean(preset),
+  )
 
   return (
     <FadeTransition
-      visible={!isIntro}
+      visible={canLoad}
       className='relative h-dvh w-full overflow-hidden'
       transitionOptions={{
         timeout: 2000,
       }}
     >
-      {!isIntro && <Modals />}
+      {canLoad && <Modals />}
     </FadeTransition>
   )
 }

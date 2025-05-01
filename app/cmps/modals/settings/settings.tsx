@@ -1,15 +1,20 @@
 import { Button } from '../../ui/button'
-import { useShallowState } from '@/store'
+import { THEME, useShallowState } from '@/store'
 import { ScrollArea } from '../../ui/scroll-area'
-import { AppDrawer } from '../../common/app-drawer'
+import { Modal } from '../../common/modal'
 import { PresetSelector } from '../../common/preset-selector'
-import { Infinity, Settings as SettingsIcon, TriangleAlert } from 'lucide-react'
+import {
+  InfinityIcon,
+  Settings as SettingsIcon,
+  TriangleAlert,
+} from 'lucide-react'
 import type { VOROFORCE_PRESET } from '../../../vf'
 import { reload } from '../../../utls/misc'
 import { Badge } from '../../ui/badge'
 import { cn } from '../../../utls/tw'
 import { Switch } from '../../ui/switch'
 import { Label } from '../../ui/label'
+import { useTheme } from '../../layout'
 
 const NUM_CELL_OPTIONS = [5000, 10000, 25000, 50000, 100000]
 
@@ -24,17 +29,28 @@ export const Settings = () => {
       setPlayedIntro: state.setPlayedIntro,
     }))
 
+  const { theme, setTheme } = useTheme()
+
   return (
-    <AppDrawer
+    <Modal
       rootProps={{
         open: open,
         onClose: () => setOpen(false),
       }}
       overlay
       footer={
-        <div className='flex w-full flex-row justify-between gap-3 p-6 md:gap-6'>
+        <div className='flex w-full flex-row justify-between gap-3 bg-background p-4 md:gap-6 md:p-6'>
           <Button variant='outline' onClick={() => setOpen(false)}>
             Close
+          </Button>
+          <Button
+            variant='outline'
+            onClick={() => {
+              setPlayedIntro(false)
+              reload()
+            }}
+          >
+            Replay Intro
           </Button>
         </div>
       }
@@ -43,7 +59,7 @@ export const Settings = () => {
         className='not-landscape:w-full not-landscape:rounded-t-3xl bg-background/60 lg:w-full lg:rounded-3xl landscape:h-full landscape:rounded-l-3xl'
         innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
       >
-        <div className='flex w-full flex-col gap-6 p-6 pr-10 lg:pt-12 lg:pb-24'>
+        <div className='flex w-full flex-col gap-4 p-4 pb-18 md:gap-6 md:p-6 md:pr-10 md:pb-24 lg:pt-12 lg:pb-24'>
           <div>
             <div className='hidden md:block'>
               <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
@@ -51,12 +67,12 @@ export const Settings = () => {
                 Quality Settings
               </div>
             </div>
-            <div className='flex flex-col gap-2 py-4 md:hidden'>
+            <div className='flex flex-col gap-2 md:hidden'>
               <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
                 <TriangleAlert className='h-5 w-5 text-amber-500 ' />
                 <div>Warning</div>
               </div>
-              <p className='text-base text-zinc-600 dark:text-zinc-300'>
+              <p className='text-base text-zinc-600 leading-none dark:text-zinc-300'>
                 This page is best viewed on a larger device like a desktop or
                 laptop.
               </p>
@@ -66,11 +82,12 @@ export const Settings = () => {
                 if (newPreset !== preset) reload()
               }}
               submitLabel='Apply'
+              className='max-md:hidden'
             />
           </div>
           <div className='flex flex-col gap-1'>
-            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-              <Infinity className='h-5 w-5 text-zinc-900 dark:text-white' />
+            <div className='flex items-center gap-2 font-semibold text-base text-zinc-900 md:text-xl dark:text-white'>
+              <InfinityIcon className='h-5 w-5 text-zinc-900 dark:text-white' />
               Cell limit override
             </div>
             <div className='flex flex-row gap-1'>
@@ -84,6 +101,7 @@ export const Settings = () => {
                   }}
                   className={cn('cursor-pointer hover:bg-primary', {
                     'bg-primary/80': userConfig.cells !== option,
+                    'max-md:hidden': option > 25000,
                   })}
                 >
                   {option}
@@ -91,16 +109,16 @@ export const Settings = () => {
               ))}
             </div>
           </div>
-          <Button
-            size='lg'
-            className='text-lg'
-            onClick={() => {
-              setPlayedIntro(false)
-              reload()
-            }}
-          >
-            Replay Intro
-          </Button>
+          <div className='flex flex-row items-center gap-2 lg:hidden'>
+            <Switch
+              id='light-mode'
+              checked={theme === THEME.light}
+              onCheckedChange={(checked) => {
+                setTheme(checked ? THEME.light : THEME.dark)
+              }}
+            />
+            <Label htmlFor='light-mode'>Light Mode</Label>
+          </div>
           <div className='flex flex-row items-center gap-2'>
             <Switch
               id='dev-mode'
@@ -115,6 +133,6 @@ export const Settings = () => {
           </div>
         </div>
       </ScrollArea>
-    </AppDrawer>
+    </Modal>
   )
 }

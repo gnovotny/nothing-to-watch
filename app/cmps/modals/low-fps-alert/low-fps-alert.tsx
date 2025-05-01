@@ -6,7 +6,7 @@ import { useShallowState } from '../../../store'
 import { VOROFORCE_PRESET } from '../../../vf'
 import { PresetSelector } from '../../common/preset-selector'
 import { reload } from '../../../utls/misc'
-import { AppDrawer } from '../../common/app-drawer'
+import { Modal } from '../../common/modal'
 import { TriangleAlert } from 'lucide-react'
 import { cn } from '../../../utls/tw'
 
@@ -71,7 +71,7 @@ export const LowFpsAlert = () => {
   }, [isSelectMode, isLgScreen])
 
   return (
-    <AppDrawer
+    <Modal
       rootProps={{
         direction: landscape ? 'left' : 'bottom',
         open: isOpen,
@@ -121,6 +121,6 @@ export const LowFpsAlert = () => {
           }}
         />
       </div>
-    </AppDrawer>
+    </Modal>
   )
 }

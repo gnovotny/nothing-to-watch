@@ -1,4 +1,9 @@
-import React, { type PropsWithChildren, type ReactNode, useState } from 'react'
+import React, {
+  Fragment,
+  type PropsWithChildren,
+  type ReactNode,
+  useState,
+} from 'react'
 import { type DialogProps, Drawer as DrawerPrimitive } from 'vaul'
 
 import { useMediaQuery } from '../../hks/use-media-query'
@@ -11,9 +16,10 @@ import {
   DrawerOverlay,
   DrawerPortal,
   DrawerTitle,
+  DrawerTrigger,
 } from '../ui/drawer'
 
-const AppDrawerHandle = ({
+const ModalHandle = ({
   className = '',
   direction,
   ...props
@@ -22,7 +28,7 @@ const AppDrawerHandle = ({
 }) => (
   <div
     className={cn(
-      'not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 landscape:-translate-x-1/2 absolute not-landscape:top-0 not-landscape:left-1/2 not-landscape:h-2.5 not-landscape:w-[100px] not-landscape:translate-y-1/2 cursor-grab rounded-full bg-background/80 landscape:top-1/2 landscape:left-0 landscape:h-[100px] landscape:w-2.5',
+      'not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 landscape:-translate-x-1/2 absolute not-landscape:top-0 not-landscape:left-1/2 not-landscape:h-2.5 not-landscape:w-[100px] not-landscape:translate-y-1/2 cursor-grab rounded-full bg-background/80 max-lg:border landscape:top-1/2 landscape:left-0 landscape:h-[100px] landscape:w-2.5',
       {
         'not-landscape:-translate-x-1/2 landscape:right-0 landscape:left-auto landscape:translate-x-1/2':
           direction === 'left',
@@ -34,7 +40,7 @@ const AppDrawerHandle = ({
   />
 )
 
-const AppDrawerContent = React.forwardRef<
+const ModalContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
     direction?: DialogProps['direction']
@@ -43,7 +49,7 @@ const AppDrawerContent = React.forwardRef<
   <DrawerPrimitive.Content
     ref={ref}
     className={cn(
-      'not-landscape:-inset-x-px pointer-events-none fixed not-landscape:bottom-0 z-30 not-landscape:h-auto focus-visible:outline-none not-landscape:md:inset-x-0 md:px-3 md:py-3 lg:px-6 lg:py-6 landscape:top-0 landscape:right-0 landscape:h-full landscape:max-h-[36rem] landscape:max-w-[40%] landscape:lg:h-auto landscape:lg:max-h-full landscape:lg:w-[40%]',
+      'not-landscape:-inset-x-px pointer-events-none fixed not-landscape:bottom-0 z-30 not-landscape:h-auto focus-visible:outline-none not-landscape:md:inset-x-0 md:px-3 md:py-3 lg:px-6 lg:py-6 landscape:top-0 landscape:right-0 landscape:h-full landscape:max-h-[36rem] landscape:min-w-130 landscape:max-w-210 landscape:lg:h-auto landscape:lg:max-h-full landscape:lg:w-2/5',
       {
         'landscape:right-auto landscape:left-0': direction === 'left',
         'not-landscape:top-0 not-landscape:bottom-auto': direction === 'top',
@@ -56,13 +62,21 @@ const AppDrawerContent = React.forwardRef<
   </DrawerPrimitive.Content>
 ))
 
-const AppDrawerContentInner = ({
+const ModalContentInner = ({
   className = '',
+  direction,
   children,
-}: PropsWithChildren<{ className?: string }>) => (
+}: PropsWithChildren<{
+  className?: string
+  direction?: DialogProps['direction']
+}>) => (
   <div
     className={cn(
-      'pointer-events-auto relative not-landscape:w-full cursor-grab overflow-hidden not-landscape:rounded-b-3xl bg-background/70 transition-colors duration-500 md:rounded-xl not-landscape:md:rounded-b-xl landscape:h-full landscape:rounded-xl landscape:lg:h-full landscape:lg:max-h-[calc(100vh-var(--spacing)*6*2)]',
+      'pointer-events-auto relative not-landscape:w-full cursor-grab overflow-hidden not-landscape:rounded-b-3xl bg-background/70 transition-colors duration-500 max-lg:border md:rounded-xl not-landscape:md:rounded-b-xl landscape:h-full landscape:rounded-xl landscape:lg:h-full landscape:lg:max-h-[calc(100vh-var(--spacing)*6*2)]',
+      {
+        'not-landscape:rounded-t-3xl not-landscape:rounded-b-none':
+          direction === 'bottom',
+      },
       className,
     )}
   >
@@ -70,7 +84,7 @@ const AppDrawerContentInner = ({
   </div>
 )
 
-const AppDrawerHeader = ({
+const ModalHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -83,7 +97,7 @@ const AppDrawerHeader = ({
   />
 )
 
-const AppDrawerFooter = ({
+const ModalFooter = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -96,7 +110,7 @@ const AppDrawerFooter = ({
   />
 )
 
-export const AppDrawer = ({
+export const Modal = ({
   rootProps,
   contentProps,
   innerContentProps,
@@ -104,9 +118,13 @@ export const AppDrawer = ({
   footerProps,
   handleProps,
   children,
+  trigger,
   header,
   footer,
+  additional,
   overlay,
+  portal = true,
+  handle = true,
 }: {
   rootProps?: React.ComponentProps<typeof DrawerPrimitive.Root>
   contentProps?: React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
@@ -115,15 +133,21 @@ export const AppDrawer = ({
   footerProps?: React.HTMLAttributes<HTMLDivElement>
   handleProps?: React.HTMLAttributes<HTMLDivElement>
   children: ReactNode | undefined
+  trigger?: ReactNode | undefined
   header?: ReactNode | undefined
   footer?: ReactNode | undefined
+  additional?: ReactNode | undefined
   overlay?: boolean
+  portal?: boolean
+  handle?: boolean
 }) => {
   const landscape = useMediaQuery(orientation('landscape'))
 
   const [isDragging, setIsDragging] = useState(false)
 
   const direction = rootProps?.direction ?? (landscape ? 'right' : 'bottom')
+
+  const OptionalDrawerPortal = portal ? DrawerPortal : Fragment
 
   return (
     <Drawer
@@ -134,9 +158,10 @@ export const AppDrawer = ({
       onRelease={() => setIsDragging(false)}
       {...rootProps}
     >
-      <DrawerPortal>
-        {overlay && <DrawerOverlay />}
-        <AppDrawerContent
+      {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
+      <DrawerPortal>{overlay && <DrawerOverlay />}</DrawerPortal>
+      <OptionalDrawerPortal>
+        <ModalContent
           direction={direction}
           {...contentProps}
           className={cn(contentProps?.className, {})}
@@ -145,29 +170,29 @@ export const AppDrawer = ({
             <DrawerTitle />
             <DrawerDescription />
           </DrawerHeader>
-          <AppDrawerContentInner
+          <ModalContentInner
+            direction={direction}
             {...innerContentProps}
             className={cn(innerContentProps?.className, {
               'cursor-grabbing': isDragging,
             })}
           >
-            {header && (
-              <AppDrawerHeader {...headerProps}>{header}</AppDrawerHeader>
-            )}
+            {header && <ModalHeader {...headerProps}>{header}</ModalHeader>}
             {children}
-            {footer && (
-              <AppDrawerFooter {...footerProps}>{footer}</AppDrawerFooter>
-            )}
-          </AppDrawerContentInner>
-          <AppDrawerHandle
-            direction={direction}
-            {...handleProps}
-            className={cn(handleProps?.className, {
-              'cursor-grabbing': isDragging,
-            })}
-          />
-        </AppDrawerContent>
-      </DrawerPortal>
+            {footer && <ModalFooter {...footerProps}>{footer}</ModalFooter>}
+          </ModalContentInner>
+          {handle && (
+            <ModalHandle
+              direction={direction}
+              {...handleProps}
+              className={cn(handleProps?.className, {
+                'cursor-grabbing': isDragging,
+              })}
+            />
+          )}
+          {additional}
+        </ModalContent>
+      </OptionalDrawerPortal>
     </Drawer>
   )
 }

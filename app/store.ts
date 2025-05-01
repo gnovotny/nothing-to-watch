@@ -47,6 +47,9 @@ export type StoreState = {
   aboutOpen: boolean
   setAboutOpen: (aboutOpen: boolean) => void
   toggleAboutOpen: () => void
+  newLinkTypeOpen: boolean
+  setNewLinkTypeOpen: (open: boolean) => void
+  toggleNewLinkTypeOpen: () => void
   playedIntro: boolean
   setPlayedIntro: (playedIntro: boolean) => void
   preset?: VOROFORCE_PRESET
@@ -135,9 +138,19 @@ export const store = create(
           })
         },
         toggleAboutOpen: () => {
-          // console.log('aboutOpen', get())
           set({
             aboutOpen: !get().aboutOpen,
+          })
+        },
+        newLinkTypeOpen: false,
+        setNewLinkTypeOpen: (newLinkTypeOpen: boolean) => {
+          set({
+            newLinkTypeOpen,
+          })
+        },
+        toggleNewLinkTypeOpen: () => {
+          set({
+            newLinkTypeOpen: !get().newLinkTypeOpen,
           })
         },
         playedIntro,

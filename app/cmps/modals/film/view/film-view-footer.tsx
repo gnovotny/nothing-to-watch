@@ -3,10 +3,9 @@ import slugify from 'slugify'
 import config from '@/config'
 import { cn } from '../../../../utls/tw'
 import type { Film } from '@/vf'
-import { Copy, X } from 'lucide-react'
+import { Copy, Plus, X } from 'lucide-react'
 import { Button } from '../../../ui/button'
-import { AddCustomLinkDialog } from './add-custom-link-dialog'
-import { store } from '@/store'
+import { useShallowState } from '@/store'
 import {
   Tooltip,
   TooltipContent,
@@ -19,10 +18,19 @@ export const FilmViewFooter = ({
   film,
   className = '',
 }: { film?: Film; className?: string }) => {
-  const customLinks = store((state) => state.userConfig.customLinks)
-  const userConfig = store((state) => state.userConfig)
-  const setUserConfig = store((state) => state.setUserConfig)
-  const exitVoroforceSelectMode = store((state) => state.exitSelectMode)
+  const {
+    userConfig,
+    setUserConfig,
+    customLinks,
+    exitVoroforceSelectMode,
+    toggleNewLinkTypeOpen,
+  } = useShallowState((state) => ({
+    userConfig: state.userConfig,
+    setUserConfig: state.setUserConfig,
+    customLinks: state.userConfig.customLinks,
+    exitVoroforceSelectMode: state.exitSelectMode,
+    toggleNewLinkTypeOpen: state.toggleNewLinkTypeOpen,
+  }))
 
   const [copiedCustomLink, setCopiedCustomLink] = useState(false)
 
@@ -30,7 +38,7 @@ export const FilmViewFooter = ({
   return (
     <div
       className={cn(
-        'flex w-full flex-row justify-between gap-3 px-4 py-6 md:gap-6 md:p-6 lg:p-9',
+        'relative flex w-full flex-row justify-between gap-3 px-4 py-6 md:gap-6 md:p-6 lg:p-6 xl:p-9',
         className,
         {},
       )}
@@ -141,7 +149,22 @@ export const FilmViewFooter = ({
               </div>
             </Button>
           ))}
-          <AddCustomLinkDialog />
+          {/*<AddCustomLink />*/}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size='icon'
+                className='hidden cursor-pointer rounded-lg border-foreground md:inline-flex md:backdrop-blur-lg'
+                variant='outline'
+                onClick={toggleNewLinkTypeOpen}
+              >
+                <Plus />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add new link type</p>
+            </TooltipContent>
+          </Tooltip>
         </TooltipProvider>
       </div>
       <Button
