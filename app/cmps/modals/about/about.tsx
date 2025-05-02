@@ -44,31 +44,32 @@ const items = [
     content: (
       <>
         <p>
-          <b>This is not a commercial project</b>. The content used is intended
-          for educational and informational purposes only. All rights to the
-          materials used belong to their respective owners. I do not claim
-          ownership over any content used. If you are the rightful owner of any
-          material used and have a concern about its use, please{' '}
-          <Link href={`mailto:${config.relayEmail}`}>contact</Link> me and I
-          will address it promptly.
+          <b>This is a non-commercial project</b>. The content is intended
+          solely for educational and informational purposes. All rights to the
+          materials used remain with their respective owners. I do not claim
+          ownership of any third-party content. If you are the rightful owner of
+          any material featured here and have concerns about its use, please{' '}
+          <Link href={`mailto:${config.relayEmail}`}>contact</Link> me—I will
+          address the issue promptly.
         </p>
         <br />
         <p>
-          The Dataset is made available under the{' '}
+          The dataset is made available under the{' '}
           <Link href='http://opendatacommons.org/licenses/by/1.0/'>
             Open Data Commons Attribution License
           </Link>{' '}
-          and sourced from{' '}
+          and is sourced from{' '}
           <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/data'>
             Kaggle's TMDB Movies Dataset
           </Link>
         </p>
         <br />
         <p>
-          Much of the shader code is heavily inspired - if not blatantly
-          copy-pasted - by various brilliant creators on{' '}
+          Much of the shader code is heavily inspired by—and in some cases
+          directly copied from—the work of talented creators on{' '}
           <Link href='https://shadertoy.com'>Shadertoy</Link>. Many of the
-          algorithms they use are in turn rehashed from other sources.
+          underlying algorithms they use are themselves adapted from other
+          sources.
         </p>
       </>
     ),
@@ -78,15 +79,16 @@ const items = [
     content: (
       <>
         <p>
-          The silver screen's heyday is arguably behind us. Luckily, there's
+          The silver screen's heyday is arguably behind us. Luckily, we have
           over a hundred years of cinema to fall back on.
         </p>
         <br />
         <p>
-          A collection of the 50,000 most <i>popular*</i> movies according to{' '}
-          <Link href={config.tmdbUrl}>TMDB</Link>. Data cut-off is early 2025.
-          Sorted by popularity in descending order, starting from the center of
-          the grid and moving outwards.
+          This gallery features a collection of the 50,000 most <i>popular*</i>{' '}
+          movies according to <Link href={config.tmdbUrl}>TMDB</Link>, with data
+          current as of early 2025. The movies are sorted by popularity in
+          descending order, starting from the center of the grid and moving
+          outward.
         </p>
         <br />
         <p>
@@ -102,11 +104,11 @@ const items = [
     content: (
       <>
         <p>
-          This is an experimental gallery that can visualize tens of thousands
-          of images as a voronoi diagram. The voronoi seeds are generated via a
-          custom grid-constrained force graph layout. The simulation layer runs
-          in javascript and supports multithreading while the visualization
-          layer uses webgl2
+          This is an experimental gallery designed to visualize tens of
+          thousands of images as a Voronoi diagram. The Voronoi seeds are
+          generated using a custom grid-constrained force graph layout. The
+          simulation layer runs in JavaScript with multithreading support, while
+          the visualization layer uses WebGL2.
         </p>
         <br />
         <Button variant='default' asChild>
@@ -127,30 +129,30 @@ const items = [
       <>
         <p>
           <Link href='https://en.wikipedia.org/wiki/Voronoi_diagram'>
-            Voronoi
+            Voronoi diagrams
           </Link>{' '}
-          are cool. Once you become aware of them, you'll begin recognizing them
-          in many places: from{' '}
+          are fascinating. Once you're aware of them, you'll start noticing them
+          everywhere—from{' '}
           <Link href='https://www.google.com/search?q=examples+of+voronoi+patterns+in+nature'>
             nature
           </Link>{' '}
-          to art and architecture. But apart from being aesthetically pleasing
-          to some of us, they don't really have a solid use case in user
-          interfaces. This is an attempt to give them one, though a similar
-          effect could admittedly be achieved by distorting a grid{' '}
+          to art and architecture. While they’re aesthetically pleasing, they
+          haven’t traditionally had a strong use case in user interfaces. This
+          is an attempt to give them one—though admittedly, a similar effect
+          could be achieved by simply distorting a grid.
         </p>
         <br />
         <p>
-          It should be noted that this is not a standard voronoi diagram. The
-          cell seeds are constrained to a grid, making them the resulting cells
-          extremely uniform. The focused center cell has a slightly higher
-          weight to reduce the enlargement of neighboring cells. In order to
-          account for the additive weighting while also maintaining cell aspect
-          ratio, the distance metric has a 1.5x bias on the y-component.
+          It’s worth noting that this is not a standard Voronoi diagram. The
+          seeds are constrained to a grid, which makes the resulting cells
+          extremely uniform. The focused center cell is given slightly more
+          weight to reduce the enlargement of neighboring cells. To balance the
+          additive weighting while maintaining cell aspect ratios, the distance
+          metric is biased 1.5x along the y-axis.
         </p>
         <br />
         <p className='hidden md:inline-block'>
-          You can <ToggleVoroforceDevMode /> to see the voronoi cell seeds.
+          You can <ToggleVoroforceDevMode /> to see the Voronoi cell seeds.
         </p>
       </>
     ),
@@ -160,21 +162,22 @@ const items = [
     content: (
       <>
         <p>
-          The force simulation runs on the CPU in a javascript web worker. It is
+          The force simulation runs on the CPU in a JavaScript web worker. It's
           heavily inspired by{' '}
-          <Link href='https://github.com/d3/d3-force'>d3-force</Link> and its
+          <Link href='https://github.com/d3/d3-force'>D3-force</Link> and its
           use of velocity Verlet integration.
         </p>
         <br />
         <p>
-          The simulation could potentially be implemented on the GPU with WebGl.
-          WebGPU would be a better choice though, once it achieves widespread
-          adoption.
+          In the future, the simulation could potentially be implemented on the
+          GPU with WebGL—though WebGPU would be a better fit once it gains
+          broader adoption.
         </p>
         <br />
         <p>
-          If kept on the CPU, there could be massive performance gains by only
-          simulating a subset of the cells and interpolating the rest.
+          If the simulation remains on the CPU, significant performance gains
+          could be achieved by simulating only a subset of the cells and
+          interpolating the rest.{' '}
         </p>
       </>
     ),
@@ -184,10 +187,10 @@ const items = [
     content: (
       <>
         <p>
-          Much of the shader code is heavily inspired by - if not blatantly
-          rehashed - various brilliant creators on{' '}
+          Much of the shader code is heavily inspired by—if not outright
+          reinterpreted from—various brilliant creators on{' '}
           <Link href='https://shadertoy.com'>Shadertoy</Link>, though many of
-          their algorithms are in turn sourced from elsewhere.
+          their algorithms are themselves sourced from elsewhere.
         </p>
         <br />
       </>
@@ -198,16 +201,15 @@ const items = [
     content: (
       <>
         <p>
-          The film posters are packed into image montages aka texture atlases.
-          The montages are in turn served on demand as compressed textures.
-          There are multiple quality levels and a set of montages for each, with
-          the lowest quality level delivering image sizes of only 4x6 pixels
+          The film posters are packed into image montages, also known as texture
+          atlases. These montages are served on demand as compressed textures,
+          with multiple quality levels available. The lowest quality level
+          delivers images as small as 4×6 pixels.
         </p>
         <br />
         <p>
           If you're interested in visualizing tens of thousands of images but
-          you find this project to be a little bit silly, then check out the
-          (unrelated) project{' '}
+          find this project a bit whimsical, check out the (unrelated) project{' '}
           <Link href='https://github.com/pleonard212/pix-plot'>pix-plot</Link>.
         </p>
       </>
