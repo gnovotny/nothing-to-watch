@@ -28,7 +28,7 @@ const ModalHandle = ({
 }) => (
   <div
     className={cn(
-      'not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 landscape:-translate-x-1/2 absolute not-landscape:top-0 not-landscape:left-1/2 not-landscape:h-2.5 not-landscape:w-[100px] not-landscape:translate-y-1/2 cursor-grab rounded-full bg-background/80 max-lg:border landscape:top-1/2 landscape:left-0 landscape:h-[100px] landscape:w-2.5',
+      'not-landscape:-translate-x-1/2 landscape:-translate-y-1/2 landscape:-translate-x-1/2 absolute not-landscape:top-0 not-landscape:left-1/2 not-landscape:h-2.5 not-landscape:w-[100px] not-landscape:translate-y-1/2 cursor-grab rounded-full bg-background/80 max-md:h-1.5 max-md:translate-y-[150%] max-md:bg-background max-lg:border landscape:top-1/2 landscape:left-0 landscape:h-[100px] landscape:w-2.5',
       {
         'not-landscape:-translate-x-1/2 landscape:right-0 landscape:left-auto landscape:translate-x-1/2':
           direction === 'left',

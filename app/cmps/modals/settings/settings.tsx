@@ -19,15 +19,25 @@ import { useTheme } from '../../layout'
 const NUM_CELL_OPTIONS = [5000, 10000, 25000, 50000, 100000]
 
 export const Settings = () => {
-  const { open, setOpen, preset, userConfig, setVConfig, setPlayedIntro } =
-    useShallowState((state) => ({
-      open: state.settingsOpen,
-      setOpen: state.setSettingsOpen,
-      preset: state.preset,
-      userConfig: state.userConfig,
-      setVConfig: state.setUserConfig,
-      setPlayedIntro: state.setPlayedIntro,
-    }))
+  const {
+    open,
+    setOpen,
+    preset,
+    userConfig,
+    setVConfig,
+    setPlayedIntro,
+    voroforceDevSceneEnabled,
+    setVoroforceDevSceneEnabled,
+  } = useShallowState((state) => ({
+    open: state.settingsOpen,
+    setOpen: state.setSettingsOpen,
+    preset: state.preset,
+    userConfig: state.userConfig,
+    setVConfig: state.setUserConfig,
+    setPlayedIntro: state.setPlayedIntro,
+    voroforceDevSceneEnabled: state.voroforceDevSceneEnabled,
+    setVoroforceDevSceneEnabled: state.setVoroforceDevSceneEnabled,
+  }))
 
   const { theme, setTheme } = useTheme()
 
@@ -39,7 +49,7 @@ export const Settings = () => {
       }}
       overlay
       footer={
-        <div className='flex w-full flex-row justify-between gap-3 bg-background p-4 md:gap-6 md:p-6'>
+        <div className='flex w-full flex-row justify-between gap-3 p-4 md:gap-6 md:p-6'>
           <Button variant='outline' onClick={() => setOpen(false)}>
             Close
           </Button>
@@ -56,7 +66,7 @@ export const Settings = () => {
       }
     >
       <ScrollArea
-        className='not-landscape:w-full not-landscape:rounded-t-3xl bg-background/60 lg:w-full lg:rounded-3xl landscape:h-full landscape:rounded-l-3xl'
+        className='not-landscape:w-full bg-background/60 lg:w-full landscape:h-full'
         innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
       >
         <div className='flex w-full flex-col gap-4 p-4 pb-18 md:gap-6 md:p-6 md:pr-10 md:pb-24 lg:pt-12 lg:pb-24'>
@@ -109,7 +119,7 @@ export const Settings = () => {
               ))}
             </div>
           </div>
-          <div className='flex flex-row items-center gap-2 lg:hidden'>
+          <div className='flex flex-row items-center gap-2'>
             <Switch
               id='light-mode'
               checked={theme === THEME.light}
@@ -129,7 +139,17 @@ export const Settings = () => {
                 reload()
               }}
             />
-            <Label htmlFor='dev-mode'>Dev Mode</Label>
+            <Label htmlFor='dev-mode'>Show Dev Widget</Label>
+          </div>
+          <div className='flex flex-row items-center gap-2'>
+            <Switch
+              id='show-cell-seeds'
+              checked={voroforceDevSceneEnabled}
+              onCheckedChange={(checked) => {
+                setVoroforceDevSceneEnabled(checked)
+              }}
+            />
+            <Label htmlFor='show-cell-seeds'>Show Cell Seeds</Label>
           </div>
         </div>
       </ScrollArea>

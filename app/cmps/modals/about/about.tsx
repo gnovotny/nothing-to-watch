@@ -25,11 +25,11 @@ const Link = ({ children, href }: PropsWithChildren<{ href: string }>) => (
 )
 
 const ToggleVoroforceDevMode = () => {
-  const { voroforceDevModeEnabled, setVoroforceDevModeEnabled } = store()
+  const { voroforceDevSceneEnabled, setVoroforceDevSceneEnabled } = store()
 
   return (
     <Button
-      onClick={() => setVoroforceDevModeEnabled(!voroforceDevModeEnabled)}
+      onClick={() => setVoroforceDevSceneEnabled(!voroforceDevSceneEnabled)}
       size='sm'
       className='mx-1 cursor-pointer'
     >
@@ -162,7 +162,8 @@ const items = [
         <p>
           The force simulation runs on the CPU in a javascript web worker. It is
           heavily inspired by{' '}
-          <Link href='https://github.com/d3/d3-force'>d3-force</Link>.
+          <Link href='https://github.com/d3/d3-force'>d3-force</Link> and its
+          use of velocity Verlet integration.
         </p>
         <br />
         <p>

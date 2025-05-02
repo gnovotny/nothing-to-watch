@@ -116,7 +116,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
 
   html, body {
@@ -134,5 +134,13 @@
 
   body {
     @apply bg-background text-foreground overflow-hidden overscroll-y-none overscroll-x-none;
+  }
+
+  /* IMPORTANT TAKE NOTE! font scaling */
+  /* biome-ignore lint/correctness/noUnknownFunction: exists */
+  @media (min-width: theme(--breakpoint-lg)) {
+      html {
+          font-size: clamp(.8rem, .5vw + .4rem, 1rem);
+      }
   }
 }

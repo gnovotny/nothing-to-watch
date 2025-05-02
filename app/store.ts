@@ -39,8 +39,8 @@ export type StoreState = {
   exitSelectMode: () => void
   isSelectMode: boolean
   isPreviewMode: boolean
-  voroforceDevModeEnabled: boolean
-  setVoroforceDevModeEnabled: (enabled: boolean) => void
+  voroforceDevSceneEnabled: boolean
+  setVoroforceDevSceneEnabled: (enabled: boolean) => void
   settingsOpen: boolean
   setSettingsOpen: (settingsOpen: boolean) => void
   toggleSettingsOpen: () => void
@@ -105,19 +105,19 @@ export const store = create(
         exitSelectMode: () => {
           get().voroforce?.controls?.deselect()
         },
-        voroforceDevModeEnabled: false,
-        setVoroforceDevModeEnabled: (voroforceDevModeEnabled: boolean) => {
+        voroforceDevSceneEnabled: false,
+        setVoroforceDevSceneEnabled: (voroforceDevSceneEnabled: boolean) => {
           get().voroforce.config.display.scene.dev.enabled =
-            voroforceDevModeEnabled
+            voroforceDevSceneEnabled
 
-          if (voroforceDevModeEnabled) {
+          if (voroforceDevSceneEnabled) {
             get().voroforce.display.scene.initDev()
           } else {
             get().voroforce.display.scene.stopDev()
           }
 
           set({
-            voroforceDevModeEnabled,
+            voroforceDevSceneEnabled,
           })
         },
         settingsOpen: false,
