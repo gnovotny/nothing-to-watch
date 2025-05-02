@@ -4,7 +4,6 @@ import { defaultSimulationConfig } from './simulation'
 
 export const defaultConfig = {
   cells: 100,
-  uniqueCells: undefined,
   simulation: defaultSimulationConfig,
   display: defaultDisplayConfig,
   controls: defaultControlsConfig,

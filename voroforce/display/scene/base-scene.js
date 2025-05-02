@@ -8,6 +8,11 @@ import { DynamicMediaGridArrayTexture } from './utils/dynamic-media-grid-array-t
 import { readPixelsAsync } from './utils/read-pixels-async'
 
 export default class BaseScene {
+  mainRenderTargets = null
+  postRenderTargets = null
+  activeMainRenderTarget = null
+  activePostRenderTarget = null
+
   constructor(app) {
     this.init(app)
   }
@@ -38,11 +43,7 @@ export default class BaseScene {
     this.refreshResolutionUniform(this.dimensions)
   }
 
-  initCustom() {
-    this.initCustomDataTextures()
-  }
-
-  initCustomDataTextures() {}
+  initCustom() {}
 
   initMeshes() {
     this.initMain()
@@ -108,7 +109,7 @@ export default class BaseScene {
       program: this.mainProgram,
     })
 
-    if (!this.renderTargets && !this.config.post?.enabled)
+    if (!this.mainRenderTargets && !this.config.post?.enabled)
       this.mainMesh.setParent(this.instance)
   }
 
@@ -125,7 +126,7 @@ export default class BaseScene {
       program: this.postProgram,
     })
 
-    this.postMesh.setParent(this.instance)
+    if (!this.postRenderTargets) this.postMesh.setParent(this.instance)
   }
 
   initDev() {
@@ -155,7 +156,7 @@ export default class BaseScene {
       })
     }
 
-    if (!this.renderTargets || this.config.post?.enabled)
+    if (!this.mainRenderTargets || this.config.post?.enabled)
       this.devPointsMesh.setParent(this.instance)
   }
 
@@ -168,7 +169,7 @@ export default class BaseScene {
     if (!this.config.main?.enabled) return
 
     this.mainProgram.uniforms.iResolution.value = this.resolutionUniform
-    this.renderTargets?.forEach((target) =>
+    this.mainRenderTargets?.forEach((target) =>
       target.setSize(this.app.canvas.width, this.app.canvas.height),
     )
   }
@@ -188,17 +189,17 @@ export default class BaseScene {
   updateMain() {
     if (!this.config.main?.enabled) return
 
-    if (this.activeRenderTarget) {
+    if (this.activeMainRenderTarget) {
       this.app.renderer.instance.render({
         scene: this.mainMesh,
         camera: this.camera,
-        target: this.activeRenderTarget,
+        target: this.activeMainRenderTarget,
       })
 
       if (!this.mainMesh.parent && !this.config.post?.enabled) {
         copyRenderTargetToCanvas(
           this.gl,
-          this.activeRenderTarget,
+          this.activeMainRenderTarget,
           this.app.canvas,
         )
       }
@@ -207,17 +208,33 @@ export default class BaseScene {
 
   updatePost() {
     if (!this.config.post?.enabled) return
+
+    if (this.activePostRenderTarget) {
+      this.app.renderer.instance.render({
+        scene: this.postMesh,
+        camera: this.camera,
+        target: this.activePostRenderTarget,
+      })
+
+      if (!this.postMesh.parent) {
+        copyRenderTargetToCanvas(
+          this.gl,
+          this.activePostRenderTarget,
+          this.app.canvas,
+        )
+      }
+    }
   }
 
   updateDev() {
     if (!this.config.dev?.enabled) return
     this.devPointsGeometry.attributes.position.needsUpdate = true
 
-    if (this.activeRenderTarget && !this.config.post?.enabled) {
+    if (this.activeMainRenderTarget && !this.config.post?.enabled) {
       this.app.renderer.instance.render({
         scene: this.devPointsMesh,
         camera: this.camera,
-        target: this.activeRenderTarget,
+        target: this.activeMainRenderTarget,
         clear: false,
       })
     }
@@ -240,11 +257,9 @@ export default class BaseScene {
   }
 
   initRenderTargets(count = 1, options = {}) {
-    this.renderTargets = [...Array(count)].map(
+    return [...Array(count)].map(
       () => new NoDepthMultiRenderTarget(this.gl, options),
     )
-    this.activeRenderTarget = this.renderTargets[0]
-    return this.renderTargets
   }
 
   refreshResolutionUniform(dimensions = this.dimensions) {
@@ -502,15 +517,24 @@ export default class BaseScene {
     })
   }
 
+  getPositionRenderTarget() {
+    return this.mainRenderTargets?.[0]
+  }
+
+  getPositionRenderTargetColorTexture(rt) {
+    return rt.voroIndexBuffer?.index ?? 0
+  }
+
   async getPositionCellIndices(position) {
-    const rt = this.renderTargets?.[0]
+    const rt = this.getPositionRenderTarget()
     if (!rt) return
 
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, rt.buffer)
 
     if (rt.textures.length > 1) {
       this.gl.readBuffer(
-        this.gl.COLOR_ATTACHMENT0 + (rt.voroIndexBuffer?.index ?? 0),
+        this.gl.COLOR_ATTACHMENT0 +
+          this.getPositionRenderTargetColorTexture(rt),
       )
     }
     const data = new Uint32Array(4) // Float32Array texture but packed as uint
@@ -530,6 +554,7 @@ export default class BaseScene {
     const index3 = data[2] - 1
     const index4 = data[3] - 1
     if (index >= 0) {
+      // console.log('index', index)
       return [index, index2, index3, index4]
     }
   }

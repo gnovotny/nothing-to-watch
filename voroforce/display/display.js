@@ -34,28 +34,26 @@ export default class Display {
   }
 
   handleRendererCompatibility() {
-    this.mediaEnabled = this.globalConfig.media?.enabled
-    if (this.mediaEnabled) {
-      if (this.globalConfig.media.compressionFormat === 'dds') {
-        if (!this.gl.getExtension('WEBGL_compressed_texture_s3tc')) {
-          this.globalConfig.media.compressionFormat = 'ktx'
-          if (!this.gl.getExtension('WEBGL_compressed_texture_etc')) {
-            throw new Error(
-              'WEBGL_compressed_texture_s3tc & WEBGL_compressed_texture_etc are both not supported',
-            )
-          }
-        }
-      }
+    const media = this.globalConfig.media
+    if (!media?.enabled) return
 
-      if (this.globalConfig.media.compressionFormat === 'ktx') {
-        if (!this.gl.getExtension('WEBGL_compressed_texture_etc')) {
-          this.globalConfig.media.compressionFormat = 'dds'
-          if (!this.gl.getExtension('WEBGL_compressed_texture_s3tc')) {
-            throw new Error(
-              'WEBGL_compressed_texture_s3tc & WEBGL_compressed_texture_etc are both not supported',
-            )
-          }
-        }
+    const compressionFormats = {
+      dds: 'WEBGL_compressed_texture_s3tc',
+      ktx: 'WEBGL_compressed_texture_etc',
+    }
+
+    const compressionFormatKeys = Object.keys(compressionFormats)
+
+    const index = compressionFormatKeys.indexOf(media.compressionFormat)
+    if (index === -1) {
+      throw new Error('Media compression format must be either dds or ktx.')
+    }
+
+    if (!this.gl.getExtension(compressionFormats[media.compressionFormat])) {
+      media.compressionFormat =
+        compressionFormatKeys[(index + 1) % compressionFormatKeys.length]
+      if (!this.gl.getExtension(compressionFormats[media.compressionFormat])) {
+        throw new Error('All compression formats are not supported.')
       }
     }
   }

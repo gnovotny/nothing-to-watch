@@ -4,9 +4,9 @@ import swap from './utils/swap'
 
 export default class Scene extends BaseScene {
   initCustom() {
-    super.initCustom()
+    this.initCustomDataTextures()
 
-    this.initRenderTargets(2, {
+    this.mainRenderTargets = this.initRenderTargets(2, {
       attachments: [
         {
           name: 'voroIndexBuffer',
@@ -35,7 +35,28 @@ export default class Scene extends BaseScene {
           : []),
       ],
     })
-    this.inactiveRenderTarget = this.renderTargets[1]
+    this.activeMainRenderTarget = this.mainRenderTargets[0]
+    this.inactiveMainRenderTarget = this.mainRenderTargets[1]
+
+    if (this.config.post?.enabled && this.config.post.position) {
+      this.postRenderTargets = this.initRenderTargets(1, {
+        attachments: [
+          {
+            name: 'output',
+          },
+          {
+            name: 'voroIndexBuffer',
+            textureOptions: {
+              format: this.gl.RGBA,
+              internalFormat: this.gl.RGBA32F,
+              type: this.gl.FLOAT,
+              minFilter: this.gl.NEAREST,
+            },
+          },
+        ],
+      })
+      this.activePostRenderTarget = this.postRenderTargets[0]
+    }
   }
 
   initCustomDataTextures() {
@@ -55,24 +76,29 @@ export default class Scene extends BaseScene {
   afterUpdateCustom() {
     if (!this.config.main?.enabled) return
 
-    this.swapRenderTargets()
+    this.swapMainRenderTargets()
 
     this.mainCustomUniforms.uVoroIndexBufferTexture.value =
-      this.inactiveRenderTarget.voroIndexBuffer.texture // output to input
+      this.inactiveMainRenderTarget.voroIndexBuffer.texture // output to input
 
     if (this.config.post?.enabled) {
       this.postCustomUniforms.uMainOutputTexture.value =
-        this.inactiveRenderTarget.output.texture
+        this.inactiveMainRenderTarget.output.texture
 
       this.postCustomUniforms.uVoroEdgeBufferTexture.value =
-        this.inactiveRenderTarget.voroEdgeBuffer.texture
+        this.inactiveMainRenderTarget.voroEdgeBuffer.texture
+
+      if (this.config.post.position) {
+        this.postCustomUniforms.uVoroIndexBufferTexture.value =
+          this.inactiveMainRenderTarget.voroIndexBuffer.texture
+      }
     }
   }
 
-  swapRenderTargets() {
-    swap(this.renderTargets)
-    this.activeRenderTarget = this.renderTargets[0]
-    this.inactiveRenderTarget = this.renderTargets[1]
+  swapMainRenderTargets() {
+    swap(this.mainRenderTargets)
+    this.activeMainRenderTarget = this.mainRenderTargets[0]
+    this.inactiveMainRenderTarget = this.mainRenderTargets[1]
   }
 
   refreshCustom() {
@@ -97,7 +123,7 @@ export default class Scene extends BaseScene {
         value: this.cellIdsTexture,
       },
       uVoroIndexBufferTexture: {
-        value: this.inactiveRenderTarget.voroIndexBuffer.texture,
+        value: this.inactiveMainRenderTarget.voroIndexBuffer.texture,
       },
     }
     return {
@@ -109,11 +135,18 @@ export default class Scene extends BaseScene {
   initPostCustomUniforms() {
     this.postCustomUniforms = {
       uVoroEdgeBufferTexture: {
-        value: this.inactiveRenderTarget.voroEdgeBuffer.texture,
+        value: this.inactiveMainRenderTarget.voroEdgeBuffer.texture,
       },
       uMainOutputTexture: {
-        value: this.inactiveRenderTarget.output.texture,
+        value: this.inactiveMainRenderTarget.output.texture,
       },
+      ...(this.config.post.position
+        ? {
+            uVoroIndexBufferTexture: {
+              value: this.inactiveMainRenderTarget.voroIndexBuffer.texture,
+            },
+          }
+        : {}),
     }
     return {
       ...this.initCustomUniforms(),
@@ -124,6 +157,14 @@ export default class Scene extends BaseScene {
   initCustomUniforms() {
     this.customUniforms = {}
     return this.customUniforms
+  }
+
+  getPositionRenderTarget() {
+    if (this.config.post?.enabled && this.config.post.position) {
+      return this.postRenderTargets?.[0]
+    }
+
+    return super.getPositionRenderTarget()
   }
 
   initCellNeighborsTexture() {
