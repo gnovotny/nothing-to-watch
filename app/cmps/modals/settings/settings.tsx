@@ -92,6 +92,10 @@ export const Settings = () => {
                 if (newPreset !== preset) reload()
               }}
               submitLabel='Apply'
+              submitProps={{
+                size: 'default',
+                className: 'text-base leading-none',
+              }}
               className='max-md:hidden'
             />
           </div>

@@ -3,13 +3,14 @@
 import { type ReactNode, useState } from 'react'
 import { Check } from 'lucide-react'
 
-import { Button } from '../ui/button'
+import { Button, type ButtonProps } from '../ui/button'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { useShallowState } from '../../store'
 import { Badge } from '../ui/badge'
 import { VOROFORCE_PRESET } from '../../vf'
 import { useMediaQuery } from '../../hks/use-media-query'
 import { down } from '../../utls/mq'
+import { cn } from '../../utls/tw'
 
 const PRESETS = [
   {
@@ -33,10 +34,12 @@ export function PresetSelector({
   className = '',
   onSetPreset,
   submitLabel = 'Continue',
+  submitProps,
 }: {
   className?: string
   onSetPreset?: (preset: VOROFORCE_PRESET) => void
   submitLabel?: string | ReactNode
+  submitProps?: ButtonProps
 }) {
   const { recommendedPreset, setStorePreset, storePreset } = useShallowState(
     (state) => ({
@@ -121,9 +124,13 @@ export function PresetSelector({
               onSetPreset?.(preset)
             }
           }}
-          className='w-full cursor-pointer text-lg'
           size='lg'
           disabled={!isSmallScreen && !selectedPreset}
+          {...submitProps}
+          className={cn(
+            'w-full cursor-pointer text-lg',
+            submitProps?.className,
+          )}
         >
           {submitLabel}
         </Button>
