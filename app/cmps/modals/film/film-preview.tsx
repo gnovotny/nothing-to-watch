@@ -9,8 +9,9 @@ import { MIN_LERP_EASING_TYPES, type VoroforceCell, easedMinLerp } from '@/vf'
 import { Badge } from '../../ui/badge'
 import { FilmRatingGauge } from './shared/film-rating-gauge'
 import { store, useShallowState } from '@/store'
+import { FilmPoster } from './shared/film-poster'
 
-export const FilmPreview = () => {
+export const FilmPreview = ({ poster = false }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const isSmallScreen = useMediaQuery(down('md'))
@@ -128,7 +129,7 @@ export const FilmPreview = () => {
         MIN_LERP_EASING_TYPES.easeInOutQuad,
       )
       opacityRef.current = easedMinLerp(
-        scaleRef.current,
+        opacityRef.current,
         customSpeedScale,
         0.05,
         MIN_LERP_EASING_TYPES.linear,
@@ -140,13 +141,18 @@ export const FilmPreview = () => {
       if (frameRef.current % 60 === 0) {
         if (topNeighborCellRef.current.y - bounds.height < 0) {
           setReverseY(true)
-        } else if (reverseY) {
+        } else if (
+          reverseY &&
+          topNeighborCellRef.current.y - bounds.height > bounds.height
+        ) {
           setReverseY(false)
         }
 
-        if (neighborCell.x - bounds.width * 0.25 < 0) {
+        const width = bounds.width * 0.25
+
+        if (neighborCell.x - width < 0) {
           setReverseX(true)
-        } else if (reverseX) {
+        } else if (reverseX && neighborCell.x - width > width) {
           setReverseX(false)
         }
       }
@@ -184,9 +190,8 @@ export const FilmPreview = () => {
             measureRef(element)
           }}
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-10 w-300 max-w-full p-4 opacity-0 transition-opacity duration-300 will-change-transform md:p-0 lg:p-9',
+            'pointer-events-none absolute top-0 left-0 z-10 w-full max-w-full p-4 opacity-0 transition-opacity duration-300 will-change-transform md:w-300 md:p-0 lg:p-9',
             {
-              'right-0 left-auto': reverseX,
               '!opacity-100': active,
             },
           )}
@@ -195,40 +200,40 @@ export const FilmPreview = () => {
             ref={innerRef}
             className={cn(
               'flex origin-top-left flex-row gap-3 lg:gap-9 lg:will-change-[transform,opacity]',
-              // 'md:-translate-y-full md:-translate-x-1/4',
               {
                 'flex-row-reverse': reverseX,
-                // 'md:!translate-y-0': reverseY,
               },
             )}
           >
-            {/*<FilmPoster*/}
-            {/*  film={film}*/}
-            {/*  className={cn(*/}
-            {/*    'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',*/}
-            {/*    {*/}
-            {/*      'pointer-events-auto': active,*/}
-            {/*    },*/}
-            {/*  )}*/}
-            {/*  // onPointerOver={onPointerOver}*/}
-            {/*/>*/}
+            {poster && (
+              <FilmPoster
+                film={film}
+                className={cn(
+                  'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
+                  {
+                    'pointer-events-auto': active,
+                  },
+                )}
+              />
+            )}
             <div
               className={cn(
                 'flex basis-full flex-row justify-between gap-3 md:basis-3/4 md:flex-col md:justify-start md:gap-6',
                 {
                   'items-end text-right': reverseX,
-                  'flex-col-reverse': reverseY,
+                  'md:flex-col-reverse': reverseY,
                 },
               )}
             >
-              <div className='flex flex-col gap-3 lg:justify-start lg:gap-6'>
-                <p className='landscape:line-clamp- line-clamp-2 hidden font-medium text-base text-foreground/90 leading-none md:inline-block lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
+              <div
+                className={cn('flex flex-col gap-3 lg:justify-start lg:gap-3', {
+                  'flex-col-reverse': reverseY,
+                })}
+              >
+                <p className='line-clamp-2 hidden font-medium text-base text-foreground/90 leading-none md:inline-block lg:line-clamp-1 lg:h-[1.25rem] lg:text-xl lg:leading-none landscape:h-[1rem] lg:landscape:h-[1.25rem]'>
                   {film.tagline}
                 </p>
-                <h3
-                  // className='line-clamp-2 h-[3.75rem] font-black text-3xl lg:line-clamp-1 lg:h-[3rem] lg:text-5xl landscape:line-clamp-1 landscape:h-[1.875rem] lg:landscape:h-[3rem]'
-                  className='line-clamp-2.2 font-black text-2xl leading-none lg:line-clamp-1.1 lg:text-5xl landscape:line-clamp-1.1'
-                >
+                <h3 className='line-clamp-2.2 font-black text-2xl leading-none lg:line-clamp-1.1 lg:text-5xl landscape:line-clamp-1.1'>
                   {film.title}
                   <span className='font-normal text-foreground/50 text-xl leading-none lg:text-3xl'>
                     &nbsp;({film.year})
@@ -245,7 +250,7 @@ export const FilmPreview = () => {
                   {film.genres?.map((genre) => (
                     <Badge
                       key={genre}
-                      className='text-[0.6rem] leading-none lg:text-xs'
+                      className='whitespace-nowrap text-[0.6rem] leading-none lg:text-xs'
                     >
                       {genre}
                     </Badge>

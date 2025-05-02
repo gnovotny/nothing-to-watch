@@ -133,6 +133,6 @@
   }
 
   body {
-    @apply bg-background text-foreground overflow-hidden overscroll-y-none;
+    @apply bg-background text-foreground overflow-hidden overscroll-y-none overscroll-x-none;
   }
 }

@@ -83,7 +83,7 @@ const items = [
         </p>
         <br />
         <p>
-          Presenting the 50,000 most <i>popular*</i> movies according to{' '}
+          A collection of the 50,000 most <i>popular*</i> movies according to{' '}
           <Link href={config.tmdbUrl}>TMDB</Link>. Data cut-off is early 2025.
           Sorted by popularity in descending order, starting from the center of
           the grid and moving outwards.

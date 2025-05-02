@@ -32,10 +32,10 @@ export const LowFpsAlert = () => {
   const canLowerQuality = preset
     ? [VOROFORCE_PRESET.mid, VOROFORCE_PRESET.high].includes(preset)
     : false
-  const warnOnce = !canLowerQuality
+  const warnLimit = !canLowerQuality ? 1 : 3
 
   const [isOpen, setIsOpen] = useState(false)
-  const [wasOpen, setWasOpen] = useState(false)
+  const [openedCount, setOpenedCount] = useState(0)
   const [alignContentToBottom, setAlignContentToBottom] = useState(false)
 
   const open = useCallback(() => {
@@ -51,11 +51,11 @@ export const LowFpsAlert = () => {
 
     ticker.freeze()
     setIsOpen(true)
-    setWasOpen(true)
+    setOpenedCount((opened) => opened + 1)
   }, [ticker, preset, setRecommendedPreset])
 
   useEffect(() => {
-    if (performanceMonitor && !(warnOnce && wasOpen)) {
+    if (performanceMonitor && openedCount < warnLimit) {
       console.log('subscribing to performance monitor')
       return performanceMonitor.subscribe({
         onDecline: () => {
@@ -64,7 +64,7 @@ export const LowFpsAlert = () => {
         },
       })
     }
-  }, [performanceMonitor, wasOpen, warnOnce, open])
+  }, [performanceMonitor, openedCount, warnLimit, open])
 
   useEffect(() => {
     setAlignContentToBottom(isSelectMode && isLgScreen)

@@ -205,8 +205,6 @@ export class Voroforce {
   }
 
   update() {
-    this.devTools?.fpsGraph?.begin()
-
     this.updateControls()
     this.updateSimulation()
 
@@ -228,7 +226,6 @@ export class Voroforce {
       return
     }
 
-    // this.devTools?.fpsGraph?.end()
     if (this.tickerMode === 'manual') this.ticker.next()
   }
 

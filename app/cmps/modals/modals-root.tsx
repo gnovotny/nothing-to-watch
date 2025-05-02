@@ -13,9 +13,9 @@ function ModalsRoot() {
     <FadeTransition
       visible={canLoad}
       className='relative h-dvh w-full overflow-hidden'
-      transitionOptions={{
-        timeout: 2000,
-      }}
+      // transitionOptions={{
+      //   timeout: 2000,
+      // }}
     >
       {canLoad && <Modals />}
     </FadeTransition>
