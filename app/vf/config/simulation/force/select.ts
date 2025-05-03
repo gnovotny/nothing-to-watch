@@ -9,7 +9,9 @@ export const forceSimulationStepSelectConfig = {
     {
       type: 'omni',
       enabled: true,
-      requestMediaVersions: true,
+      requestMediaVersions: {
+        enabled: true,
+      },
       manageWeights: true,
       push: {
         strength: 0.1,

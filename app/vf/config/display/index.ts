@@ -4,7 +4,8 @@
 // import mainFrag from './main-castle-mountain.frag'
 // import mainFrag from './main-test-new2.frag'
 // import mainFrag from './main-test-new3.frag'
-import mainFrag from './main.frag'
+// import mainFrag from './main.frag'
+import mainFrag from './main2.frag'
 // import mainFrag from './main-fisheye-test.frag'
 // import postFrag from './post-fisheye-test.frag'
 
@@ -64,6 +65,18 @@ export default {
             },
             select: {
               value: 3,
+            },
+          },
+        },
+        fFishEyeMod: {
+          value: 0,
+          animatable: true,
+          modes: {
+            default: {
+              value: 0,
+            },
+            select: {
+              value: 1,
             },
           },
         },

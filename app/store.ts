@@ -94,7 +94,8 @@ export const store = create(
         setFilm: (film?: Film) => set({ film }),
         filmBatches: new Map<number, FilmBatch>(),
         mode: playedIntro ? VOROFORCE_MODE.preview : VOROFORCE_MODE.intro,
-        isPreviewMode: true,
+        // mode: playedIntro ? VOROFORCE_MODE.select : VOROFORCE_MODE.intro,
+        isPreviewMode: false,
         isSelectMode: false,
         setMode: (mode: VOROFORCE_MODE) =>
           set({

@@ -20,6 +20,8 @@ export const LowFpsAlert = () => {
     ticker,
     isSelectMode,
     setRecommendedPreset,
+    setAboutOpen,
+    setSettingsOpen,
   } = useShallowState((state) => ({
     performanceMonitor: state.performanceMonitor,
     preset: state.preset,
@@ -27,18 +29,25 @@ export const LowFpsAlert = () => {
     isSelectMode: state.isSelectMode,
     recommendedPreset: state.recommendedPreset,
     setRecommendedPreset: state.setRecommendedPreset,
+    setAboutOpen: state.setAboutOpen,
+    setSettingsOpen: state.setSettingsOpen,
   }))
 
   const canLowerQuality = preset
     ? [VOROFORCE_PRESET.mid, VOROFORCE_PRESET.high].includes(preset)
     : false
-  const warnLimit = !canLowerQuality ? 1 : 3
+  const warnLimit = !canLowerQuality ? 1 : 2
 
   const [isOpen, setIsOpen] = useState(false)
   const [openedCount, setOpenedCount] = useState(0)
   const [alignContentToBottom, setAlignContentToBottom] = useState(false)
 
   const open = useCallback(() => {
+    if (!isLgScreen) {
+      setAboutOpen(false)
+      setSettingsOpen(false)
+    }
+
     switch (preset) {
       case VOROFORCE_PRESET.high:
         setRecommendedPreset(VOROFORCE_PRESET.mid)
@@ -52,7 +61,19 @@ export const LowFpsAlert = () => {
     ticker.freeze()
     setIsOpen(true)
     setOpenedCount((opened) => opened + 1)
-  }, [ticker, preset, setRecommendedPreset])
+  }, [
+    ticker,
+    preset,
+    setRecommendedPreset,
+    isLgScreen,
+    setAboutOpen,
+    setSettingsOpen,
+  ])
+
+  const close = useCallback(() => {
+    setIsOpen(false)
+    ticker.unfreeze()
+  }, [ticker])
 
   useEffect(() => {
     if (performanceMonitor && openedCount < warnLimit) {
@@ -75,10 +96,7 @@ export const LowFpsAlert = () => {
       rootProps={{
         direction: landscape ? 'left' : 'bottom',
         open: isOpen,
-        onClose: () => {
-          setIsOpen(false)
-          ticker.unfreeze()
-        },
+        onClose: close,
       }}
       contentProps={{
         className: cn({
@@ -93,8 +111,8 @@ export const LowFpsAlert = () => {
             <TriangleAlert className='h-5 w-5 text-amber-500 ' />
             <div>Low FPS detected</div>
           </div>
-          <p className='text-base text-zinc-600 dark:text-zinc-300'>
-            <span className='md:hidden'>
+          <p className='inline-flex text-base text-zinc-600 max-md:pb-2 dark:text-zinc-300'>
+            <span className='leading-none md:hidden'>
               This page is best viewed on a larger device like a desktop or
               laptop.
             </span>
@@ -116,8 +134,11 @@ export const LowFpsAlert = () => {
         </div>
         <PresetSelector
           onSetPreset={(newPreset: VOROFORCE_PRESET) => {
-            if (newPreset !== preset) reload()
-            setIsOpen(false)
+            if (newPreset !== preset) {
+              reload()
+            } else {
+              close()
+            }
           }}
         />
       </div>

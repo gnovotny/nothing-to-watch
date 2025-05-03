@@ -62,7 +62,10 @@ export class Loader extends CustomEventTarget {
 
     const baseUrl = this.config.baseUrl
     const config = this.config.versions[versionIndex]
-    const ext = this.config.compressionFormat
+    const ext =
+      !config.type || config.type === 'compressed'
+        ? this.config.compressionFormat
+        : undefined
 
     let src
     if (typeof config.layerSrcFormat === 'function') {
@@ -101,6 +104,7 @@ export class Loader extends CustomEventTarget {
 
       // Verify magic number
       if (header[0] !== MAGIC) {
+        console.log('src', src)
         throw new Error('Invalid DDS file format')
       }
 

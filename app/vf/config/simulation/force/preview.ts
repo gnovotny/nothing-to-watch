@@ -11,16 +11,21 @@ export const forceSimulationStepPreviewConfig = {
     {
       type: 'omni',
       enabled: true,
-      requestMediaVersions: true,
       manageWeights: true,
-      // lerpCenterToPrimaryCellOnIdlePointer: false,
-      breathing: true,
+      pointer: {
+        // lerpCenterToPrimaryCellOnIdle: false,
+      },
+      requestMediaVersions: {
+        enabled: true,
+      },
+      breathing: {
+        enabled: true,
+      },
       push: {
         // strength: 0.15,
         strength: 0.2,
         // strength: 0.,
         // strength: 0.4,
-        selector: 'focused',
         yFactor: 2.5,
         // yFactor: 3,
         alignmentMaxLevelsX: 40,

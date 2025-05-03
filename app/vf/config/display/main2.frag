@@ -33,6 +33,7 @@ uniform int iForceMaxNeighborLevel;
 uniform float fRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
+uniform float fFishEyeMod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
@@ -610,7 +611,7 @@ Data init(vec2 p) {
     return Data(indices, indices2, vec2(0.), vec4(0.), false, 0.);
 }
 
-Data update(vec2 p) {
+Data update(vec2 p, float zoomFactor) {
     vec2 fragCoord = gl_FragCoord.xy;
     uvec4 prevIndices = fetchIndices(fragCoord);
     if (indexIsUndefined(prevIndices.x)) return init(p);
@@ -728,7 +729,8 @@ Data update(vec2 p) {
         float bbX = mediaBbox.z - mediaBbox.x;
         float bbY = mediaBbox.w - mediaBbox.y;
 
-        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
+//        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*(1./zoomFactor));
         #if LOCK_MEDIA_ASPECT == 1
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
@@ -787,46 +789,43 @@ void main() {
     vec2 p = fetchPCoords();
     vec2 mediaP = fetchNormalizedPCoords();
 
+    float zoomFactor = 1.;
+
     #if FISHEYE_TEST == 1
 
-        vec2 fragCoord = gl_FragCoord.xy;
-        vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
-        vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
-        float forceCenterDist = sqrt(dist(fragCoord, forceCenterPixel));
-        float aspect = iResolution.x / iResolution.y;
-        vec2 screenCenter = vec2(0.5, 0.5 / aspect);
-        vec2 d = p - forceCenter;
-        float r = sqrt(dot(d, d));
-        //    if (r > 1.5) {
-        //        discard;
-        //    }
-        float iR = 1. / r;
-        //    float iR = abs(r - 1.*aspect)/1.*aspect;
-        float power = ( TAU ) * .25;
-        //    power = clamp(power*iR, 0.0001, ( TAU ) * .25);
-        //    float power = ( TAU ) * .5;
-        //    float power = PI;
-        //    float power = ( TAU ) * .25 * iR;
-        float rr = r * 10.15;
-        //    float bind = screenCenter.x;
-        float bind = 0.5;
+        if (fFishEyeMod > 0.) {
 
-        //    p = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-        //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
-        //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
-        //    p = mix(forceCenter, p, r);
-        //    p = forceCenter + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
+            vec2 fragCoord = gl_FragCoord.xy;
+            vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
+            vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
+            vec2 d = p - forceCenter;
+            float r = sqrt(dot(d, d));
 
-        p -= forceCenter;
-        float radius = 1.;
-        float percent = r / radius;
-        float strength = 1.;
-        p *= mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-        //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-        p += forceCenter;
+            float radius = 1.;
+            float percent = r / radius;
+            float iPercent = radius / r;
+            //        float strength = 1.;
+            float strength = fFishEyeMod;
+            float step = smoothstep(0.0, iPercent, percent);
+            //        float strengthMod = 1. - step;
+            float strengthMod = .5;
+            //        if (step <1.) discard;
+            zoomFactor = mix(1.0, step, strength * strengthMod);
+
+            p -= forceCenter;
+            p *= zoomFactor;
+            p += forceCenter;
+
+//            mediaP -= forceCenter;
+//            mediaP *= zoomFactor;
+//            mediaP += forceCenter;
+
+            //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
+
+        }
     #endif
 
-    Data data = update(p);
+    Data data = update(p, zoomFactor);
     uvec4 indices = data.indices;
     vec3 c = bMediaEnabled ? mediaColor(mediaP, indices.x, data.mediaBbox) : randomColor(indices.x);
     float a = 1.;

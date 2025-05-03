@@ -1,5 +1,5 @@
 // @ts-nocheck
-// ^ the huge destructuring of function args causes tsc to hang for some reason
+// ^ the huge destructuring of function args causes tsc to hang
 import { clamp, easedMinLerp, lerp, mapRange } from '../../../../utils'
 import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
 
@@ -31,21 +31,125 @@ export const omniForce = ({
   config: {
     cellsLen = cells.length,
     primarySelector = 'focused',
-    requestMediaVersions: _requestMediaVersions = true,
-    requestMediaVersions = globalConfig.media?.enabled && _requestMediaVersions,
-    mediaV2ColLevelAdjacencyThreshold = 6,
-    mediaV2RowLevelAdjacencyThreshold = 3,
-    mediaV1ColLevelAdjacencyThreshold = mediaV2ColLevelAdjacencyThreshold * 4,
-    mediaV1RowLevelAdjacencyThreshold = mediaV2RowLevelAdjacencyThreshold * 4,
-    mediaV1SpeedLimit = 0.5,
-    mediaV2SpeedLimit = 0.25,
-    manageWeights = false,
-    lerpCenterToPrimaryCellOnIdlePointer = true,
-    idlePointerDelay = 500,
     defaultLerpFactor = LERP_FACTOR_DEFAULT,
-    breathing = false,
-    breathingCycleDuration = 6000,
-    breathingVariability = 0.1,
+
+    manageWeights = false,
+    pointer: {
+      lerpCenterToPrimaryCellOnIdle:
+        lerpCenterToPrimaryCellOnIdlePointer = true,
+      idleDelay: idlePointerDelay = 500,
+    } = {},
+    breathing: {
+      enabled: breathing = false,
+      cycleDuration: breathingCycleDuration = 6000,
+      variability: breathingVariability = 0.1,
+    } = {},
+    requestMediaVersions: {
+      enabled: _requestMediaVersions = true,
+      requestMediaVersions = globalConfig.media?.enabled &&
+        _requestMediaVersions,
+      versionCount: mediaVersionCount = globalConfig.media?.versions?.length ??
+        0,
+      maxTargetVersion: maxTargetMediaVersion = mediaVersionCount - 1,
+      v3ColLevelAdjacencyThreshold: mediaV3ColLevelAdjacencyThreshold = 1,
+      v3RowLevelAdjacencyThreshold: mediaV3RowLevelAdjacencyThreshold = 1,
+      v2ColLevelAdjacencyThreshold: mediaV2ColLevelAdjacencyThreshold = 6,
+      v2RowLevelAdjacencyThreshold: mediaV2RowLevelAdjacencyThreshold = 3,
+      v1ColLevelAdjacencyThreshold:
+        mediaV1ColLevelAdjacencyThreshold = mediaV2ColLevelAdjacencyThreshold *
+        4,
+      v1RowLevelAdjacencyThreshold:
+        mediaV1RowLevelAdjacencyThreshold = mediaV2RowLevelAdjacencyThreshold *
+        4,
+      v1SpeedLimit: mediaV1SpeedLimit = 0.5,
+      v2SpeedLimit: mediaV2SpeedLimit = 0.25,
+      v3SpeedLimit: mediaV3SpeedLimit = 0.25,
+      vMaxSpeedLimit: mediaVMaxSpeedLimit = maxTargetMediaVersion === 3
+        ? mediaV3SpeedLimit
+        : mediaV2SpeedLimit,
+      versions: mediaVersions = [
+        ...(mediaVersionCount > 3 &&
+        mediaV3ColLevelAdjacencyThreshold > 0 &&
+        mediaV3RowLevelAdjacencyThreshold > 0
+          ? [
+              {
+                index: 3,
+                adjacencyThreshold: {
+                  col: mediaV3ColLevelAdjacencyThreshold,
+                  row: mediaV3RowLevelAdjacencyThreshold,
+                },
+                speedLimit: mediaV3SpeedLimit,
+              },
+            ]
+          : []),
+        {
+          index: 2,
+          adjacencyThreshold: {
+            col: mediaV2ColLevelAdjacencyThreshold,
+            row: mediaV2RowLevelAdjacencyThreshold,
+          },
+          speedLimit: mediaV2SpeedLimit,
+        },
+        {
+          index: 1,
+          adjacencyThreshold: {
+            col: mediaV1ColLevelAdjacencyThreshold,
+            row: mediaV1RowLevelAdjacencyThreshold,
+          },
+          speedLimit: mediaV1SpeedLimit,
+        },
+      ],
+      validVersions: validMediaVersions = mediaVersions.filter(
+        (v) => v.adjacencyThreshold.col > 0 && v.adjacencyThreshold.row > 0,
+      ),
+      version: mediaVersion = mediaVersions[0],
+      handleCellMediaVersions = (
+        cell,
+        pointerSpeedScale,
+        colLevelAdjacency,
+        rowLevelAdjacency,
+      ) => {
+        for (let i = 0; i < validMediaVersions.length; ++i) {
+          mediaVersion = validMediaVersions[i]
+
+          if (
+            pointerSpeedScale < mediaVersion.speedLimit &&
+            colLevelAdjacency <= mediaVersion.adjacencyThreshold.col &&
+            rowLevelAdjacency <= mediaVersion.adjacencyThreshold.row
+          ) {
+            cell.targetMediaVersion = max(
+              cell.targetMediaVersion,
+              mediaVersion.index,
+            )
+            return
+          }
+        }
+
+        if (pointerSpeedScale < mediaV1SpeedLimit) {
+          cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
+        }
+
+        /** revert to old fn if perf deteriorates **/
+        // if (
+        //   pointerSpeedScale < mediaV2SpeedLimit &&
+        //   colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
+        //   rowLevelAdjacency <= mediaV2RowLevelAdjacencyThreshold
+        // ) {
+        //   cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
+        // } else if (
+        //   pointerSpeedScale < mediaV1SpeedLimit &&
+        //   colLevelAdjacency <= mediaV1ColLevelAdjacencyThreshold &&
+        //   rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
+        // ) {
+        //   cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
+        //   // cell.targetMediaVersion = 1 // reduce res if out of range (free mipmapping)
+        // } else {
+        //   if (pointerSpeedScale < mediaV1SpeedLimit) {
+        //     cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
+        //   }
+        // }
+      },
+    } = {},
     push: {
       strength: _pushStrength = 1,
       // pushStrength = _pushStrength,
@@ -72,6 +176,8 @@ export const omniForce = ({
       maxLevelsFromPrimary: latticeMaxLevelsFromPrimary = 30,
       cellWidth: latticeCellWidth = globalConfig.lattice.cellWidth,
       cellHeight: latticeCellHeight = globalConfig.lattice.cellHeight,
+      cols: latticeCols = globalConfig.lattice.cols,
+      rows: latticeRows = globalConfig.lattice.rows,
     } = {},
     origin: {
       strength: originStrength = 0.8,
@@ -137,12 +243,6 @@ export const omniForce = ({
     primaryCellWeightPushFactor = 1,
     pushSpeedFactor = 1
 
-  // TODO
-  // if (manageMedia) {
-  // const mediaV2DistThreshold = pushRadius * 0.1
-  // const mediaV1DistThreshold = mediaV2DistThreshold * 3
-  // }
-
   function force(alpha) {
     forceSetup(alpha)
     latticeForcePass(alpha) // lattice pass must run in isolation
@@ -187,9 +287,12 @@ export const omniForce = ({
     // console.log('breathingPushMod', breathingPushMod)
 
     if (requestMediaVersions) {
-      if (pointerSpeedScale < mediaV2SpeedLimit) {
-        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 3)
-        primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
+      if (pointerSpeedScale < mediaVMaxSpeedLimit) {
+        primaryCell.targetMediaVersion = max(
+          primaryCell.targetMediaVersion,
+          maxTargetMediaVersion,
+        )
+        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
       }
     }
 
@@ -390,24 +493,12 @@ export const omniForce = ({
           l = sqrt(l)
           // media loading logic, might move it at some point
           if (!isPrimaryCell && requestMediaVersions) {
-            if (
-              pointerSpeedScale < mediaV2SpeedLimit &&
-              // l < mediaV2DistThreshold ||
-              colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
-              rowLevelAdjacency <= mediaV2RowLevelAdjacencyThreshold
-            ) {
-              cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
-            } else if (
-              pointerSpeedScale < mediaV1SpeedLimit &&
-              // l < mediaV1DistThreshold ||
-              colLevelAdjacency <= mediaV1ColLevelAdjacencyThreshold &&
-              rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
-            ) {
-              cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
-              // cell.targetMediaVersion = 1 // reduce res if out of range (free mipmapping)
-            } else {
-              cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
-            }
+            handleCellMediaVersions(
+              cell,
+              pointerSpeedScale,
+              colLevelAdjacency,
+              rowLevelAdjacency,
+            )
           }
 
           l = (pushRadius - l) / l
@@ -508,12 +599,12 @@ export const omniForce = ({
     minLatticeRow = max(primaryCell.row - latticeMaxLevelsFromPrimary, 1)
     maxLatticeRow = min(
       primaryCell.row + latticeMaxLevelsFromPrimary,
-      globalConfig.lattice.rows,
+      latticeRows,
     )
     minLatticeCol = max(primaryCell.col - latticeMaxLevelsFromPrimary, 1)
     maxLatticeCol = min(
       primaryCell.col + latticeMaxLevelsFromPrimary,
-      globalConfig.lattice.cols,
+      latticeCols,
     )
 
     // much faster than looping through all cells
@@ -523,7 +614,7 @@ export const omniForce = ({
         latticeRow < maxLatticeRow;
         latticeRow++
       ) {
-        i = latticeRow * globalConfig.lattice.cols + latticeCol
+        i = latticeRow * latticeCols + latticeCol
         if (i < cellsLen) {
           cell = cells[i]
 
@@ -546,7 +637,7 @@ export const omniForce = ({
           // top
           latticeLinkForce(
             cell,
-            cells[i - globalConfig.lattice.cols],
+            cells[i - latticeCols],
             alpha,
             latticeCellHeight,
             latticeStrengthMod,

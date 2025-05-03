@@ -6,6 +6,7 @@ import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
 import { NoDepthMultiRenderTarget } from './utils/no-depth-multi-render-target'
 import { DynamicMediaGridArrayTexture } from './utils/dynamic-media-grid-array-texture'
 import { readPixelsAsync } from './utils/read-pixels-async'
+import { easedMinLerp } from '../../utils'
 
 export default class BaseScene {
   mainRenderTargets = null
@@ -361,7 +362,9 @@ export default class BaseScene {
       uMediaV0Texture: { value: this.compressedMediaTextures[0] },
       uMediaV1Texture: { value: this.compressedMediaTextures[1] },
       uMediaV2Texture: { value: this.compressedMediaTextures[2] },
-      uMediaV3Texture: { value: this.mediaTextures[0] },
+      uMediaV3Texture: {
+        value: this.mediaTextures[0] ?? new Texture(this.gl, {}),
+      },
       iStdNumMediaVersionCols: {
         value: compressedMediaVersions?.map((v) => v?.cols ?? 0) ?? [0, 0, 0],
       },
@@ -381,10 +384,34 @@ export default class BaseScene {
     ]
   }
 
+  // getForceCenter() {
+  //   const centerX = this.sharedData?.forceCenterX ?? 0
+  //   const centerY = this.sharedData?.forceCenterY ?? 0
+  //   return [centerX, centerY]
+  // }
+
   getForceCenter() {
-    const centerX = this.sharedData?.forceCenterX ?? 0
-    const centerY = this.sharedData?.forceCenterY ?? 0
-    return [centerX, centerY]
+    this.targetForceCenter = [
+      !Number.isNaN(this.sharedData?.forceCenterX) &&
+      this.sharedData?.forceCenterX
+        ? this.sharedData.forceCenterX
+        : this.dimensions.width / 2,
+      !Number.isNaN(this.sharedData?.forceCenterY) &&
+      this.sharedData?.forceCenterY
+        ? this.sharedData.forceCenterY
+        : this.dimensions.height / 2,
+    ]
+
+    console.log('this.targetForceCenter', this.targetForceCenter)
+
+    this.forceCenter = this.forceCenter
+      ? [
+          easedMinLerp(this.forceCenter[0], this.targetForceCenter[0], 0.05),
+          easedMinLerp(this.forceCenter[1], this.targetForceCenter[1], 0.05),
+        ]
+      : this.targetForceCenter
+
+    return this.forceCenter
   }
 
   initBaseUniforms() {
