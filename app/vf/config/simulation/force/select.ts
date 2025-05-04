@@ -6,22 +6,55 @@ export const forceSimulationStepSelectConfig = {
     velocityDecayTransitionEnterMode: 0.5,
   },
   forces: [
+    // {
+    //   type: 'omni',
+    //   enabled: true,
+    //   manageWeights: true,
+    //   requestMediaVersions: {
+    //     enabled: true,
+    //     v3ColLevelAdjacencyThreshold: 1,
+    //     v3RowLevelAdjacencyThreshold: 1,
+    //   },
+    //   breathing: {
+    //     enabled: false,
+    //   },
+    //   push: {
+    //     strength: 0.1,
+    //     selector: 'focused',
+    //     yFactor: 1.5,
+    //   },
+    //   lattice: {
+    //     strength: 0.8,
+    //     yFactor: 1.5,
+    //     xFactor: 1,
+    //     maxLevelsFromPrimary: 50,
+    //   },
+    //   origin: {
+    //     strength: 0.1,
+    //     // yFactor: 1.5,
+    //   },
+    // },
     {
       type: 'omni',
       enabled: true,
+      manageWeights: false,
       requestMediaVersions: {
         enabled: true,
+        v3ColLevelAdjacencyThreshold: 1,
+        v3RowLevelAdjacencyThreshold: 1,
       },
-      manageWeights: true,
+      breathing: {
+        enabled: true,
+      },
       push: {
         strength: 0.1,
         selector: 'focused',
-        yFactor: 1.5,
-        breathing: true,
+        yFactor: 2.5,
+        centerXStretchMod: 1.5,
       },
       lattice: {
         strength: 0.8,
-        yFactor: 1.5,
+        yFactor: 2.75,
         xFactor: 1,
         maxLevelsFromPrimary: 50,
       },

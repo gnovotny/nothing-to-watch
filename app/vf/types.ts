@@ -16,10 +16,12 @@ export type VoroforceInstance = SafeVoroforceInstance & {
 }
 
 export enum VOROFORCE_MODE {
-  preview = 'preview',
-  select = 'select',
-  intro = 'intro',
+  preview = 0,
+  select = 1,
+  intro = 2,
 }
+
+export const DEFAULT_VOROFORCE_MODE: VOROFORCE_MODE = VOROFORCE_MODE.select
 
 export enum VOROFORCE_PRESET {
   mobile = 'mobile',

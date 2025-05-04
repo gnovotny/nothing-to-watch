@@ -1,9 +1,10 @@
 import { forceSimulationStepIntroConfig } from './intro'
 import { forceSimulationStepPreviewConfig } from './preview'
 import { forceSimulationStepSelectConfig } from './select'
+import { VOROFORCE_MODE } from '../../../types'
 
 export const forceSimulationStepConfigs = {
-  preview: forceSimulationStepPreviewConfig,
-  select: forceSimulationStepSelectConfig,
-  intro: forceSimulationStepIntroConfig,
+  [VOROFORCE_MODE.preview]: forceSimulationStepPreviewConfig,
+  [VOROFORCE_MODE.select]: forceSimulationStepSelectConfig,
+  [VOROFORCE_MODE.intro]: forceSimulationStepIntroConfig,
 }

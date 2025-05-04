@@ -1,11 +1,11 @@
 import { Moon, Sun } from 'lucide-react'
 
 import { cn } from '../../../utls/tw'
-import { THEME } from '@/store'
 import { Button } from '../../ui/button'
 
 import { useTheme } from './theme-provider'
 import type { MouseEventHandler } from 'react'
+import {THEME} from "../../../types";
 
 export function ThemeToggle({
   className = '',

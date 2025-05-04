@@ -62,7 +62,7 @@ layout(location = 3) out vec4 voroIndexBuffer2Color;
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define FISHEYE_TEST 1
+#define FISHEYE_STRENGTH 50
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define MEDIA_UV_ROTATE_FACTOR 1
@@ -791,7 +791,9 @@ void main() {
 
     float zoomFactor = 1.;
 
-    #if FISHEYE_TEST == 1
+//    float fishEyeStrength = FISHEYE_STRENGTH;
+
+    #if FISHEYE_STRENGTH != 0
 
         if (fFishEyeMod > 0.) {
 
@@ -804,11 +806,11 @@ void main() {
             float radius = 1.;
             float percent = r / radius;
             float iPercent = radius / r;
-            //        float strength = 1.;
-            float strength = fFishEyeMod;
             float step = smoothstep(0.0, iPercent, percent);
+            //        float strength = 1.;
+            float strength = float(FISHEYE_STRENGTH) / 100.;
             //        float strengthMod = 1. - step;
-            float strengthMod = .5;
+            float strengthMod = fFishEyeMod;
             //        if (step <1.) discard;
             zoomFactor = mix(1.0, step, strength * strengthMod);
 

@@ -1,4 +1,5 @@
 import { forceSimulationStepConfigs } from './force'
+import { DEFAULT_VOROFORCE_MODE } from '../../types'
 
 export default {
   steps: {
@@ -7,6 +8,7 @@ export default {
       baseFocusedWeight: 1,
       baseFocusedDirectXNeighborWeight: 0,
     },
-    force: Object.values(forceSimulationStepConfigs)[0],
+    // force: Object.values(forceSimulationStepConfigs)[0],
+    force: forceSimulationStepConfigs[DEFAULT_VOROFORCE_MODE],
   },
 }

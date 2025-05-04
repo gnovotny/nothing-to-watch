@@ -6,6 +6,8 @@
 // import mainFrag from './main-test-new3.frag'
 // import mainFrag from './main.frag'
 import mainFrag from './main2.frag'
+import { THEME } from '../../../types'
+import { VOROFORCE_MODE } from '../../types'
 // import mainFrag from './main-fisheye-test.frag'
 // import postFrag from './post-fisheye-test.frag'
 
@@ -21,61 +23,56 @@ export default {
         bForceMaxQuality: { value: false },
         bPixelSearch: { value: true },
         fBaseColor: {
-          value: [0, 0, 0],
           animatable: true,
           themes: {
             default: {
               value: [0, 0, 0],
             },
-            light: {
+            [THEME.light]: {
               value: [1, 1, 1],
             },
           },
         },
         fRoundnessMod: {
-          value: 1,
           animatable: true,
           modes: {
             default: {
               value: 1,
             },
-            select: {
+            [VOROFORCE_MODE.select]: {
               value: 3,
             },
           },
         },
         fEdge1Mod: {
-          value: 1,
           animatable: true,
           modes: {
             default: {
               value: 1,
             },
-            select: {
+            [VOROFORCE_MODE.select]: {
               value: 5,
             },
           },
         },
         fEdge0Mod: {
-          value: 1.5,
           animatable: true,
           modes: {
             default: {
               value: 1.5,
             },
-            select: {
+            [VOROFORCE_MODE.select]: {
               value: 3,
             },
           },
         },
         fFishEyeMod: {
-          value: 0,
           animatable: true,
           modes: {
             default: {
               value: 0,
             },
-            select: {
+            [VOROFORCE_MODE.select]: {
               value: 1,
             },
           },

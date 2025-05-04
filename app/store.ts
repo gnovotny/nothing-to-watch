@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import {
   type ConfigUniforms,
+  DEFAULT_VOROFORCE_MODE,
   type Film,
   type FilmBatch,
   type FilmData,
@@ -14,12 +15,7 @@ import {
 import { UAParser } from 'ua-parser-js'
 import type { PerformanceMonitorApi } from './vf/utils/performance-monitor'
 import { useShallow } from 'zustand/react/shallow'
-
-export enum THEME {
-  dark = 'dark',
-  light = 'light',
-  system = 'system',
-}
+import { THEME } from './types'
 
 export type StoreState = {
   theme: THEME
@@ -93,10 +89,9 @@ export const store = create(
         setContainer: (container: HTMLElement) => set({ container }),
         setFilm: (film?: Film) => set({ film }),
         filmBatches: new Map<number, FilmBatch>(),
-        mode: playedIntro ? VOROFORCE_MODE.preview : VOROFORCE_MODE.intro,
-        // mode: playedIntro ? VOROFORCE_MODE.select : VOROFORCE_MODE.intro,
-        isPreviewMode: true,
-        isSelectMode: false,
+        mode: playedIntro ? DEFAULT_VOROFORCE_MODE : VOROFORCE_MODE.intro,
+        isPreviewMode: DEFAULT_VOROFORCE_MODE === VOROFORCE_MODE.preview,
+        isSelectMode: DEFAULT_VOROFORCE_MODE === VOROFORCE_MODE.select,
         setMode: (mode: VOROFORCE_MODE) =>
           set({
             mode,

@@ -8,7 +8,8 @@ import { down, matchMediaQuery } from '../../utls/mq'
 
 import type { StoreState } from '../../store'
 import type { ConfigUniform } from './uniforms'
-import { VOROFORCE_PRESET } from '../types'
+import { type VOROFORCE_MODE, VOROFORCE_PRESET } from '../types'
+import type { THEME } from '../../types'
 
 export type CustomLink = {
   name: string
@@ -136,11 +137,33 @@ export const getConfig = async (state: StoreState) => {
   return config
 }
 
-export const getVoroforceConfigProps = async (state: StoreState) => {
-  const config = await getConfig(state)
+const processVoroforceStageConfigUniforms = (
+  stageConfigUniforms: Record<string, ConfigUniform>,
+  mode: VOROFORCE_MODE,
+  theme: THEME,
+) => {
+  return new Map<string, ConfigUniform>(
+    Object.entries(stageConfigUniforms).map(([key, uniform]) => {
+      if (typeof uniform.value === 'undefined') {
+        uniform.value = uniform.modes
+          ? typeof uniform.modes?.[mode]?.value !== 'undefined'
+            ? uniform.modes[mode].value
+            : (uniform.modes?.default?.value ?? 0)
+          : typeof uniform.themes?.[theme]?.value !== 'undefined'
+            ? uniform.themes[theme].value
+            : (uniform.themes?.default?.value ?? 0)
+      }
+      return [key, uniform]
+    }),
+  )
+}
 
-  console.log('config', config)
-
+const getVoroforceConfigUniforms = (
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  config: any,
+  mode: VOROFORCE_MODE,
+  theme: THEME,
+) => {
   const {
     display: {
       scene: {
@@ -150,14 +173,20 @@ export const getVoroforceConfigProps = async (state: StoreState) => {
     },
   } = config
 
-  const configUniforms = {
-    main: new Map<string, ConfigUniform>(Object.entries(mainConfigUniforms)),
-    post: new Map<string, ConfigUniform>(Object.entries(postConfigUniforms)),
+  return {
+    main: processVoroforceStageConfigUniforms(mainConfigUniforms, mode, theme),
+    post: processVoroforceStageConfigUniforms(postConfigUniforms, mode, theme),
     animating: new Map<string, ConfigUniform>(),
   }
+}
+
+export const getVoroforceConfigProps = async (state: StoreState) => {
+  const config = await getConfig(state)
+
+  console.log('config', config)
 
   return {
     config,
-    configUniforms,
+    configUniforms: getVoroforceConfigUniforms(config, state.mode, state.theme),
   }
 }

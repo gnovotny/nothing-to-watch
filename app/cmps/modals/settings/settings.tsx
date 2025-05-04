@@ -1,5 +1,5 @@
 import { Button } from '../../ui/button'
-import { THEME, useShallowState } from '@/store'
+import { useShallowState } from '@/store'
 import { ScrollArea } from '../../ui/scroll-area'
 import { Modal } from '../../common/modal'
 import { PresetSelector } from '../../common/preset-selector'
@@ -15,6 +15,7 @@ import { cn } from '../../../utls/tw'
 import { Switch } from '../../ui/switch'
 import { Label } from '../../ui/label'
 import { useTheme } from '../../layout'
+import { THEME } from '../../../types'
 
 const NUM_CELL_OPTIONS = [5000, 10000, 25000, 50000, 100000]
 

@@ -1,5 +1,6 @@
 import { type ReactNode, createContext, use, useEffect } from 'react'
-import { store, THEME } from '@/store'
+import { store } from '@/store'
+import {THEME} from "../../../types";
 
 type ThemeProviderProps = {
   children: ReactNode

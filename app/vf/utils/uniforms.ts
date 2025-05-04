@@ -1,6 +1,6 @@
-import type { THEME } from '../../store'
 import { MIN_LERP_EASING_TYPES, easedMinLerp } from './math'
 import type { VOROFORCE_MODE } from '../types'
+import type { THEME } from '../../types'
 
 export type BaseConfigUniform =
   | {

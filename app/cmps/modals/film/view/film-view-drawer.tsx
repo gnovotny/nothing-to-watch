@@ -29,11 +29,13 @@ export const FilmViewDrawer = () => {
     film: activeFilm,
     isSelectMode,
     exitVoroforceSelectMode,
+    newLinkTypeOpen,
   } = useShallowState((state) => ({
     film: state.film,
     isSelectMode: state.isSelectMode,
     updateStoreBounds: state.setFilmViewBounds,
     exitVoroforceSelectMode: state.exitSelectMode,
+    newLinkTypeOpen: state.newLinkTypeOpen,
   }))
 
   const film = useMemo(() => {
@@ -70,6 +72,9 @@ export const FilmViewDrawer = () => {
       contentProps={{
         onMouseEnter: () => setFreezeFilm(true),
         onMouseLeave: () => setFreezeFilm(false),
+        className: cn('group', {
+          'contain-layout contain-paint contain-style': !newLinkTypeOpen,
+        }),
       }}
       innerContentProps={{
         className: cn({

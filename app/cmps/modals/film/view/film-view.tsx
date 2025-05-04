@@ -50,7 +50,13 @@ export const FilmView = ({
         />
       )}
       <div className='relative z-1 flex h-full w-full flex-col'>
-        <div className={cn('max-h-64 w-full md:max-h-auto', {})}>
+        {/*<div className={cn('max-h-64 w-full md:max-h-auto', {})}>*/}
+        <div
+          className={cn(
+            'h-64 w-full group-hover:h-auto group-hover:min-h-64',
+            {},
+          )}
+        >
           <div className='flex h-full w-full flex-row gap-6 p-4 md:p-6 lg:p-6 xl:p-9'>
             <div className='flex w-full flex-col justify-between gap-9'>
               <div className='flex w-full flex-col gap-3'>
@@ -73,7 +79,7 @@ export const FilmView = ({
                 </div>
                 <div className='flex w-full flex-row justify-between gap-3'>
                   <div className='flex flex-col gap-3'>
-                    <p className='text-base text-foreground/80 italic lg:text-xl'>
+                    <p className='line-clamp-1 text-base text-foreground/80 italic lg:text-xl'>
                       {film.tagline}
                     </p>
                     <div className='flex flex-row gap-3 pt-2'>
@@ -87,10 +93,12 @@ export const FilmView = ({
             </div>
           </div>
         </div>
-        <div className='full mb-15 px-4 pb-6 md:px-6 md:pt-6 lg:px-6 lg:pt-0 lg:pb-6 xl:p-9'>
-          <p className='text-base leading-tight max-md:line-clamp-4 max-xl:line-clamp-9 lg:text-xl'>
-            {film.overview}
-          </p>
+        <div className='full mb-15 px-4 pb-6 md:px-6 lg:px-6 lg:pb-6 xl:px-9 xl:pb-9'>
+          <div className='flex flex-col justify-end text-base leading-tight max-lg:h-[calc(4em*1.25)] group-hover:max-lg:h-auto lg:h-[calc(4em*1.25)] lg:text-xl group-hover:lg:h-auto'>
+            <p className='max-lg:line-clamp-4 group-hover:max-lg:line-clamp-none lg:line-clamp-4 group-hover:lg:line-clamp-none'>
+              {film.overview}
+            </p>
+          </div>
         </div>
       </div>
     </div>

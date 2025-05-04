@@ -52,8 +52,8 @@ export const omniForce = ({
         0,
       maxTargetVersion: maxTargetMediaVersion = mediaVersionCount - 1,
       cellTargetMediaVersion = 0,
-      v3ColLevelAdjacencyThreshold: mediaV3ColLevelAdjacencyThreshold = 1,
-      v3RowLevelAdjacencyThreshold: mediaV3RowLevelAdjacencyThreshold = 1,
+      v3ColLevelAdjacencyThreshold: mediaV3ColLevelAdjacencyThreshold = 0,
+      v3RowLevelAdjacencyThreshold: mediaV3RowLevelAdjacencyThreshold = 0,
       v2ColLevelAdjacencyThreshold: mediaV2ColLevelAdjacencyThreshold = 6,
       v2RowLevelAdjacencyThreshold: mediaV2RowLevelAdjacencyThreshold = 3,
       v1ColLevelAdjacencyThreshold:
@@ -589,7 +589,7 @@ export const omniForce = ({
         }
       }
 
-      if (manageWeights && cell.weight !== 0 && i !== primaryCell?.index) {
+      if (/*manageWeights && */ cell.weight !== 0 && i !== primaryCell?.index) {
         cell.weight = easedMinLerp(cell.weight, 0, defaultLerpFactor * 4)
       }
 
