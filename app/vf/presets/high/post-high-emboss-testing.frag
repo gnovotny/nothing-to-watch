@@ -307,14 +307,14 @@ float m(vec3 p){
     // Voronoi heightmap.
     float h = heightMap(uv, p);
 
-    //    // A sprinkling of noise.
-    //    //    vec3 tx = texture(iChannel1, p.xy*2.).xyz; //tx *= tx;
-    //    //    vec3 tx = texture(iChannel1, uv).xyz; //tx *= tx;
-    //    vec3 tx = texture(uMainOutputTexture, uv).xyz; //tx *= tx;
-    //    float gr = dot(tx, vec3(.299, .587, .114));
-    //    //    float gr = dot(tx, tx);
-    //    //float gr = hash22(floor(p.xy*32.)/32.).x;
-    //    h *= (1. + gr*.01);
+        // A sprinkling of noise.
+        //    vec3 tx = texture(iChannel1, p.xy*2.).xyz; //tx *= tx;
+        //    vec3 tx = texture(iChannel1, uv).xyz; //tx *= tx;
+        vec3 tx = texture(uMainOutputTexture, uv).xyz; //tx *= tx;
+        float gr = dot(tx, tx);
+        //    float gr = dot(tx, tx);
+        //float gr = hash22(floor(p.xy*32.)/32.).x;
+        h *= (1. + gr*.05);
 
     // Adding the height map to the back plane.
     //    return -p.z - (h - .5)*.05;
@@ -583,14 +583,14 @@ void main(){
 
     //    for(int i=0; i<1;i++){
     //    for(int i=0; i<40;i++){
-    for(int i=0; i<80;i++){
+    for(int i=0; i<120;i++){
 
         d = m(o + r*t);
         // There isn't really a far plane to go beyond, but it's there anyway.
         if(abs(d)<.001 || t>FAR) break;
         //        t += d*.7;
         //        t += d*.56;
-        t += d*.07;
+        t += d*.04;
         //        t += d*.14;
         //        t += d*.3;
 

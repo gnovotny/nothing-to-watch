@@ -29,9 +29,9 @@ layout(location = 1) out vec4 voroIndexBufferColor;
 ////////////////
 
 vec4 fetchIndices(vec2 position) {
-//    return floatBitsToUint(texelFetch(uVoroIndexBufferTexture, ivec2(position), 0)) - 1u;
+    //    return floatBitsToUint(texelFetch(uVoroIndexBufferTexture, ivec2(position), 0)) - 1u;
     return texelFetch(uVoroIndexBufferTexture, ivec2(position), 0);
-//    return floatBitsToUint(texture(uVoroIndexBufferTexture, position)) - 1u;
+    //    return floatBitsToUint(texture(uVoroIndexBufferTexture, position)) - 1u;
 }
 
 float dot2(vec2 p) {
@@ -116,7 +116,7 @@ float type, float rough, float fresRef){
 
 #define FAR 8.
 
-//int id = 0; // Object ID. (Not used here).
+int objID = 0; // Object ID. (Not used here).
 
 // Standard 2D rotation formula.
 mat2 rot2(in float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
@@ -227,43 +227,73 @@ vec2 gVID;
 // The height map values. In this case, it's just a Voronoi variation. By the way,
 // I could optimize this a lot further.
 //float heightMap(vec3 p){
+//float heightMap(vec2 uv, vec3 p){
+//
+//    vec2 pp = p.xy;
+//    //    pp *= 0.25;
+//
+//    float aspect = iResolution.x / iResolution.y;
+//    vec2 uv2 = vec2(pp.x * 0.5 + 0.5, pp.y * aspect * 0.5 + 0.5);
+//
+//    // Vector holds the rounded edge value, straight edge value,
+//    //    vec3 v3 = texture(uVoroEdgeBufferTexture, uv).rgb;
+//    vec3 v3 = texture(uVoroEdgeBufferTexture, uv2).rgb;
+//
+//    float v = v3.x;
+//    //    float v = v3.y;
+//    gVID = v3.yz;
+//
+//    //    v *= 5.5;
+//    v *= 51.5;
+//
+//    // This hash runs between -.5 and .5
+//    //float v2 = smoothstep(.0, .0, (-r*.5 + hash22(v3.yz + .1).x));
+//    //
+//    // Adding fine lines.
+//    float v2 = smoothstep(.0, .0, (hash22(v3.yz + .1).x + .25));
+//    //float ln = abs(fract(v*4.) - .5)*4. - 1.;
+//    //v = clamp(v + v2*smoothstep(0., .0, -ln*.3), 0., 1.);
+//    //    v += v2*smoothstep(0., .1, -sin(v*TAU*4.))*.3;
+//
+//    // Flatening the tops and hashed based inversion, or whatever...
+//    // I made it all up. :)
+//    v = clamp(v + .05, 0., .55);
+//
+//    v = mix(v, 1. - v, step(0., hash21(v3.yz + .22)));
+//    //    v = mix(v, 1. - v, step(0., hash21(vec2(.22))));
+//    //    v = mix(v, 1. - v, 1.);
+//
+//    v = mix(v, 1. - v, step(0., v - .1));
+//
+//    return v;
+//}
+
 float heightMap(vec2 uv, vec3 p){
 
     vec2 pp = p.xy;
     //    pp *= 0.25;
 
-    float aspect = iResolution.x / iResolution.y;
-    vec2 uv2 = vec2(pp.x * 0.5 + 0.5, pp.y * aspect * 0.5 + 0.5);
-
-    // Vector holds the rounded edge value, straight edge value,
-    //    vec3 v3 = texture(uVoroEdgeBufferTexture, uv).rgb;
-    vec3 v3 = texture(uVoroEdgeBufferTexture, uv2).rgb;
+    vec3 v3 = texture(uVoroEdgeBufferTexture, uv).rgb;
 
     float v = v3.x;
-    //    float v = v3.y;
     gVID = v3.yz;
+
+    if(v<0.025){
+        objID = 1;
+
+    } else {
+        objID = 0;
+    }
 
     //    v *= 5.5;
     v *= 51.5;
 
-    // This hash runs between -.5 and .5
-    //float v2 = smoothstep(.0, .0, (-r*.5 + hash22(v3.yz + .1).x));
-    //
-    // Adding fine lines.
-    float v2 = smoothstep(.0, .0, (hash22(v3.yz + .1).x + .25));
-    //float ln = abs(fract(v*4.) - .5)*4. - 1.;
-    //v = clamp(v + v2*smoothstep(0., .0, -ln*.3), 0., 1.);
-    //    v += v2*smoothstep(0., .1, -sin(v*TAU*4.))*.3;
+//    v = clamp(v + .05, 0., .55);
+    v = clamp(v + .05, 0., .95);
+    //    v = clamp(v + .05, 0., 3.95); // higher
 
-    // Flatening the tops and hashed based inversion, or whatever...
-    // I made it all up. :)
-    v = clamp(v + .05, 0., .55);
 
-    v = mix(v, 1. - v, step(0., hash21(v3.yz + .22)));
-    //    v = mix(v, 1. - v, step(0., hash21(vec2(.22))));
-    //    v = mix(v, 1. - v, 1.);
-
-    v = mix(v, 1. - v, step(0., v - .1));
+    //    v = 1. - v; // reversed z
 
     return v;
 }
@@ -278,14 +308,14 @@ float m(vec3 p){
     // Voronoi heightmap.
     float h = heightMap(uv, p);
 
-//    // A sprinkling of noise.
-//    //    vec3 tx = texture(iChannel1, p.xy*2.).xyz; //tx *= tx;
-//    //    vec3 tx = texture(iChannel1, uv).xyz; //tx *= tx;
-//    vec3 tx = texture(uMainOutputTexture, uv).xyz; //tx *= tx;
-//    float gr = dot(tx, vec3(.299, .587, .114));
-//    //    float gr = dot(tx, tx);
-//    //float gr = hash22(floor(p.xy*32.)/32.).x;
-//    h *= (1. + gr*.01);
+    //    // A sprinkling of noise.
+    //    //    vec3 tx = texture(iChannel1, p.xy*2.).xyz; //tx *= tx;
+    //    //    vec3 tx = texture(iChannel1, uv).xyz; //tx *= tx;
+    //    vec3 tx = texture(uMainOutputTexture, uv).xyz; //tx *= tx;
+    //    float gr = dot(tx, vec3(.299, .587, .114));
+    //    //    float gr = dot(tx, tx);
+    //    //float gr = hash22(floor(p.xy*32.)/32.).x;
+    //    h *= (1. + gr*.01);
 
     // Adding the height map to the back plane.
     //    return -p.z - (h - .5)*.05;
@@ -463,7 +493,7 @@ void main(){
     // Coordinates.
     vec2 fragCoord = gl_FragCoord.xy / iResolution.z;
     vec2 u = (fragCoord - iResolution.xy*.5)/iResolution.y;
-//    vec2 u = (fragCoord*2.0-iResolution.xy) / iResolution.y;
+    //    vec2 u = (fragCoord*2.0-iResolution.xy) / iResolution.y;
 
     vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
     vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
@@ -472,7 +502,7 @@ void main(){
     //u *= rot2(TAU/24.);
 
     // TODO
-//    u *= 1.14;
+    //    u *= 1.14;
 
     // Screen bulge.
     //u *= 1. + dot(u, u)*.08;
@@ -480,7 +510,7 @@ void main(){
 
     //    vec3 o = vec3(iTime/8., iTime/16., -1);
     vec3 o = vec3(0., 0., -1);
-//    vec3 o = vec3(forceCenter, -1);
+    //    vec3 o = vec3(forceCenter, -1);
     vec3 l = vec3(.5, 0, 0);
 
 
@@ -493,45 +523,45 @@ void main(){
 
     #if FISHEYE_TEST == 1
 
-        vec2 fragCoord2 = gl_FragCoord.xy;
-        float forceCenterDist = sqrt(dot2(fragCoord2 - forceCenterPixel));
-        float aspect = iResolution.x / iResolution.y;
-        vec2 screenCenter = vec2(0.5, 0.5 / aspect);
-        vec2 dd = u - forceCenter;
-        float rrr = sqrt(dot(dd, dd));
-        //    if (r > 1.5) {
-        //        discard;
-        //    }
-        float iR = 1. / rrr;
-        //    float iR = abs(r - 1.*aspect)/1.*aspect;
-        float power = ( TAU ) * .25;
-        //    power = clamp(power*iR, 0.0001, ( PI2 ) * .25);
-        //    float power = ( PI2 ) * .5;
-        //    float power = PI;
-        //    float power = ( PI2 ) * .25 * iR;
-        float rr = rrr * 10.15;
-        //    float bind = screenCenter.x;
-        float bind = 0.5;
+    vec2 fragCoord2 = gl_FragCoord.xy;
+    float forceCenterDist = sqrt(dot2(fragCoord2 - forceCenterPixel));
+    float aspect = iResolution.x / iResolution.y;
+    vec2 screenCenter = vec2(0.5, 0.5 / aspect);
+    vec2 dd = u - forceCenter;
+    float rrr = sqrt(dot(dd, dd));
+    //    if (r > 1.5) {
+    //        discard;
+    //    }
+    float iR = 1. / rrr;
+    //    float iR = abs(r - 1.*aspect)/1.*aspect;
+    float power = ( TAU ) * .25;
+    //    power = clamp(power*iR, 0.0001, ( PI2 ) * .25);
+    //    float power = ( PI2 ) * .5;
+    //    float power = PI;
+    //    float power = ( PI2 ) * .25 * iR;
+    float rr = rrr * 10.15;
+    //    float bind = screenCenter.x;
+    float bind = 0.5;
 
-        //    p = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-        //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
-        //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
-        //    p = mix(forceCenter, p, r);
-        //    p = forceCenter + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
+    //    p = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
+    //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
+    //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
+    //    p = mix(forceCenter, p, r);
+    //    p = forceCenter + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
 
-        u -= forceCenter;
-//        o.xy -= forceCenter;
-        float radius = 1.;
-        float percent = rrr / radius;
-//        float strength = 0.75;
-        float strength = 0.25;
-        float factor = mix(1.0, smoothstep(0.0, radius / rrr, percent), strength);
-        u *= factor;
-//        o *= factor;
-//        o.xy *= factor;
-        //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-        u += forceCenter;
-//         o.xy += forceCenter;
+    u -= forceCenter;
+    //        o.xy -= forceCenter;
+    float radius = 1.;
+    float percent = rrr / radius;
+    //        float strength = 0.75;
+    float strength = 0.25;
+    float factor = mix(1.0, smoothstep(0.0, radius / rrr, percent), strength);
+    u *= factor;
+    //        o *= factor;
+    //        o.xy *= factor;
+    //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
+    u += forceCenter;
+    //         o.xy += forceCenter;
     #endif
 
 
@@ -553,7 +583,7 @@ void main(){
     float d, t = 0.;
 
     //    for(int i=0; i<1;i++){
-//    for(int i=0; i<40;i++){
+    //    for(int i=0; i<40;i++){
     for(int i=0; i<80;i++){
 
         d = m(o + r*t);
@@ -561,22 +591,22 @@ void main(){
         if(abs(d)<.001 || t>FAR) break;
         //        t += d*.7;
         //        t += d*.56;
-                t += d*.07;
-//        t += d*.14;
+        t += d*.07;
+        //        t += d*.14;
         //        t += d*.3;
 
     }
 
     t = min(t, FAR);
 
-    //int svID = id; // Object ID. Unused.
+    int svObjID = objID; // Object ID. Unused.
     // Voronoi cell ID.
     vec2 vID = gVID;
 
     // Set the initial scene color to black.
     vec4 c = vec4(0);
 
-//    uvec4 indices = uvec4(uint(-1));
+    //    uvec4 indices = uvec4(uint(-1));
     vec4 indices;
 
     // If the ray hits something in the scene, light it up.
@@ -584,8 +614,8 @@ void main(){
 
         // Position and normal.
         vec3 p = o + r*t;
-//        vec3 p = o + r;
-//        vec3 p = vec3(u, 0.);
+        //        vec3 p = o + r;
+        //        vec3 p = vec3(u, 0.);
         vec3 n = nr(p);
 
         l -= p; // Light to surface vector. Ie: Light direction vector.
@@ -611,7 +641,7 @@ void main(){
         float aspect = iResolution.x / iResolution.y;
         vec2 uv = vec2(p.x * 0.5 + 0.5, p.y * aspect * 0.5 + 0.5);
 
-//        indices = fetchIndices(uv);
+        //        indices = fetchIndices(uv);
         indices = fetchIndices(uv*iResolution.xy);
 
         float hm = heightMap(uv, p);
@@ -624,49 +654,61 @@ void main(){
 
 
         // Texture.
-        //        vec3 tx = tex3D(iChannel0, (p), n);
-        vec3 tx = tex3D(iChannel0, vec3(uv, p.z), n);
-//                vec3 tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
+        vec3 tx;
+        //        tx = tex3D(iChannel0, (p), n);
+        //        tx = tex3D(iChannel0, vec3(uv, p.z), n);
+        //                tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
+
+        if (svObjID == 1) {
+            tx = tex3D(iChannel0, vec3(uv, p.z), n);
+        } else {
+            tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
+        }
+
         vec3 oCol = tx;
 
 
-
-        oCol = mix(oCol, mix(oCol, oCol*cCol*2., .5), step(0., hm - .55));
-
-        //oCol = vec3(1)*dot(oCol, vec3(.299, .587, .114));
-
-
-        // Backfill light.
-        float backFill = max(dot(vec3(-l.xy, 0.), n), 0.);
-        float ns0 = n3D(p*3. + iTime/4.);
-        ns0 = smoothstep(-.25, .25, ns0 - .5);
-        oCol += oCol*mix(vec3(.0, .0, .0), vec3(.01, .01, .01), ns0)*backFill*sh;
-        // Faux Fresnel edge glow.
-        float fres = pow(max(1. - max(dot(-r, n), 0.), 0.), 4.);
-        oCol += oCol*fres;
+        if (svObjID == 1) {
 
 
 
 
+            oCol = mix(oCol, mix(oCol, oCol*cCol*2., .5), step(0., hm - .55));
 
-        // Specular reflections.
-        vec3 hv = normalize(-r + l);
-        vec3 ref = reflect(r, n);
-        // Hacky environmental mapping... I should put more effort into this. :)
-        vec3 tx2 = eMap(ref, n);
-        float specR = pow(max(dot(hv, n), 0.), 8.);
-        oCol += specR*tx2*2.;
+            //oCol = vec3(1)*dot(oCol, vec3(.299, .587, .114));
 
 
-        // Faux shadowing.
-        float shade = hm + .02;
-        oCol *= min(vec3(pow(shade, .8))*1.6, 1.);
-        // Alternative.
-        //oCol *= smoothstep(0., .55, hm)*.8 + .2;
+            // Backfill light.
+            float backFill = max(dot(vec3(-l.xy, 0.), n), 0.);
+            float ns0 = n3D(p*3. + iTime/4.);
+            ns0 = smoothstep(-.25, .25, ns0 - .5);
+            oCol += oCol*mix(vec3(.0, .0, .0), vec3(.01, .01, .01), ns0)*backFill*sh;
+            // Faux Fresnel edge glow.
+            float fres = pow(max(1. - max(dot(-r, n), 0.), 0.), 4.);
+            oCol += oCol*fres;
 
 
 
-        #if 1
+
+
+            // Specular reflections.
+            vec3 hv = normalize(-r + l);
+            vec3 ref = reflect(r, n);
+            // Hacky environmental mapping... I should put more effort into this. :)
+            vec3 tx2 = eMap(ref, n);
+            float specR = pow(max(dot(hv, n), 0.), 8.);
+            oCol += specR*tx2*2.;
+
+
+            // Faux shadowing.
+            float shade = hm + .02;
+            oCol *= min(vec3(pow(shade, .8))*1.6, 1.);
+            // Alternative.
+            //oCol *= smoothstep(0., .55, hm)*.8 + .2;
+
+
+
+            #if 1
             // Hacky BDRF lighting.
             //
             // Quick Lighting Tech - blackle
@@ -694,7 +736,7 @@ void main(){
             // improve this, feel free to let me know. :)
             c.xyz = (oCol*ambience*(sh*.75 + .25) + ct*(sh));
 
-        #else
+            #else
             // Blinn Phong.
             float df = max(dot(l, n), 0.); // Diffuse.
             //df = pow(df, 2.)*.65 + pow(df, 4.)*.75;
@@ -704,7 +746,11 @@ void main(){
 
             // Regular diffuse and specular terms.
             c.xyz = oCol*(df*vec3(1, .97, .92)*2.*sh + vec3(1, .6, .2)*sp*sh + .1);
-        #endif
+            #endif
+
+        } else {
+            c.xyz = oCol;
+        }
 
         // Apply the curvature based lines.
         //c.xyz *= crv*1. + .35;
@@ -723,11 +769,11 @@ void main(){
     //    fragColor = vec4(pow(c.xyz, vec3(1./2.2)), 1);
     outputColor = vec4(pow(c.xyz, vec3(1./1.7)), 1);
 
-//    fragColor = mix(fragColor, texture(uMainOutputTexture, vUv), 0.5);
+    //    fragColor = mix(fragColor, texture(uMainOutputTexture, vUv), 0.5);
 
     //    fragColor = c;
 
-//    voroIndexBufferColor = uintBitsToFloat(indices + 1u);
-//    voroIndexBufferColor = uintBitsToFloat(indices + 1u);
+    //    voroIndexBufferColor = uintBitsToFloat(indices + 1u);
+    //    voroIndexBufferColor = uintBitsToFloat(indices + 1u);
     voroIndexBufferColor = indices;
 }
