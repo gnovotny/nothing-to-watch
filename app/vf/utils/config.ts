@@ -73,7 +73,6 @@ export const getConfig = async (state: StoreState) => {
   const cellsOverrideParam = urlParams.get('cells')
   const customLinkBase64Param = urlParams.get('customLinkBase64')
 
-  // const ua = new UAParser()
   const device = ua.getDevice()
 
   let preset = initialPreset
@@ -131,9 +130,7 @@ export const getConfig = async (state: StoreState) => {
   config.cells = cellsOverrideParam
     ? Number.parseInt(cellsOverrideParam)
     : (userConfig.cells ?? config.cells)
-  // if (userConfig.noPostEffects) {
-  //   config.display.scene.post.enabled = false
-  // }
+
   return config
 }
 

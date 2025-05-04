@@ -35,7 +35,7 @@ export const FilmView = ({
             'absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-[opacity] duration-500 will-change-[opacity]',
             {
               '!w-0 !h-0': backdropErrored,
-              '!opacity-50': !backdropHidden,
+              '!opacity-60 dark:!opacity-50': !backdropHidden,
             },
           )}
           alt=''
@@ -53,7 +53,7 @@ export const FilmView = ({
         {/*<div className={cn('max-h-64 w-full md:max-h-auto', {})}>*/}
         <div
           className={cn(
-            'h-64 w-full group-hover:h-auto group-hover:min-h-64 md:not-landscape:h-48 max-md:landscape:h-full',
+            'h-64 w-full group-hover:h-auto group-hover:min-h-64 md:not-landscape:h-48 group-hover:md:not-landscape:min-h-48 max-md:landscape:h-full',
             {},
           )}
         >
@@ -94,7 +94,7 @@ export const FilmView = ({
           </div>
         </div>
         <div className='full mb-15 px-4 pb-6 md:px-6 lg:px-6 lg:pb-6 xl:px-9 xl:pb-9'>
-          <div className='flex flex-col justify-end text-base leading-tight max-lg:h-[calc(4em*1.25)] group-hover:max-lg:h-auto lg:h-[calc(4em*1.25)] lg:text-xl group-hover:lg:h-auto'>
+          <div className='flex flex-col justify-end text-base leading-tight max-lg:h-[calc(4em*1.25)] group-hover:max-lg:h-auto group-hover:max-lg:min-h-[calc(4em*1.25)] lg:h-[calc(4em*1.25)] lg:text-xl group-hover:lg:h-auto'>
             <p className='max-lg:line-clamp-4 group-hover:max-lg:line-clamp-none lg:line-clamp-4 group-hover:lg:line-clamp-none'>
               {film.overview}
             </p>

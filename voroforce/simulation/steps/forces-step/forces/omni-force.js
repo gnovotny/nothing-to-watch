@@ -180,6 +180,9 @@ export const omniForce = ({
       maxLevelsFromPrimary: latticeMaxLevelsFromPrimary = 30,
       cellWidth: latticeCellWidth = globalConfig.lattice.cellWidth,
       cellHeight: latticeCellHeight = globalConfig.lattice.cellHeight,
+      cellSizeMod: latticeCellSizeMod = 1,
+      cellWidthMod: latticeCellWidthMod = latticeCellSizeMod,
+      cellHeightMod: latticeCellHeightMod = latticeCellSizeMod,
       cols: latticeCols = globalConfig.lattice.cols,
       rows: latticeRows = globalConfig.lattice.rows,
     } = {},
@@ -187,6 +190,9 @@ export const omniForce = ({
       strength: originStrength = 0.8,
       xFactor: originXFactor = 1,
       yFactor: originYFactor = 1,
+      latticeScale: originLatticeScale = 1,
+      originX: originLatticeX = globalConfig.lattice.latticeWidth / 2,
+      originY: originLatticeY = globalConfig.lattice.latticeHeight / 2,
     } = {},
   } = {},
   handleEnd,
@@ -470,13 +476,19 @@ export const omniForce = ({
 
       // origin force
       cell.vx +=
-        (cell.ix - cell.x) *
+        ((originLatticeScale === 1
+          ? cell.ix
+          : (cell.ix - originLatticeX) * originLatticeScale + originLatticeX) -
+          cell.x) *
         originStrength *
         alpha *
         originXFactor *
         (1 - (1 - breathingPushMod) * 3)
       cell.vy +=
-        (cell.iy - cell.y) *
+        ((originLatticeScale === 1
+          ? cell.iy
+          : (cell.iy - originLatticeY) * originLatticeScale + originLatticeY) -
+          cell.y) *
         originStrength *
         alpha *
         originYFactor *
@@ -634,7 +646,7 @@ export const omniForce = ({
             cell,
             cells[i - 1],
             alpha,
-            latticeCellWidth,
+            latticeCellWidth * latticeCellWidthMod,
             latticeStrengthMod,
           )
 
@@ -643,7 +655,7 @@ export const omniForce = ({
             cell,
             cells[i - latticeCols],
             alpha,
-            latticeCellHeight,
+            latticeCellHeight * latticeCellHeightMod,
             latticeStrengthMod,
           )
         }
