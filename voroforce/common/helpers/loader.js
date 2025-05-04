@@ -200,13 +200,8 @@ export class Loader extends CustomEventTarget {
           // mode: 'no-cors',
         })
       ).blob()
-      // console.log('blob', blob)
-
-      // Set image source to blob URL
-      // image.src = URL.createObjectURL(blob)
 
       async function loadImage(src) {
-        // console.log('loadImage', src)
         return new Promise((resolve, reject) => {
           const img = new Image()
           img.onload = () => {
