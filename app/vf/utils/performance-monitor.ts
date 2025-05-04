@@ -54,20 +54,19 @@ export function initPerformanceMonitor(
     iterations = 10,
     ms = 250,
     // ms = 1000,
-    // threshold = 0.75,
-    threshold = 0.25,
+    threshold = 0.75,
+    // threshold = 0.25,
     step = 0.1,
     factor: _factor = 0.5,
     flipflops = Number.POSITIVE_INFINITY,
-    bounds = (refreshRate) => (refreshRate > 100 ? [60, 100] : [40, 60]),
+    bounds = (refreshRate) => (refreshRate > 100 ? [60, 100] : [50, 60]),
     onIncline,
     onDecline,
     onChange,
     onFallback,
   }: PerformanceMonitorProps = {} as PerformanceMonitorProps,
 ) {
-  // biome-ignore lint/style/useExponentiationOperator: <explanation>
-  const decimalPlacesRatio = Math.pow(10, 0)
+  const decimalPlacesRatio = 10 ** 0
   let lastFactor = 0
 
   const api: PerformanceMonitorApi = {
@@ -113,7 +112,7 @@ export function initPerformanceMonitor(
       const lowerBounds = averages.filter((value) => value < lower)
       // Trigger incline when more than -threshold- avgs exceed the upper bound
       if (upperBounds.length > iterations * threshold) {
-        console.log('onIncline')
+        console.log('onIncline', upperBounds.length, iterations * threshold)
         api.factor = Math.min(1, api.factor + step)
         api.flipped++
         if (onIncline) onIncline(api)
@@ -129,7 +128,6 @@ export function initPerformanceMonitor(
       }
 
       if (lastFactor !== api.factor) {
-        console.log('onChange')
         lastFactor = api.factor
         if (onChange) onChange(api)
         api.subscriptions.forEach((sub) => sub.onChange?.(api))

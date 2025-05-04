@@ -406,7 +406,7 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
 //        mediaCols = 1;
 //        mediaRows = 1;
 //        numLayers = int(ceil(50000./54.));
-        numLayers = 1;
+        numLayers = 10;
         mediaCols = 9;
         mediaRows = 6;
     } else {

@@ -30,14 +30,15 @@ export class DynamicMediaGridArrayTexture extends Texture {
     this.tileWidth = tileWidth
     this.tileHeight = tileHeight
 
-    const maxLayers = gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS)
-    this.length = Math.min(
-      Math.ceil(this.length / this.layerCapacity),
-      maxLayers,
-    )
-
+    // const maxLayers = gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS)
+    // this.length = Math.min(
+    //   Math.ceil(this.length / this.layerCapacity),
+    //   maxLayers,
+    // )
     // console.log('this.length', this.length)
     // console.log(`Maximum 2D texture array layers: ${maxLayers}`)
+
+    this.length = 10
 
     this.bind()
     // Initialize the texture storage with aligned dimensions
@@ -71,7 +72,7 @@ export class DynamicMediaGridArrayTexture extends Texture {
       this.gl.RGBA, // internal format
       this.width, // width
       this.height, // height
-      1, //this.length, // depth
+      this.length, //1, this.length, // depth
       0, // border (must be 0)
       this.gl.RGBA, // format
       this.gl.UNSIGNED_BYTE, // type
@@ -171,7 +172,11 @@ export class DynamicMediaGridArrayTexture extends Texture {
       const tileCol = tileIndex % this.cols
 
       // console.log('tileIndex', tileIndex, tileRow, tileCol)
-      // const trueIndex = Math.ceil(index / this.layerCapacity)
+      const trueIndex = Math.ceil(index / this.layerCapacity)
+      // console.log('trueIndex', trueIndex)
+      let virtualIndex = trueIndex % this.length
+      virtualIndex = virtualIndex === 0 ? this.length - 1 : virtualIndex - 1
+      // console.log('virtualIndex', virtualIndex)
       // console.log('bytes', bytes)
       this.gl.texSubImage3D(
         this.gl.TEXTURE_2D_ARRAY,
@@ -180,7 +185,8 @@ export class DynamicMediaGridArrayTexture extends Texture {
         tileRow * this.tileHeight,
         // index,
         // trueIndex,
-        0,
+        // 0,
+        virtualIndex,
         this.tileWidth,
         this.tileHeight,
         1,

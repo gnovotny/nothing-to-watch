@@ -330,7 +330,7 @@ export const handleLattice = (globalConfig, cells, width, height) => {
 
   // TODO
   config.subgrid = globalConfig.media.versions
-    .filter(({ type }) => !type || type === 'compressed')
+    .filter(({ type }) => !type || type === 'compressed-grid')
     .reduce(
       (prev, mediaVersion = {}) => {
         const layerCapacity = mediaVersion.cols * mediaVersion.rows

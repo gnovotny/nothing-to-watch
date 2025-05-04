@@ -11,7 +11,7 @@ export default {
       height: 624,
       layers: Number.parseInt(import.meta.env.VITE_MEDIA_VERSION_0_LAYERS) ?? 1,
       layerSrcFormat: '/low/{EXT}/{INDEX}.{EXT}',
-      type: 'compressed',
+      type: 'compressed-grid',
     },
     {
       cols: 90,
@@ -21,7 +21,7 @@ export default {
       layers:
         Number.parseInt(import.meta.env.VITE_MEDIA_VERSION_1_LAYERS) ?? 10,
       layerSrcFormat: '/mid/{EXT}/{INDEX}.{EXT}',
-      type: 'compressed',
+      type: 'compressed-grid',
     },
     {
       cols: 18,
@@ -31,7 +31,7 @@ export default {
       layers:
         Number.parseInt(import.meta.env.VITE_MEDIA_VERSION_2_LAYERS) ?? 241,
       layerSrcFormat: '/high/{EXT}/{INDEX}.{EXT}',
-      type: 'compressed',
+      type: 'compressed-grid',
     },
   ],
 }
@@ -61,5 +61,5 @@ export const singleVersion = {
   //   )?.poster
   //   if (posterUrl) return `${appConfig.posterBaseUrl}${posterUrl}`
   // },
-  type: 'extra',
+  type: 'uncompressed-single',
 }

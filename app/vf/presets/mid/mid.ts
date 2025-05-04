@@ -5,7 +5,12 @@ import { singleVersion } from '../../config/media'
 export default {
   cells: 25000,
   media: {
-    versions: [...baseConfig.media.versions, singleVersion],
+    versions: [
+      ...baseConfig.media.versions,
+      ...(import.meta.env.VITE_EXPERIMENTAL_MEDIA_VERSION_3_ENABLED
+        ? [singleVersion]
+        : []),
+    ],
   },
   display: {
     scene: {

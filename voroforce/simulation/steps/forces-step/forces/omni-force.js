@@ -51,6 +51,7 @@ export const omniForce = ({
       versionCount: mediaVersionCount = globalConfig.media?.versions?.length ??
         0,
       maxTargetVersion: maxTargetMediaVersion = mediaVersionCount - 1,
+      cellTargetMediaVersion = 0,
       v3ColLevelAdjacencyThreshold: mediaV3ColLevelAdjacencyThreshold = 1,
       v3RowLevelAdjacencyThreshold: mediaV3RowLevelAdjacencyThreshold = 1,
       v2ColLevelAdjacencyThreshold: mediaV2ColLevelAdjacencyThreshold = 6,
@@ -103,12 +104,17 @@ export const omniForce = ({
         (v) => v.adjacencyThreshold.col > 0 && v.adjacencyThreshold.row > 0,
       ),
       version: mediaVersion = mediaVersions[0],
+      highestSpeedLimit: mediaHighestSpeedLimit = validMediaVersions[
+        validMediaVersions.length - 1
+      ].speedLimit,
       handleCellMediaVersions = (
         cell,
         pointerSpeedScale,
         colLevelAdjacency,
         rowLevelAdjacency,
       ) => {
+        if (pointerSpeedScale > mediaHighestSpeedLimit) return
+        /** dynamic but possibly less performant fn **/
         for (let i = 0; i < validMediaVersions.length; ++i) {
           mediaVersion = validMediaVersions[i]
 
@@ -125,11 +131,9 @@ export const omniForce = ({
           }
         }
 
-        if (pointerSpeedScale < mediaV1SpeedLimit) {
-          cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
-        }
+        cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
 
-        /** revert to old fn if perf deteriorates **/
+        /** old hardcoded fn **/
         // if (
         //   pointerSpeedScale < mediaV2SpeedLimit &&
         //   colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
