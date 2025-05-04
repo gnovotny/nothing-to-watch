@@ -44,7 +44,7 @@ export const AnimateHeightChange: React.FC<AnimateHeightChangeProps> = ({
     <div
       {...props}
       className={cn(
-        'relative overflow-hidden transition-[height] duration-300 ease-out will-change-[height]',
+        'overflow-hidden transition-[height] duration-300 ease-out will-change-[height]',
         className,
       )}
       style={{

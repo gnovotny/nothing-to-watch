@@ -190,7 +190,7 @@ export const FilmPreview = ({ poster = false }) => {
             measureRef(element)
           }}
           className={cn(
-            'pointer-events-none absolute top-0 left-0 z-10 w-full max-w-full p-4 opacity-0 transition-opacity duration-300 will-change-transform md:w-300 md:p-0 lg:p-9',
+            'pointer-events-none fixed top-0 left-0 z-10 w-full max-w-full p-4 opacity-0 transition-opacity duration-300 will-change-transform md:w-300 md:p-0 lg:p-9',
             {
               '!opacity-100': active,
             },

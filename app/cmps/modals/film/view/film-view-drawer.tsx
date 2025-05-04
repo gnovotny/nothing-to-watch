@@ -72,9 +72,12 @@ export const FilmViewDrawer = () => {
       contentProps={{
         onMouseEnter: () => setFreezeFilm(true),
         onMouseLeave: () => setFreezeFilm(false),
-        className: cn('group', {
-          'contain-layout contain-paint contain-style': !newLinkTypeOpen,
-        }),
+        className: cn(
+          'group landscape:max-lg:min-w-[33vw] landscape:max-lg:max-w-[66vw]',
+          {
+            'contain-layout contain-paint contain-style': !newLinkTypeOpen,
+          },
+        ),
       }}
       innerContentProps={{
         className: cn({
@@ -89,6 +92,7 @@ export const FilmViewDrawer = () => {
       additional={<AddCustomLinkModal />}
     >
       <AnimateHeightChange
+        className='relative max-lg:landscape:static'
         duration={500}
         delay={100}
         onMouseEnter={() => setViewHovered(true)}

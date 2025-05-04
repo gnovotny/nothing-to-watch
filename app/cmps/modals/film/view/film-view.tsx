@@ -53,7 +53,7 @@ export const FilmView = ({
         {/*<div className={cn('max-h-64 w-full md:max-h-auto', {})}>*/}
         <div
           className={cn(
-            'h-64 w-full group-hover:h-auto group-hover:min-h-64',
+            'h-64 w-full group-hover:h-auto group-hover:min-h-64 md:not-landscape:h-48 max-md:landscape:h-full',
             {},
           )}
         >
@@ -71,7 +71,7 @@ export const FilmView = ({
                   </h3>
                   <div className='absolute top-0 right-0 flex flex-row-reverse items-center gap-3'>
                     <FilmRatingGauge value={film.rating} />
-                    <div className='hidden text-xxs leading-none md:block lg:hidden xl:block'>
+                    <div className='hidden text-xxs leading-none md:not-landscape:block lg:hidden xl:block'>
                       TMDB <br />
                       Score
                     </div>
