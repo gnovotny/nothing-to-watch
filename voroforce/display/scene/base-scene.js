@@ -402,8 +402,6 @@ export default class BaseScene {
         : this.dimensions.height / 2,
     ]
 
-    console.log('this.targetForceCenter', this.targetForceCenter)
-
     this.forceCenter = this.forceCenter
       ? [
           easedMinLerp(this.forceCenter[0], this.targetForceCenter[0], 0.05),

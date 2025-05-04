@@ -216,7 +216,7 @@ export class Loader extends CustomEventTarget {
           img.onerror = () => {
             reject(new Error('Failed to load image'))
           }
-          // img.crossOrigin = 'anonymous'
+          img.crossOrigin = 'use-credentials'
           img.src = src
         })
       }
