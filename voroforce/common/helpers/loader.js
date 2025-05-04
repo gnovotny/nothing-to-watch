@@ -195,11 +195,11 @@ export class Loader extends CustomEventTarget {
       offset += 4 // levelSize field
       bytes = new Uint8Array(arrayBuffer, offset, levelSize)
     } else {
-      // const blob = await (
-      //   await fetch(src, {
-      //     mode: 'no-cors',
-      //   })
-      // ).blob()
+      const blob = await (
+        await fetch(src, {
+          // mode: 'no-cors',
+        })
+      ).blob()
       // console.log('blob', blob)
 
       // Set image source to blob URL
@@ -210,18 +210,18 @@ export class Loader extends CustomEventTarget {
         return new Promise((resolve, reject) => {
           const img = new Image()
           img.onload = () => {
-            // URL.revokeObjectURL(img.src)
+            URL.revokeObjectURL(img.src)
             resolve(img)
           }
           img.onerror = () => {
             reject(new Error('Failed to load image'))
           }
-          img.crossOrigin = 'use-credentials'
+          // img.crossOrigin = 'use-credentials'
           img.src = src
         })
       }
-      // bytes = await loadImage(URL.createObjectURL(blob))
-      bytes = await loadImage(src)
+      bytes = await loadImage(URL.createObjectURL(blob))
+      // bytes = await loadImage(src)
     }
 
     this.loadedIndex++
