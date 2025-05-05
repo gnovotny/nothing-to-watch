@@ -179,6 +179,9 @@ export default class BaseScene {
     if (!this.config.post?.enabled) return
 
     this.postProgram.uniforms.iResolution.value = this.resolutionUniform
+    this.postRenderTargets?.forEach((target) =>
+      target.setSize(this.app.canvas.width, this.app.canvas.height),
+    )
   }
 
   resizeDev() {

@@ -38,7 +38,7 @@ export default class Scene extends BaseScene {
     this.activeMainRenderTarget = this.mainRenderTargets[0]
     this.inactiveMainRenderTarget = this.mainRenderTargets[1]
 
-    if (this.config.post?.enabled && this.config.post.position) {
+    if (this.config.post?.enabled && this.config.post.voroIndexBuffer) {
       this.postRenderTargets = this.initRenderTargets(1, {
         attachments: [
           {
@@ -88,7 +88,7 @@ export default class Scene extends BaseScene {
       this.postCustomUniforms.uVoroEdgeBufferTexture.value =
         this.inactiveMainRenderTarget.voroEdgeBuffer.texture
 
-      if (this.config.post.position) {
+      if (this.config.post.voroIndexBuffer) {
         this.postCustomUniforms.uVoroIndexBufferTexture.value =
           this.inactiveMainRenderTarget.voroIndexBuffer.texture
       }
@@ -140,7 +140,7 @@ export default class Scene extends BaseScene {
       uMainOutputTexture: {
         value: this.inactiveMainRenderTarget.output.texture,
       },
-      ...(this.config.post.position
+      ...(this.config.post.voroIndexBuffer
         ? {
             uVoroIndexBufferTexture: {
               value: this.inactiveMainRenderTarget.voroIndexBuffer.texture,
@@ -160,7 +160,7 @@ export default class Scene extends BaseScene {
   }
 
   getPositionRenderTarget() {
-    if (this.config.post?.enabled && this.config.post.position) {
+    if (this.config.post?.enabled && this.config.post.voroIndexBuffer) {
       return this.postRenderTargets?.[0]
     }
 

@@ -1,5 +1,5 @@
 import midConfig from '../mid/mid'
-import postFrag from './post-high.frag'
+import postFrag from './post-high2.frag'
 import { mergeConfigs } from '√'
 
 export default mergeConfigs(midConfig, {
@@ -8,7 +8,7 @@ export default mergeConfigs(midConfig, {
     scene: {
       post: {
         fragmentShader: postFrag,
-        position: true,
+        voroIndexBuffer: true,
       },
     },
   },
