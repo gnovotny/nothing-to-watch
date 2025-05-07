@@ -21,7 +21,7 @@ export enum VOROFORCE_MODE {
   intro = 2,
 }
 
-export const DEFAULT_VOROFORCE_MODE: VOROFORCE_MODE = VOROFORCE_MODE.select
+export const DEFAULT_VOROFORCE_MODE: VOROFORCE_MODE = VOROFORCE_MODE.preview
 
 export enum VOROFORCE_PRESET {
   mobile = 'mobile',

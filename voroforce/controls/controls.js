@@ -144,7 +144,7 @@ export default class Controls extends CustomEventTarget {
       // Calculate distance
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
-      // Abort if outside of reaction radius
+      // Abort if outside reaction radius
       if (distance > this.pointerRadius) {
         this.freezePointerUntilRefocus()
         return

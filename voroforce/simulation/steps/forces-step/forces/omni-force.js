@@ -8,7 +8,7 @@ const LERP_FACTOR_DEFAULT = 0.025
 const { abs, max, min, sqrt } = Math
 
 const getPushRadius = (dimensions) => {
-  // return dimensions.get('diagonal')
+  return dimensions.get('diagonal')
 
   // const dimensionsScale = 0.5
   const dimensionsScale = 1

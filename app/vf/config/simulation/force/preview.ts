@@ -23,8 +23,8 @@ export const forceSimulationStepPreviewConfig = {
       },
       push: {
         // strength: 0.15,
-        strength: 0.2,
-        // strength: 0.,
+        // strength: 0.2, // for smaller push radius
+        strength: 0.1,
         // strength: 0.4,
         yFactor: 2.5,
         // yFactor: 3,
