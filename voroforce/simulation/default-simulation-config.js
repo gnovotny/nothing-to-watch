@@ -9,6 +9,7 @@ export const defaultForceSimulationStepConfig = {
     alphaMin: 0,
     velocityDecay: 0.7,
   },
+  latticeScale: 1,
   forces: [
     {
       type: 'lattice',

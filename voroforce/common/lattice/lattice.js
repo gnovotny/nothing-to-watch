@@ -410,5 +410,7 @@ export const handleLattice = (globalConfig, cells, width, height) => {
 
   const immediate = prevRows !== config.rows || prevCols !== config.cols
 
+  config.latticeScale = 1 // has no effect on calculations but can be adjusted on the fly and used in the force simulation or fragment shader
+
   packLattice(cells, config, immediate)
 }

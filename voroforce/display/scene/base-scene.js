@@ -65,10 +65,12 @@ export default class BaseScene {
 
   beforeUpdate() {
     if (this.mainBaseUniforms) {
-      const { rows, cols } = this.globalConfig.lattice
+      const { rows, cols, cellWidth, cellHeight } = this.globalConfig.lattice
 
       this.mainBaseUniforms.iLatticeCols.value = cols
       this.mainBaseUniforms.iLatticeRows.value = rows
+      this.mainBaseUniforms.fLatticeCellWidth.value = cellWidth
+      this.mainBaseUniforms.fLatticeCellHeight.value = cellHeight
     }
 
     if (this.baseUniforms) {
@@ -471,13 +473,13 @@ export default class BaseScene {
       fLatticeCellHeight: { value: cellHeight },
       iLatticeCols: { value: cols },
       iLatticeRows: { value: rows },
-      bForceMaxQuality: { value: false },
       iForceMaxNeighborLevel: { value: 0 },
       fRoundnessMod: { value: 1 },
       fEdge1Mod: { value: 1 },
       fEdge0Mod: { value: 1 },
       fBaseColor: { value: [0, 0, 0] },
-      bPostEnabled: { value: this.config.post?.enabled },
+      bDrawEdges: { value: !this.config.post?.enabled },
+      bVoroEdgeBufferOutput: { value: this.config.post?.enabled },
     }
     return {
       ...this.initBaseUniforms(),

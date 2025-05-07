@@ -12,15 +12,14 @@ export class AutoTicker extends CustomEventTarget {
 
     this.fpsCap = fpsCap
     this.frameInterval = 1000 / this.fpsCap // milliseconds per frame
-    this.current = this.initialFrameTime = this.lastFrameTime = 0
+    this.lastFrameTime = 0
+    this.current = 0
   }
 
   init() {
     this.initiated = true
-    this.current =
-      this.initialFrameTime =
-      this.lastFrameTime =
-        performance.now()
+    this.lastFrameTime = performance.now()
+    this.current = this.lastFrameTime
   }
 
   start() {
@@ -36,38 +35,24 @@ export class AutoTicker extends CustomEventTarget {
 
   tick() {
     if (!this.running) return
-    this.fpsGraph?.end()
-    this.fpsGraph?.begin()
 
     requestAnimationFrame(this.tick)
 
     // update metrics
     const currentTime = performance.now()
     this.delta = currentTime - this.current
-
-    console.log('this.delta', this.delta)
-    // const elapsedSinceLastFrame = currentTime - this.lastFrameTime
+    this.current = currentTime
+    this.elapsed = this.current - this.lastFrameTime
 
     // console.log('this.elapsed', this.elapsed)
 
     // Only execute if enough time has passed for our target FPS
-    // if (elapsedSinceLastFrame >= this.frameInterval) {
-    if (this.delta >= this.frameInterval) {
-      // this.fpsGraph?.begin()
-
-      this.current = currentTime - (this.delta % this.frameInterval)
-      this.elapsed = this.current - this.initialFrameTime
+    if (this.elapsed >= this.frameInterval) {
+      this.fpsGraph?.begin()
 
       // Adjust lastFrameTime to maintain consistent timing
       // This prevents time drift by accounting for actual elapsed time
-      // this.lastFrameTime =
-      //   currentTime - (elapsedSinceLastFrame % this.frameInterval)
-
-      // console.log(
-      //   '(elapsedSinceLastFrame % this.frameInterval)',
-      //   elapsedSinceLastFrame,
-      //   elapsedSinceLastFrame % this.frameInterval,
-      // )
+      this.lastFrameTime = currentTime - (this.elapsed % this.frameInterval)
 
       // trigger event
       this.dispatchEvent(
@@ -78,7 +63,7 @@ export class AutoTicker extends CustomEventTarget {
         }),
       )
 
-      // this.fpsGraph?.end()
+      this.fpsGraph?.end()
     }
   }
 

@@ -5,12 +5,11 @@ import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
 
 const LERP_FACTOR_DEFAULT = 0.025
 
-const abs = Math.abs,
-  max = Math.max,
-  min = Math.min,
-  sqrt = Math.sqrt
+const { abs, max, min, sqrt } = Math
 
 const getPushRadius = (dimensions) => {
+  // return dimensions.get('diagonal')
+
   // const dimensionsScale = 0.5
   const dimensionsScale = 1
   const aspect = dimensions.get('aspect')
@@ -159,6 +158,7 @@ export const omniForce = ({
       // pushStrength = _pushStrength,
       pushStrength = _pushStrength * 0.5,
       radius: pushRadius = getPushRadius(dimensions),
+      radiusLimit: pushRadiusLimit = true,
       xFactor: configPushXMod = 1,
       yFactor: configPushYMod = 1,
       speedFactor: configPushSpeedFactor = 0,
@@ -505,7 +505,7 @@ export const omniForce = ({
         y = cell.y + cell.vy - centerY
         l = x * x + y * y
 
-        if (l !== 0 && l < pushRadius * pushRadius) {
+        if (l !== 0 && (!pushRadiusLimit || l < pushRadius * pushRadius)) {
           l = sqrt(l)
           // media loading logic, might move it at some point
           if (!isPrimaryCell && requestMediaVersions) {

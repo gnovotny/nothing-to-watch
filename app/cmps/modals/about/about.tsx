@@ -145,10 +145,12 @@ const items = [
         <p>
           It’s worth noting that this is not a standard Voronoi diagram. The
           seeds are constrained to a grid, which makes the resulting cells
-          extremely uniform. The focused center cell is given slightly more
-          weight to reduce the enlargement of neighboring cells. To balance the
-          additive weighting while maintaining cell aspect ratios, the distance
-          metric is biased 1.5x along the y-axis.
+          extremely uniform. The focused cell is given slightly more weight to
+          reduce the enlargement of neighboring cells. To balance the additive
+          weighting while maintaining cell aspect ratios, the distance metric is
+          biased 1.5x along the y-axis. Depending on the view mode, there is
+          also a bulging effect centering around the focused cell that affects
+          the distance metric.
         </p>
         <br />
         <p className='hidden md:inline-block'>

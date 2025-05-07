@@ -6,9 +6,8 @@ export default {
     voronoi: {
       latticeNeighborLevels: 3,
       baseFocusedWeight: 1,
-      baseFocusedDirectXNeighborWeight: 0,
+      baseFocusedImmediateXNeighborWeight: 0,
     },
-    // force: Object.values(forceSimulationStepConfigs)[0],
     force: forceSimulationStepConfigs[DEFAULT_VOROFORCE_MODE],
   },
 }

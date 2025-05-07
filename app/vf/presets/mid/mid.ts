@@ -1,6 +1,6 @@
 import baseConfig from '../../config/config'
 import postFrag from './post-mid.frag'
-import { singleVersion } from '../../config/media'
+import { uncompressedSingleMediaVersionConfig } from '../../config/media'
 
 export default {
   cells: 25000,
@@ -8,7 +8,7 @@ export default {
     versions: [
       ...baseConfig.media.versions,
       ...(import.meta.env.VITE_EXPERIMENTAL_MEDIA_VERSION_3_ENABLED
-        ? [singleVersion]
+        ? [uncompressedSingleMediaVersionConfig]
         : []),
     ],
   },

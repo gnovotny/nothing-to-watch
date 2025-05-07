@@ -55,8 +55,8 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
   updateWeights(/*alpha, velocityDecay*/) {
     const baseFocusedWeight = this.config.baseFocusedWeight
     if (!baseFocusedWeight) return
-    const baseFocusedDirectXNeighborWeight =
-      this.config.baseFocusedDirectXNeighborWeight ?? 0
+    const baseFocusedImmediateXNeighborWeight =
+      this.config.baseFocusedImmediateXNeighborWeight ?? 0
 
     const cellWidth = this.globalConfig.lattice.cellWidth
 
@@ -84,7 +84,7 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
           })
         }
 
-        if (baseFocusedDirectXNeighborWeight) {
+        if (baseFocusedImmediateXNeighborWeight) {
           ;[
             focusedCellLeftNeighborIndex,
             focusedCellRightNeighborIndex,
@@ -136,7 +136,7 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
           this.cellWeights[key] = newValue
         }
       } else if (
-        baseFocusedDirectXNeighborWeight &&
+        baseFocusedImmediateXNeighborWeight &&
         (key === focusedCellLeftNeighborIndex ||
           key === focusedCellRightNeighborIndex)
       ) {
@@ -153,12 +153,12 @@ export default class VoronoiSimulationStep extends BaseSimulationStep {
         //   Math.abs(this.cells[key].x - cellRightNeighborX)
         // const wMod = avgXDist / cellWidth
         const wMod = 1
-        const focusedDirectXNeighborWeight =
-          baseFocusedDirectXNeighborWeight * wMod
-        if (value !== focusedDirectXNeighborWeight) {
+        const focusedImmediateXNeighborWeight =
+          baseFocusedImmediateXNeighborWeight * wMod
+        if (value !== focusedImmediateXNeighborWeight) {
           const newValue = easedMinLerp(
             value,
-            focusedDirectXNeighborWeight,
+            focusedImmediateXNeighborWeight,
             0.025,
           )
           item.value = newValue

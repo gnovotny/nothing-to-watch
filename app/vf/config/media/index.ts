@@ -36,7 +36,7 @@ export default {
   ],
 }
 
-export const singleVersion = {
+export const uncompressedSingleMediaVersionConfig = {
   cols: 1,
   rows: 1,
   realCols: 9,

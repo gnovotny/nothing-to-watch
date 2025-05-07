@@ -1,6 +1,9 @@
 import type { RectReadOnly } from 'react-use-measure'
 import { create } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import { subscribeWithSelector } from 'zustand/middleware'
+import { UAParser } from 'ua-parser-js'
+
 import {
   type ConfigUniforms,
   DEFAULT_VOROFORCE_MODE,
@@ -11,10 +14,9 @@ import {
   VOROFORCE_MODE,
   type VOROFORCE_PRESET,
   type VoroforceInstance,
+  type PerformanceMonitorApi,
 } from './vf'
-import { UAParser } from 'ua-parser-js'
-import type { PerformanceMonitorApi } from './vf/utils/performance-monitor'
-import { useShallow } from 'zustand/react/shallow'
+
 import { THEME } from './types'
 
 export type StoreState = {
