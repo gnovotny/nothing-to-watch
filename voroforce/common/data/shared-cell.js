@@ -23,7 +23,7 @@ export class SharedCell {
     this.cellMediaVersionsArray = cellMediaVersionsArray
     this.cellIdsArray = cellIdsArray
 
-    this.id = cellData.id
+    // this.id = cellData.id
     this.index = cellData.index
     this.group = cellData.group
 

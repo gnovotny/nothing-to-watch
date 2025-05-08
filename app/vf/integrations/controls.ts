@@ -14,7 +14,12 @@ export const handleControls = () => {
 
   controls.listen('selected', (async ({ cell }: { cell: VoroforceCell }) => {
     // if (store.getState().mode !== VOROFORCE_MODES.select) return
-    controls.freezePointerUntilBlurAndRefocus()
-    if (cell) setFilm(await getCellFilm(cell, filmBatches))
+
+    if (cell) {
+      setFilm(await getCellFilm(cell, filmBatches))
+      controls.freezePointerUntilBlurAndRefocus()
+    } else {
+      controls.unfreezePointer()
+    }
   }) as unknown as EventListener)
 }

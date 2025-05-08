@@ -45,7 +45,7 @@ export class AutoTicker extends CustomEventTarget {
     const currentTime = performance.now()
     this.delta = currentTime - this.current
 
-    console.log('this.delta', this.delta)
+    // console.log('this.delta', this.delta)
     // const elapsedSinceLastFrame = currentTime - this.lastFrameTime
 
     // console.log('this.elapsed', this.elapsed)

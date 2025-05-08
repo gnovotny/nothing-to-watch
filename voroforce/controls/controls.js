@@ -30,6 +30,7 @@ export default class Controls extends CustomEventTarget {
   prevX = 0
   prevY = 0
   prevTime = 0
+  prevSpeed = 0
   pointerFrozen = true
   pointerFrozenUntilRefocus = true
 
@@ -102,7 +103,7 @@ export default class Controls extends CustomEventTarget {
   }
 
   handleUpdate(targetPointer = this.targetPointer) {
-    if (this.pointerFrozen) {
+    if (this.pointerFrozenUntilRefocus) {
       this.getCellIndices(this.pointer, (primaryIndex, indices) => {
         Object.assign(this.pointer, {
           indices,
@@ -121,9 +122,10 @@ export default class Controls extends CustomEventTarget {
 
     let newPointerPosition = { x: targetPointer.x, y: targetPointer.y }
 
-    if (!this.pointerFrozen) {
+    if (!this.pointerFrozenUntilRefocus) {
       const currentTime = performance.now()
       const deltaTime = Math.min(currentTime - this.prevTime, this.maxDeltaTime) // Cap the deltaTime to prevent jumps
+      // const deltaTime = currentTime - this.prevTime
 
       if (
         this.prevTime === 0 ||
@@ -157,6 +159,10 @@ export default class Controls extends CustomEventTarget {
       // Calculate current speed (pixels per second)
       let speed = distance / (deltaTime / 1000)
 
+      // if (this.prevSpeed) {
+      //   speed = (speed + this.prevSpeed) / 2
+      // }
+
       // Apply speed limit if needed
       if (speed > dynamicMaxPointerSpeed) {
         // Scale factor to limit speed
@@ -185,15 +191,28 @@ export default class Controls extends CustomEventTarget {
         Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed,
         0.1,
       )
-      Object.assign(this.pointer, newPointerPosition)
-      this.handlePointerMove()
+      if (!this.pointerFrozen) {
+        Object.assign(this.pointer, newPointerPosition)
+        this.handlePointerMove()
+      }
     }
 
     this.getCellIndices(newPointerPosition, (primaryIndex, indices) => {
       if (this.pointerFrozen) {
         if (this.pointerFrozenUntilBlurAndRefocus) {
           if (this.cells.focusedIndex !== primaryIndex) {
-            this.freezePointerUntilRefocus()
+            // this.freezePointerUntilRefocus()
+
+            this.pointer.speedScale = 0
+            this.pointerFrozenUntilBlurAndRefocus = false
+
+            Object.assign(this.pointer, this.frozenPointer)
+            setTimeout(() => this.freezePointerUntilRefocus(), 250)
+          } else {
+            Object.assign(this.pointer, {
+              indices,
+            })
+            Object.assign(this.pointer, newPointerPosition)
           }
         } else if (this.pointerFrozenUntilRefocus) {
           if (this.cells.focusedIndex === primaryIndex) {
@@ -217,19 +236,42 @@ export default class Controls extends CustomEventTarget {
   freezePointer() {
     this.prevX = undefined
     this.prevY = undefined
-    this.pointer.speedScale = 0
     this.pointerFrozen = true
-    this.pointerFrozenUntilRefocus = true
+
+    if (!this.frozenPointer) {
+      this.frozenPointer = {
+        indices: this.pointer.indices,
+        x: this.pointer.x,
+        y: this.pointer.y,
+      }
+    }
+
+    // if (this.frozenPointer) {
+    //   Object.assign(this.pointer, {
+    //     indices: this.frozenPointer.indices,
+    //     x: this.frozenPointer.x,
+    //     y: this.frozenPointer.y,
+    //   })
+    // } else {
+    //   this.frozenPointer = {
+    //     indices: this.pointer.indices,
+    //     x: this.pointer.x,
+    //     y: this.pointer.y,
+    //   }
+    // }
   }
 
   freezePointerUntilRefocus() {
     this.freezePointer()
+    this.pointer.speedScale = 0
     this.pointerFrozenUntilRefocus = true
     this.pointerFrozenUntilBlurAndRefocus = false
   }
 
   freezePointerUntilBlurAndRefocus() {
-    this.freezePointerUntilRefocus()
+    this.freezePointer()
+    this.pointer.speedScale = 0.05
+    this.pointerFrozenUntilRefocus = false
     this.pointerFrozenUntilBlurAndRefocus = true
   }
 
@@ -237,6 +279,7 @@ export default class Controls extends CustomEventTarget {
     this.pointerFrozenUntilRefocus = false
     this.pointerFrozenUntilBlurAndRefocus = false
     this.pointerFrozen = false
+    this.frozenPointer = null
   }
 
   onPointerDown(e) {

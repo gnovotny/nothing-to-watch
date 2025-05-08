@@ -36,7 +36,8 @@ export const omniForce = ({
     pointer: {
       lerpCenterToPrimaryCellOnIdle:
         lerpCenterToPrimaryCellOnIdlePointer = true,
-      idleDelay: idlePointerDelay = 500,
+      // idleDelay: idlePointerDelay = 500,
+      idleDelay: idlePointerDelay = 0,
     } = {},
     breathing: {
       enabled: breathing = false,
@@ -203,6 +204,7 @@ export const omniForce = ({
     centerY,
     targetCenterX,
     targetCenterY,
+    targetCenterLerp = defaultLerpFactor,
     primaryCell,
     newPrimaryCell,
     prevPrimaryCell,
@@ -246,7 +248,7 @@ export const omniForce = ({
     centerXStretchMod,
     isPrimaryCell = false,
     pointerSpeedScale = 0,
-    idlePointerScale = 1,
+    inversePointerSpeedScale = 1,
     idlePointerTimeout,
     idleLerpCenterToPrimaryCell = false,
     primaryCellWeight = 0,
@@ -278,7 +280,7 @@ export const omniForce = ({
     //   defaultLerpFactor,
     // )
     // console.log('pointerSpeedScale', pointerSpeedScale)
-    idlePointerScale = 1 - pointerSpeedScale
+    inversePointerSpeedScale = 1 - pointerSpeedScale
 
     if (breathing) {
       timestamp = Date.now()
@@ -291,7 +293,7 @@ export const omniForce = ({
             breathingCycleDuration,
         ) *
           breathingVariability *
-          idlePointerScale
+          inversePointerSpeedScale
     }
 
     // console.log('breathingPushMod', breathingPushMod)
@@ -309,7 +311,7 @@ export const omniForce = ({
     if (configPushSpeedFactor > 0) {
       pushSpeedFactor = easedMinLerp(
         pushSpeedFactor,
-        max(idlePointerScale, 0.2),
+        max(inversePointerSpeedScale, 0.2),
         defaultLerpFactor,
       )
     }
@@ -367,17 +369,26 @@ export const omniForce = ({
 
       // console.log('inversePointerSpeedScale', inversePointerSpeedScale)
 
+      targetCenterLerp = max(
+        pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
+        defaultLerpFactor,
+      )
+
+      // console.log('targetCenterLerp', targetCenterLerp)
+
       targetCenterX = easedMinLerp(
         targetCenterX,
         pointer?.x ?? primaryCellX,
         // defaultLerpFactor,
-        idlePointerScale,
+        // inversePointerSpeedScale,
+        targetCenterLerp,
       )
       targetCenterY = easedMinLerp(
         targetCenterY,
         pointer?.y ?? primaryCellY,
         // defaultLerpFactor,
-        idlePointerScale,
+        // inversePointerSpeedScale,
+        targetCenterLerp,
       )
 
       // if (centerToPrimaryCellDist < targetCenterToPrimaryCellDist) {
@@ -438,13 +449,13 @@ export const omniForce = ({
         // breathingPushMod ** 2 *
         breathingPushMod *
         // (1 - breathingPushMod) *
-        idlePointerScale *
+        inversePointerSpeedScale *
         pushSpeedFactor
       primaryCellWeight = primaryCell.weight = easedMinLerp(
         primaryCell.weight,
         primaryCellWeight,
         primaryCellWeight > primaryCell.weight
-          ? defaultLerpFactor * sqrt(idlePointerScale)
+          ? defaultLerpFactor * sqrt(inversePointerSpeedScale)
           : defaultLerpFactor * 3,
       )
 
@@ -478,7 +489,7 @@ export const omniForce = ({
       cell.vx +=
         ((originLatticeScale === 1
           ? cell.ix
-          : (cell.ix - originLatticeX) * originLatticeScale + originLatticeX) -
+          : (cell.ix - centerX) * originLatticeScale + centerX) -
           cell.x) *
         originStrength *
         alpha *
@@ -487,7 +498,7 @@ export const omniForce = ({
       cell.vy +=
         ((originLatticeScale === 1
           ? cell.iy
-          : (cell.iy - originLatticeY) * originLatticeScale + originLatticeY) -
+          : (cell.iy - centerY) * originLatticeScale + centerY) -
           cell.y) *
         originStrength *
         alpha *

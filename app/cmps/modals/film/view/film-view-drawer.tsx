@@ -1,4 +1,4 @@
-import { lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useMediaQuery } from '../../../../hks/use-media-query'
 import { useShallowState } from '@/store'
@@ -61,12 +61,17 @@ export const FilmViewDrawer = () => {
     [viewMounted, film],
   )
 
+  const onClose = useCallback(() => {
+    exitVoroforceSelectMode()
+    setFreezeFilm(false)
+  }, [exitVoroforceSelectMode])
+
   return (
     <Modal
       rootProps={{
         direction: landscape ? 'left' : 'top',
         open: isSelectMode,
-        onClose: exitVoroforceSelectMode,
+        onClose,
         modal: false,
       }}
       contentProps={{

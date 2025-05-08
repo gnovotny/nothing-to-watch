@@ -66,17 +66,27 @@ export class DynamicMediaGridArrayTexture extends Texture {
     //   this.type,
     //   bytes,
     // )
-    gl.texImage3D(
-      this.gl.TEXTURE_2D_ARRAY,
-      0,
-      this.gl.RGBA, // internal format
-      this.width, // width
-      this.height, // height
-      this.length, //1, this.length, // depth
-      0, // border (must be 0)
-      this.gl.RGBA, // format
-      this.gl.UNSIGNED_BYTE, // type
-      null, // data
+
+    // gl.texImage3D(
+    //   this.gl.TEXTURE_2D_ARRAY,
+    //   0,
+    //   this.gl.RGBA, // internal format
+    //   this.width, // width
+    //   this.height, // height
+    //   this.length, //1, this.length, // depth
+    //   0, // border (must be 0)
+    //   this.gl.RGBA, // format
+    //   this.gl.UNSIGNED_BYTE, // type
+    //   null, // data
+    // )
+
+    gl.texStorage3D(
+      gl.TEXTURE_2D_ARRAY,
+      1, // mipmap levels
+      this.gl.RGBA8,
+      this.width,
+      this.height,
+      this.length, // (number of layers)
     )
   }
 
@@ -167,16 +177,23 @@ export class DynamicMediaGridArrayTexture extends Texture {
     }
 
     this.pendingLayerUpdates.forEach(({ index, bytes }) => {
+      // index++
       const tileIndex = index % this.layerCapacity
       const tileRow = Math.floor(tileIndex / this.cols)
       const tileCol = tileIndex % this.cols
 
       // console.log('tileIndex', tileIndex, tileRow, tileCol)
-      const trueIndex = Math.ceil(index / this.layerCapacity)
+      const trueIndex = Math.floor(index / this.layerCapacity)
       // console.log('trueIndex', trueIndex)
-      let virtualIndex = trueIndex % this.length
-      virtualIndex = virtualIndex === 0 ? this.length - 1 : virtualIndex - 1
-      // console.log('virtualIndex', virtualIndex)
+      const virtualIndex = trueIndex % this.length
+      // console.log(
+      //   'virtualIndex',
+      //   index,
+      //   trueIndex,
+      //   virtualIndex,
+      //   tileCol,
+      //   tileRow,
+      // )
       // console.log('bytes', bytes)
       this.gl.texSubImage3D(
         this.gl.TEXTURE_2D_ARRAY,
