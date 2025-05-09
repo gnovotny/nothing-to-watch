@@ -1,4 +1,4 @@
-import { clamp, easedMinLerp, isTouchDevice, setStyles } from '../utils'
+import { clamp, isTouchDevice, setStyles } from '../utils'
 import { CustomEventTarget } from '../utils/custom-event-target'
 
 const TMP_TOUCH_DRAG_MODE = true
@@ -66,9 +66,9 @@ export default class Controls extends CustomEventTarget {
 
   handleFirstUpdate() {
     if (
+      this.cells.focused ||
       !this.config.autoFocusCenter?.enabled ||
-      (this.config.autoFocusCenter.enabled === 'touch' && !isTouchDevice) ||
-      this.cells.focused
+      (this.config.autoFocusCenter.enabled === 'touch' && !isTouchDevice)
     ) {
       this.update = this.handleUpdate
       return
@@ -186,11 +186,13 @@ export default class Controls extends CustomEventTarget {
 
       this.prevTime = currentTime
 
-      this.pointer.speedScale = easedMinLerp(
-        this.pointer.speedScale,
-        Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed,
-        0.1,
-      )
+      this.pointer.speedScale =
+        Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed
+      // this.pointer.speedScale = easedMinLerp(
+      //     this.pointer.speedScale,
+      //     Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed,
+      //     0.1,
+      // )
       if (!this.pointerFrozen) {
         Object.assign(this.pointer, newPointerPosition)
         this.handlePointerMove()

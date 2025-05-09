@@ -5,17 +5,11 @@ export class DynamicMediaGridArrayTexture extends Texture {
     super(gl, {
       ...args,
       target: gl.TEXTURE_2D_ARRAY,
-
       // These are the key parameters for bilinear filtering
       minFilter: gl.LINEAR,
       magFilter: gl.LINEAR,
-
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
-
-      // If using mipmaps
-      // generateMipmaps: true, // For some compressed formats
-      // minFilter: gl.LINEAR_MIPMAP_LINEAR, // Trilinear filtering with mipmaps
     })
 
     const {
@@ -23,50 +17,22 @@ export class DynamicMediaGridArrayTexture extends Texture {
       realRows: rows,
       tileWidth,
       tileHeight,
+      virtualLayers: length = 10,
     } = args.mediaVersion
     this.cols = cols
     this.rows = rows
     this.layerCapacity = cols * rows
     this.tileWidth = tileWidth
     this.tileHeight = tileHeight
+    this.length = length
 
     // const maxLayers = gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS)
     // this.length = Math.min(
     //   Math.ceil(this.length / this.layerCapacity),
     //   maxLayers,
     // )
-    // console.log('this.length', this.length)
-    // console.log(`Maximum 2D texture array layers: ${maxLayers}`)
-
-    this.length = 10
 
     this.bind()
-    // Initialize the texture storage with aligned dimensions
-    // gl.texStorage3D(
-    //   gl.TEXTURE_2D_ARRAY,
-    //   1, // (1 for no mipmaps)
-    //   // this.internalFormat,
-    //   gl.RGBA8,
-    //   this.width,
-    //   this.height,
-    //   this.length, // (number of layers)
-    // )
-
-    // this.gl.texSubImage3D(
-    //   this.gl.TEXTURE_2D_ARRAY,
-    //   0,
-    //   0,
-    //   0,
-    //   // index,
-    //   trueIndex,
-    //   this.tileWidth,
-    //   this.tileHeight,
-    //   1,
-    //   this.format,
-    //   this.type,
-    //   bytes,
-    // )
-
     // gl.texImage3D(
     //   this.gl.TEXTURE_2D_ARRAY,
     //   0,
@@ -79,7 +45,6 @@ export class DynamicMediaGridArrayTexture extends Texture {
     //   this.gl.UNSIGNED_BYTE, // type
     //   null, // data
     // )
-
     gl.texStorage3D(
       gl.TEXTURE_2D_ARRAY,
       1, // mipmap levels
@@ -177,33 +142,18 @@ export class DynamicMediaGridArrayTexture extends Texture {
     }
 
     this.pendingLayerUpdates.forEach(({ index, bytes }) => {
-      // index++
       const tileIndex = index % this.layerCapacity
       const tileRow = Math.floor(tileIndex / this.cols)
       const tileCol = tileIndex % this.cols
 
-      // console.log('tileIndex', tileIndex, tileRow, tileCol)
-      const trueIndex = Math.floor(index / this.layerCapacity)
-      // console.log('trueIndex', trueIndex)
-      const virtualIndex = trueIndex % this.length
-      // console.log(
-      //   'virtualIndex',
-      //   index,
-      //   trueIndex,
-      //   virtualIndex,
-      //   tileCol,
-      //   tileRow,
-      // )
-      // console.log('bytes', bytes)
+      const trueLayerIndex = Math.floor(index / this.layerCapacity)
+      const virtualLayerIndex = trueLayerIndex % this.length
       this.gl.texSubImage3D(
         this.gl.TEXTURE_2D_ARRAY,
         0,
         tileCol * this.tileWidth,
         tileRow * this.tileHeight,
-        // index,
-        // trueIndex,
-        // 0,
-        virtualIndex,
+        virtualLayerIndex,
         this.tileWidth,
         this.tileHeight,
         1,
@@ -211,20 +161,6 @@ export class DynamicMediaGridArrayTexture extends Texture {
         this.type,
         bytes,
       )
-
-      // this.gl.texSubImage3D(
-      //     this.gl.TEXTURE_2D_ARRAY,
-      //     0,
-      //     0,
-      //     0,
-      //     index,
-      //     this.globalConfig.media.width,
-      //     this.globalConfig.media.height,
-      //     1,
-      //     this.gl.RGBA,
-      //     this.gl.UNSIGNED_BYTE,
-      //     media.image,
-      // )
     })
 
     this.pendingLayerUpdates = []

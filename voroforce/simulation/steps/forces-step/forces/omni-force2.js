@@ -202,9 +202,7 @@ export const omniForce = ({
 
   let centerX,
     centerY,
-    targetCenterX,
-    targetCenterY,
-    targetCenterLerp = defaultLerpFactor,
+    centerLerp = defaultLerpFactor,
     primaryCell,
     newPrimaryCell,
     prevPrimaryCell,
@@ -249,6 +247,8 @@ export const omniForce = ({
     isPrimaryCell = false,
     pointerSpeedScale = 0,
     inversePointerSpeedScale = 1,
+    relativePointerSpeedScale = 0,
+    newRelativePointerSpeedScale = 0,
     idlePointerTimeout,
     idleLerpCenterToPrimaryCell = false,
     primaryCellWeight = 0,
@@ -273,17 +273,14 @@ export const omniForce = ({
 
     if (!primaryCell) return
 
-    pointerSpeedScale = pointer.speedScale
-    // pointerSpeedScale = easedMinLerp(
-    //   pointerSpeedScale,
-    //   pointer.speedScale,
-    //   defaultLerpFactor,
-    // )
+    // pointerSpeedScale = pointer.speedScale
+    pointerSpeedScale = easedMinLerp(pointerSpeedScale, pointer.speedScale, 0.1)
+
     // console.log('pointerSpeedScale', pointerSpeedScale)
     inversePointerSpeedScale = 1 - pointerSpeedScale
 
     if (breathing) {
-      timestamp = Date.now()
+      timestamp = performance.now()
       if (!startTime) startTime = timestamp
       breathingPushMod =
         1 -
@@ -296,15 +293,12 @@ export const omniForce = ({
           inversePointerSpeedScale
     }
 
-    // console.log('breathingPushMod', breathingPushMod)
-
     if (requestMediaVersions) {
       if (pointerSpeedScale < mediaVMaxSpeedLimit) {
         primaryCell.targetMediaVersion = max(
           primaryCell.targetMediaVersion,
           maxTargetMediaVersion,
         )
-        // primaryCell.targetMediaVersion = max(primaryCell.targetMediaVersion, 2)
       }
     }
 
@@ -318,108 +312,141 @@ export const omniForce = ({
 
     primaryCellX = primaryCell.x + primaryCell.vx
     primaryCellY = primaryCell.y + primaryCell.vy
-    targetCenterX ??= primaryCellX
-    targetCenterY ??= primaryCellY
+    centerX ??= primaryCellX
+    centerY ??= primaryCellY
 
-    // x = targetCenterX - primaryCellX
-    // y = targetCenterY - primaryCellY
-    // prevTargetCenterToPrimaryCellDist = targetCenterToPrimaryCellDist
-    // targetCenterToPrimaryCellDist = sqrt(x * x + y * y)
+    // centerLerp = easedMinLerp(
+    //     centerLerp,
+    //     inversePointerSpeedScale,
+    //     // pointerSpeedScale,
+    //     // max(
+    //     //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
+    //     //   defaultLerpFactor,
+    //     // ),
+    //     defaultLerpFactor,
+    // )
+    centerLerp = inversePointerSpeedScale
 
-    if (lerpCenterToPrimaryCellOnIdlePointer && pointerSpeedScale === 0) {
-      if (idlePointerDelay > 0) {
-        if (!idleLerpCenterToPrimaryCell && !idlePointerTimeout) {
-          idlePointerTimeout = setTimeout(() => {
-            idleLerpCenterToPrimaryCell = true
-          }, idlePointerDelay)
-        }
-      } else {
-        idleLerpCenterToPrimaryCell = true
-      }
+    newRelativePointerSpeedScale =
+      pointerSpeedScale <= 0.005 ? pointerSpeedScale / 0.005 : 1
 
-      if (idleLerpCenterToPrimaryCell) {
-        // if (pointerSpeedScale < 0.05) {
-        // targetCenterX = primaryCellX
-        // targetCenterY = primaryCellY
-        targetCenterX = easedMinLerp(
-          targetCenterX,
-          primaryCellX,
-          defaultLerpFactor,
-        )
-        targetCenterY = easedMinLerp(
-          targetCenterY,
-          primaryCellY,
-          defaultLerpFactor,
-        )
-      } /* else {
-        targetCenterX = pointer?.x ?? primaryCellX
-        targetCenterY = pointer?.y ?? primaryCellY
-      }*/
-    } else {
-      if (lerpCenterToPrimaryCellOnIdlePointer) {
-        if (idlePointerTimeout) {
-          clearTimeout(idlePointerTimeout)
-          idlePointerTimeout = undefined
-        }
-        idleLerpCenterToPrimaryCell = false
-      }
+    relativePointerSpeedScale = easedMinLerp(
+      relativePointerSpeedScale,
+      newRelativePointerSpeedScale,
+      newRelativePointerSpeedScale > relativePointerSpeedScale
+        ? max(relativePointerSpeedScale / newRelativePointerSpeedScale, 0.1) *
+            defaultLerpFactor
+        : defaultLerpFactor,
+      // defaultLerpFactor *
+      //   max(newRelativePointerSpeedScale, 0.5),
+    )
 
-      // targetCenterX = pointer?.x ?? primaryCellX
-      // targetCenterY = pointer?.y ?? primaryCellY
+    console.log('pointerSpeedScale', pointerSpeedScale)
+    // console.log('relativePointerSpeedScale', relativePointerSpeedScale)
 
-      // console.log('inversePointerSpeedScale', inversePointerSpeedScale)
+    centerX = easedMinLerp(
+      centerX,
+      lerp(primaryCellX, pointer?.x ?? primaryCellX, relativePointerSpeedScale),
+      // defaultLerpFactor,
+      // inversePointerSpeedScale,
+      centerLerp,
+    )
 
-      targetCenterLerp = max(
-        pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
-        defaultLerpFactor,
-      )
+    centerY = easedMinLerp(
+      centerY,
+      lerp(primaryCellY, pointer?.y ?? primaryCellY, relativePointerSpeedScale),
+      // defaultLerpFactor,
+      // inversePointerSpeedScale,
+      centerLerp,
+    )
 
-      // console.log('targetCenterLerp', targetCenterLerp)
-
-      targetCenterX = easedMinLerp(
-        targetCenterX,
-        pointer?.x ?? primaryCellX,
-        // defaultLerpFactor,
-        // inversePointerSpeedScale,
-        targetCenterLerp,
-      )
-      targetCenterY = easedMinLerp(
-        targetCenterY,
-        pointer?.y ?? primaryCellY,
-        // defaultLerpFactor,
-        // inversePointerSpeedScale,
-        targetCenterLerp,
-      )
-
-      // if (centerToPrimaryCellDist < targetCenterToPrimaryCellDist) {
-      // }
-
-      // targetCenterX = lerp(
-      //   primaryCellX,
-      //   targetCenterX,
-      //   min(pointerSpeedScale * 5, 1),
-      // )
-      // targetCenterY = lerp(
-      //   primaryCellY,
-      //   targetCenterY,
-      //   min(pointerSpeedScale * 5, 1),
-      // )
-    }
-
-    // console.log('centerX', centerX)
-
-    centerX = targetCenterX
-    centerY = targetCenterY
+    // centerX = easedMinLerp(centerX, primaryCellX, defaultLerpFactor)
+    // centerY = easedMinLerp(centerY, primaryCellY, defaultLerpFactor)
+    //
+    // console.log('centerLerp', centerLerp)
+    // // console.log('inversePointerSpeedScale', inversePointerSpeedScale)
+    //
+    // // centerLerp = max(
+    // //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
+    // //   defaultLerpFactor,
+    // // )
+    //
+    // centerLerp = easedMinLerp(
+    //   centerLerp,
+    //   inversePointerSpeedScale,
+    //   // max(
+    //   //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
+    //   //   defaultLerpFactor,
+    //   // ),
+    //   defaultLerpFactor * 0.01,
+    // )
+    //
+    // console.log('centerLerp', centerLerp)
+    //
+    // // console.log('centerLerp', centerLerp)
+    //
     // centerX = easedMinLerp(
-    //   centerX ?? targetCenterX,
-    //   targetCenterX,
-    //   defaultLerpFactor,
+    //   centerX,
+    //   pointer?.x ?? primaryCellX,
+    //   // defaultLerpFactor,
+    //   // inversePointerSpeedScale,
+    //   centerLerp,
     // )
     // centerY = easedMinLerp(
-    //   centerY ?? targetCenterY,
-    //   targetCenterY,
-    //   defaultLerpFactor,
+    //   centerY,
+    //   pointer?.y ?? primaryCellY,
+    //   // defaultLerpFactor,
+    //   // inversePointerSpeedScale,
+    //   centerLerp,
     // )
+
+    // if (lerpCenterToPrimaryCellOnIdlePointer && pointerSpeedScale === 0) {
+    //   // if (pointerSpeedScale < 0.05) {
+    //   // centerX = primaryCellX
+    //   // centerY = primaryCellY
+    //   centerX = easedMinLerp(centerX, primaryCellX, defaultLerpFactor)
+    //   centerY = easedMinLerp(centerY, primaryCellY, defaultLerpFactor)
+    //
+    //   centerLerp = easedMinLerp(centerLerp, 0, defaultLerpFactor)
+    //
+    //   console.log('centerLerp', centerLerp)
+    // } else {
+    //   // console.log('inversePointerSpeedScale', inversePointerSpeedScale)
+    //
+    //   // centerLerp = max(
+    //   //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
+    //   //   defaultLerpFactor,
+    //   // )
+    //
+    //   centerLerp = easedMinLerp(
+    //     centerLerp,
+    //     inversePointerSpeedScale,
+    //     // max(
+    //     //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
+    //     //   defaultLerpFactor,
+    //     // ),
+    //     defaultLerpFactor * 0.01,
+    //   )
+    //
+    //   console.log('centerLerp', centerLerp)
+    //
+    //   // console.log('centerLerp', centerLerp)
+    //
+    //   centerX = easedMinLerp(
+    //     centerX,
+    //     pointer?.x ?? primaryCellX,
+    //     // defaultLerpFactor,
+    //     // inversePointerSpeedScale,
+    //     centerLerp,
+    //   )
+    //   centerY = easedMinLerp(
+    //     centerY,
+    //     pointer?.y ?? primaryCellY,
+    //     // defaultLerpFactor,
+    //     // inversePointerSpeedScale,
+    //     centerLerp,
+    //   )
+    // }
 
     secondaryCell =
       primaryCell?.index === pointer.indices[0]
@@ -439,6 +466,8 @@ export const omniForce = ({
       centerToSecondaryCellDist = sqrt(x * x + y * y)
       distRatio =
         centerToPrimaryCellDist / max(centerToSecondaryCellDist, 0.00001)
+
+      // console.log('distRatio', distRatio)
     }
 
     primaryCellPushFactorX = primaryCellPushFactorY = Math.min(distRatio, 1)

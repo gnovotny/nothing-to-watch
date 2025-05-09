@@ -24,8 +24,6 @@ layout(location = 1) out vec4 voroIndexBufferColor;
 
 #define TAU 6.2831853
 
-#define FISHEYE_TEST 0
-
 ////////////////
 
 vec4 fetchIndices(vec2 position) {
@@ -512,57 +510,6 @@ void main(){
     vec3 o = vec3(0., 0., -1);
     //    vec3 o = vec3(forceCenter, -1);
     vec3 l = vec3(.5, 0, 0);
-
-
-
-
-
-
-
-
-
-    #if FISHEYE_TEST == 1
-
-    vec2 fragCoord2 = gl_FragCoord.xy;
-    float forceCenterDist = sqrt(dot2(fragCoord2 - forceCenterPixel));
-    float aspect = iResolution.x / iResolution.y;
-    vec2 screenCenter = vec2(0.5, 0.5 / aspect);
-    vec2 dd = u - forceCenter;
-    float rrr = sqrt(dot(dd, dd));
-    //    if (r > 1.5) {
-    //        discard;
-    //    }
-    float iR = 1. / rrr;
-    //    float iR = abs(r - 1.*aspect)/1.*aspect;
-    float power = ( TAU ) * .25;
-    //    power = clamp(power*iR, 0.0001, ( PI2 ) * .25);
-    //    float power = ( PI2 ) * .5;
-    //    float power = PI;
-    //    float power = ( PI2 ) * .25 * iR;
-    float rr = rrr * 10.15;
-    //    float bind = screenCenter.x;
-    float bind = 0.5;
-
-    //    p = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-    //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
-    //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
-    //    p = mix(forceCenter, p, r);
-    //    p = forceCenter + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
-
-    u -= forceCenter;
-    //        o.xy -= forceCenter;
-    float radius = 1.;
-    float percent = rrr / radius;
-    //        float strength = 0.75;
-    float strength = 0.25;
-    float factor = mix(1.0, smoothstep(0.0, radius / rrr, percent), strength);
-    u *= factor;
-    //        o *= factor;
-    //        o.xy *= factor;
-    //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-    u += forceCenter;
-    //         o.xy += forceCenter;
-    #endif
 
 
     // Unit direction ray.

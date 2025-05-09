@@ -47,6 +47,7 @@ export const uncompressedSingleMediaVersionConfig = {
   height: 1980,
 
   layers: 50000, // real layers for 50000/54: 925.9 = 926
+  virtualLayers: 10,
   layerIndexStart: 0,
   layerSrcFormat: '/single/{INDEX}.jpg',
   // layerSrcFormat: async (
