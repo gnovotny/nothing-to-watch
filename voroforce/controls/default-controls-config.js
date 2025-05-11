@@ -1,5 +1,4 @@
 export const defaultControlsConfig = {
-  maxDeltaTime: 10,
   autoFocusCenter: {
     enabled: 'touch', // true, false or 'touch'
     random: false,

@@ -91,6 +91,7 @@ uniform vec2 fForceCenter;
 uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
+uniform float fUnfocusedEffectMod;
 
 in vec2 vUv;
 
@@ -108,6 +109,7 @@ struct Data {
     vec4 mediaBbox;
     bool debugFlag;
     float scaleMod;
+    float weight;
 };
 
 #if BICUBIC_MEDIA_FILTER == 1
@@ -628,7 +630,7 @@ Data init(vec2 p) {
         indices.x = (row-1u) * uint(iLatticeCols) + col;
     }
 
-    return Data(indices, uvec4(uint(-1)), vec2(0.), vec4(0.), false, 0.);
+    return Data(indices, uvec4(uint(-1)), vec2(0.), vec4(0.), false, 0., 0.);
 }
 
 Data update() {
@@ -866,7 +868,7 @@ Data update() {
         calcMinEdgeDists(indices2.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
     #endif
 
-    return Data(indices, indices2, minEdgeDists, mediaBbox, debugFlag, scaleMod);
+    return Data(indices, indices2, minEdgeDists, mediaBbox, debugFlag, scaleMod, weight);
 }
 
 void main() {
@@ -926,6 +928,12 @@ void main() {
 //    if (focusCenterDist > 725.) {
 //        c = fBaseColor;
 //    }
+    if (fUnfocusedEffectMod > 0.) {
+//        if (indices.x != uint(iFocusedIndex)) {
+//            c = mix(c, fBaseColor, 0.7 * fUnfocusedEffectMod);
+//        }
+        c = mix(c, fBaseColor, 0.7 * fUnfocusedEffectMod * (1.-data.weight));
+    }
     outputColor = vec4(c, a);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*inverseScaleMod)), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)*scaleMod), 1.);

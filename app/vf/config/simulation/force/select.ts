@@ -37,7 +37,7 @@ export const forceSimulationStepSelectConfig = {
     {
       type: 'omni',
       enabled: true,
-      manageWeights: false,
+      manageWeights: true,
       requestMediaVersions: {
         enabled: true,
         v3ColLevelAdjacencyThreshold: 1,

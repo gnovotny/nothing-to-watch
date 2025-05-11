@@ -17,7 +17,7 @@ export class DynamicMediaGridArrayTexture extends Texture {
       realRows: rows,
       tileWidth,
       tileHeight,
-      virtualLayers: length = 10,
+      virtualLayers: length = 50,
     } = args.mediaVersion
     this.cols = cols
     this.rows = rows

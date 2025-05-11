@@ -77,7 +77,6 @@ export const LowFpsAlert = () => {
 
   useEffect(() => {
     if (performanceMonitor && openedCount < warnLimit) {
-      console.log('subscribing to performance monitor')
       return performanceMonitor.subscribe({
         onDecline: () => {
           console.log('fps decline')

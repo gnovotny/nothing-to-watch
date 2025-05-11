@@ -325,7 +325,9 @@ export const omniForce = ({
     //     // ),
     //     defaultLerpFactor,
     // )
-    centerLerp = inversePointerSpeedScale
+    // centerLerp = inversePointerSpeedScale
+    // centerLerp = defaultLerpFactor
+    centerLerp = 1
 
     newRelativePointerSpeedScale =
       pointerSpeedScale <= 0.005 ? pointerSpeedScale / 0.005 : 1
@@ -341,7 +343,7 @@ export const omniForce = ({
       //   max(newRelativePointerSpeedScale, 0.5),
     )
 
-    console.log('pointerSpeedScale', pointerSpeedScale)
+    // console.log('pointerSpeedScale', pointerSpeedScale)
     // console.log('relativePointerSpeedScale', relativePointerSpeedScale)
 
     centerX = easedMinLerp(

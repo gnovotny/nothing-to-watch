@@ -78,6 +78,10 @@ export default {
             },
           },
         },
+        fUnfocusedEffectMod: {
+          animatable: true,
+          value: 0,
+        },
       },
     },
     post: {

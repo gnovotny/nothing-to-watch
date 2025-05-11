@@ -65,7 +65,6 @@ export class Dimensions extends CustomEventTarget {
 
   setState(s) {
     Object.assign(this.#state, typeof s === 'function' ? s(this.#state) : s)
-
     this.dispatchDimensionsEvent()
   }
 

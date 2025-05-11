@@ -6,6 +6,7 @@ export const handleControls = () => {
     setFilm,
     voroforce: { controls },
     filmBatches,
+    configUniforms: { main: mainUniforms, animating: animatingUniforms },
   } = store.getState()
 
   controls.listen('focused', (async ({ cell }: { cell: VoroforceCell }) => {
@@ -14,12 +15,30 @@ export const handleControls = () => {
 
   controls.listen('selected', (async ({ cell }: { cell: VoroforceCell }) => {
     // if (store.getState().mode !== VOROFORCE_MODES.select) return
-
     if (cell) {
       setFilm(await getCellFilm(cell, filmBatches))
-      controls.freezePointerUntilBlurAndRefocus()
+      controls.pinPointer()
     } else {
-      controls.unfreezePointer()
+      controls.unpinPointer()
+    }
+  }) as unknown as EventListener)
+
+  controls.listen('pointerFrozenChange', (async ({
+    frozen,
+  }: { frozen: boolean }) => {
+    const uniformKey = 'fUnfocusedEffectMod'
+    const uniform = mainUniforms.get(uniformKey)
+    if (!uniform) return
+    const value = frozen ? 1 : 0
+    if (animatingUniforms && uniform.animatable) {
+      if (uniform.value !== value) {
+        uniform.targetValue = value
+        if (!animatingUniforms.has(uniformKey)) {
+          animatingUniforms.set(uniformKey, uniform)
+        }
+      }
+    } else {
+      uniform.value = value
     }
   }) as unknown as EventListener)
 }

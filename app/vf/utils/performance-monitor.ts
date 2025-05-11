@@ -112,7 +112,7 @@ export function initPerformanceMonitor(
       const lowerBounds = averages.filter((value) => value < lower)
       // Trigger incline when more than -threshold- avgs exceed the upper bound
       if (upperBounds.length > iterations * threshold) {
-        console.log('onIncline', upperBounds.length, iterations * threshold)
+        // console.log('onIncline', upperBounds.length, iterations * threshold)
         api.factor = Math.min(1, api.factor + step)
         api.flipped++
         if (onIncline) onIncline(api)
@@ -120,7 +120,7 @@ export function initPerformanceMonitor(
       }
       // Trigger decline when more than -threshold- avgs are below the lower bound
       if (lowerBounds.length > iterations * threshold) {
-        console.log('onDecline')
+        // console.log('onDecline')
         api.factor = Math.max(0, api.factor - step)
         api.flipped++
         if (onDecline) onDecline(api)

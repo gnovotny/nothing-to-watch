@@ -4,12 +4,26 @@ import { CustomEventTarget } from '../utils/custom-event-target'
 // biome-ignore lint/suspicious/noShadowRestrictedNames: intentional
 const Infinity = Number.POSITIVE_INFINITY
 
-const { abs, atan2, pow, sqrt, random, min, PI } = Math
+const { abs, atan2, pow, sqrt, random, min, max, PI } = Math
 
 class PointerMoveEvent extends Event {
   constructor(pointer) {
     super('pointerMove')
     this.pointer = pointer
+  }
+}
+
+class PointerShakeEvent extends Event {
+  constructor(data) {
+    super('pointerShake')
+    Object.assign(this, data)
+  }
+}
+
+class PointerFrozenChangeEvent extends Event {
+  constructor(data) {
+    super('pointerFrozenChange')
+    Object.assign(this, data)
   }
 }
 
@@ -29,11 +43,11 @@ class CellSelectedEvent extends Event {
   }
 }
 
+const getAverageSpeedTotal = (array) =>
+  array.reduce((a, b) => a + b.total, 0) / array.length
+
 export default class Controls extends CustomEventTarget {
-  prevX = 0
-  prevY = 0
   pointerFrozen = true
-  pointerFrozenUntilRefocus = true
 
   constructor(store, display, options = {}) {
     super()
@@ -42,31 +56,46 @@ export default class Controls extends CustomEventTarget {
     this.initEventListeners()
 
     // Configuration options with defaults
+    // this.options = {
+    //   maxSpeed: options.maxSpeed !== undefined ? options.maxSpeed : Infinity, // Maximum speed threshold in px/s
+    //   maxAcceleration:
+    //     options.maxAcceleration !== undefined
+    //       ? options.maxAcceleration
+    //       : Infinity, // Maximum acceleration threshold in px/s²
+    //   capValues: options.capValues || false, // Whether to cap values at the threshold
+    //   ...options,
+    // }
+
     this.options = {
-      maxSpeed: options.maxSpeed !== undefined ? options.maxSpeed : Infinity, // Maximum speed threshold in px/s
-      maxAcceleration:
-        options.maxAcceleration !== undefined
-          ? options.maxAcceleration
-          : Infinity, // Maximum acceleration threshold in px/s²
-      capValues: options.capValues || false, // Whether to cap values at the threshold
-      ...options,
+      maxSpeed: 300,
+      maxAcceleration: 50000,
+      capValues: false,
+
+      freezeOnAbruptSpeedIncreaseFactor: 10,
+      unfreezePointerSpeedLimit: 300,
+
+      shakeEnabled: options.shakeEnabled || true,
+      shakeMinSpeed: options.shakeMinSpeed || 200, // Minimum velocity to count as a shake
+      shakeDirChangeTimeout: options.shakeDirChangeTimeout || 100, // Reset after this many ms of no dir change
+      minShakes: options.minShakes || 4, // Minimum direction changes to trigger a shake
+      shakeCooldown: options.shakeCooldown || 2000, // Minimum time between shake events
     }
 
     // Store previous positions and timestamps
-    this.positions = []
-    this.maxPositions = 10 // Number of positions to store for calculations
+    this.positionHistory = []
+    this.speeds = []
+    this.maxHistory = 10 // Number of prev items to store for calculations
 
     // Current values
-    this.position = { x: 0, y: 0 }
+    // this.position = { x: 0, y: 0 }
     this.lastPosition = null // Last adjusted position
     this.speed = { x: 0, y: 0, total: 0 }
     this.lastSpeed = { x: 0, y: 0, total: 0 } // Last adjusted speed
+    this.avgSpeedTotal = 0
     this.acceleration = { x: 0, y: 0, total: 0 }
     this.direction = 0
 
     // Flags for threshold detection
-    this.isOverSpeedThreshold = false
-    this.isOverAccelerationThreshold = false
 
     // Last timestamp for controlling position updates
     this.lastTimestamp = null
@@ -87,12 +116,14 @@ export default class Controls extends CustomEventTarget {
     this.dimensions = this.store.get('dimensions')
     this.pointer = this.store.get('sharedPointer')
     this.cells = this.store.get('cells')
-    this.maxDeltaTime = this.config.maxDeltaTime ?? 10 // Maximum time difference in milliseconds
 
-    const d = this.dimensions.get('diagonal')
-    this.maxPointerSpeed = this.config.maxPointerSpeed * d
-    this.activePointerRadiusScale = this.config.pointerRadius
-    this.pointerRadius = this.activePointerRadiusScale * d
+    // const d = this.dimensions.get('diagonal')
+    // this.maxSpeed = this.config.maxPointerSpeed
+    //   ? this.config.maxPointerSpeed * d
+    //   : Infinity
+    // this.maxAcceleration = this.config.maxPointerAcceleration
+    //   ? this.config.maxPointerAcceleration * d
+    //   : Infinity
   }
 
   handleFirstUpdate() {
@@ -133,8 +164,8 @@ export default class Controls extends CustomEventTarget {
     })
   }
 
-  handleUpdate(position = this.position) {
-    if (this.pointerFrozenUntilRefocus) {
+  handleUpdate(/*position = this.position*/) {
+    if (this.pointerFrozen) {
       this.getCellIndices(this.pointer, (primaryIndex, indices) => {
         Object.assign(this.pointer, {
           indices,
@@ -149,87 +180,97 @@ export default class Controls extends CustomEventTarget {
       })
     }
 
-    if (!position) return
+    if (this.rawPosition) {
+      this.handlePointerPosition({
+        ...this.rawPosition,
+        timestamp: performance.now(),
+      })
+    }
+
+    if (!this.position) return
 
     if (!this.pointerFrozen) {
       this.pointer.speedScale =
-        Math.min(this.speed.total, this.maxPointerSpeed) / this.maxPointerSpeed
-      // this.pointer.speedScale = easedMinLerp(
-      //     this.pointer.speedScale,
-      //     Math.min(speed, this.maxPointerSpeed) / this.maxPointerSpeed,
-      //     0.1,
-      // )
-      Object.assign(this.pointer, position)
+        Math.min(this.speed.total, this.options.maxSpeed) /
+        this.options.maxSpeed
+      Object.assign(this.pointer, this.position)
       this.handlePointerMove()
     }
 
-    this.getCellIndices(position, (primaryIndex, indices) => {
+    this.getCellIndices(this.position, (primaryIndex, indices) => {
       if (this.pointerFrozen) {
-        if (this.pointerFrozenUntilBlurAndRefocus) {
-          if (this.cells.focusedIndex !== primaryIndex) {
-            // this.freezePointerUntilRefocus()
-
-            this.pointer.speedScale = 0
-            this.pointerFrozenUntilBlurAndRefocus = false
-
-            Object.assign(this.pointer, this.frozenPointer)
-            setTimeout(() => this.freezePointerUntilRefocus(), 250)
-          } else {
-            Object.assign(this.pointer, {
-              indices,
-            })
-            Object.assign(this.pointer, position)
-          }
-        } else if (this.pointerFrozenUntilRefocus) {
-          if (this.cells.focusedIndex === primaryIndex) {
-            this.unfreezePointer()
-          }
+        if (
+          this.speed.total < this.options.unfreezePointerSpeedLimit &&
+          this.cells.focusedIndex === primaryIndex
+        ) {
+          this.unfreezePointer()
         }
       } else {
-        if (this.cells.focusedIndex !== primaryIndex) {
-          this.cells.focusedIndex = primaryIndex
-          this.dispatchEvent(
-            new CellFocusedEvent(this.cells.focused, this.cells),
-          )
+        if (this.pointerPinned && this.cells.focusedIndex !== primaryIndex) {
+          Object.assign(this.pointer, this.pinnedPointer)
+          this.unpinPointer()
+          this.freezePointer()
+        } else {
+          Object.assign(this.pointer, {
+            indices,
+          })
+          if (this.cells.focusedIndex !== primaryIndex) {
+            this.cells.focusedIndex = primaryIndex
+            this.dispatchEvent(
+              new CellFocusedEvent(this.cells.focused, this.cells),
+            )
+          }
         }
-        Object.assign(this.pointer, {
-          indices,
-        })
       }
     })
   }
 
-  freezePointer() {
-    this.pointerFrozen = true
-
-    if (!this.frozenPointer) {
-      this.frozenPointer = {
-        indices: this.pointer.indices,
-        x: this.pointer.x,
-        y: this.pointer.y,
-      }
+  savePointer() {
+    return {
+      indices: this.pointer.indices,
+      x: this.pointer.x,
+      y: this.pointer.y,
+      speedScale: 0,
     }
   }
 
-  freezePointerUntilRefocus() {
-    this.freezePointer()
+  freezePointer() {
+    this.pointerFrozen = true
     this.pointer.speedScale = 0
-    this.pointerFrozenUntilRefocus = true
-    this.pointerFrozenUntilBlurAndRefocus = false
-  }
+    this.frozenPointer ??= this.savePointer()
 
-  freezePointerUntilBlurAndRefocus() {
-    this.freezePointer()
-    this.pointer.speedScale = 0.05
-    this.pointerFrozenUntilRefocus = false
-    this.pointerFrozenUntilBlurAndRefocus = true
+    this.dispatchEvent(
+      new PointerFrozenChangeEvent({
+        pointer: this.pointer,
+        frozen: this.pointerFrozen,
+      }),
+    )
+    // console.log('freezePointer')
   }
 
   unfreezePointer() {
-    this.pointerFrozenUntilRefocus = false
-    this.pointerFrozenUntilBlurAndRefocus = false
     this.pointerFrozen = false
     this.frozenPointer = null
+
+    this.dispatchEvent(
+      new PointerFrozenChangeEvent({
+        pointer: this.pointer,
+        frozen: this.pointerFrozen,
+      }),
+    )
+    // console.log('unfreezePointer')
+  }
+
+  pinPointer() {
+    this.speed.total = 0
+    this.pointerPinned = true
+    this.pinnedPointer ??= this.savePointer()
+    // console.log('pinPointer')
+  }
+
+  unpinPointer() {
+    this.pointerPinned = false
+    this.pinnedPointer = undefined
   }
 
   onPointerDown(e) {
@@ -243,13 +284,8 @@ export default class Controls extends CustomEventTarget {
     this.handlePointerClick()
   }
 
-  onPointerMove(e) {
-    const timestamp = performance.now()
-    const rawPosition = {
-      x: e.x,
-      y: e.y,
-      timestamp: timestamp,
-    }
+  handlePointerPosition(rawPosition) {
+    if (!rawPosition) return
 
     // Process the position with capping if needed
     const position = this.processPosition(rawPosition)
@@ -258,72 +294,106 @@ export default class Controls extends CustomEventTarget {
     this.position = { x: position.x, y: position.y }
 
     // Add current position to our array
-    this.positions.push(position)
-
+    this.positionHistory.push(position)
     // Keep array at max size
-    if (this.positions.length > this.maxPositions) {
-      this.positions.shift()
+    if (this.positionHistory.length > this.maxHistory) {
+      this.positionHistory.shift()
+    }
+
+    // Add current position to our array
+    this.speeds.push({
+      ...this.speed,
+    })
+    // Keep array at max size
+    if (this.speeds.length > this.maxHistory) {
+      this.speeds.shift()
+      this.avgSpeedTotal = getAverageSpeedTotal(this.speeds)
     }
 
     // Calculate speed and acceleration if we have enough data points
-    if (this.positions.length >= 2) {
-      this.calculateSpeed()
-      this.calculateDirection()
-    }
-
-    if (this.positions.length >= 3) {
-      this.calculateAcceleration()
-    }
+    // if (this.positionHistory.length >= 2) {
+    //   this.manageSpeed && this.calculateSpeed()
+    //   this.manageDirection && this.calculateDirection()
+    // }
+    //
+    // if (this.manageAcceleration && this.positionHistory.length >= 3) {
+    //   this.calculateAcceleration()
+    // }
 
     // Save last processed values for next calculation
     this.lastPosition = { ...this.position }
-    this.lastTimestamp = timestamp
+    this.lastTimestamp = rawPosition.timestamp
     this.lastSpeed = { ...this.speed }
+    this.lastAcceleration = { ...this.acceleration }
+  }
+
+  onPointerMove(e) {
+    this.rawPosition = {
+      x: e.x,
+      y: e.y,
+      timestamp: performance.now(),
+    }
   }
 
   processPosition(rawPosition) {
-    // If not capping or this is the first position, just return raw position
-    if (!this.options.capValues || !this.lastPosition || !this.lastTimestamp) {
-      return rawPosition
-    }
+    // If this is the first position, just return raw position
+    if (!this.lastPosition || !this.lastTimestamp) return rawPosition
 
-    // Calculate time difference in seconds
-    const timeDiff = (rawPosition.timestamp - this.lastTimestamp) / 1000
-    if (timeDiff <= 0) return rawPosition // Safety check
+    // Calculate time delta in seconds
+    const timeDelta = (rawPosition.timestamp - this.lastTimestamp) / 1000
+    if (timeDelta <= 0) return rawPosition // Safety check
 
     // Calculate desired position based on raw mouse coordinates
-    const desiredDeltaX = rawPosition.x - this.lastPosition.x
-    const desiredDeltaY = rawPosition.y - this.lastPosition.y
+    const positionDeltaX = rawPosition.x - this.lastPosition.x
+    const positionDeltaY = rawPosition.y - this.lastPosition.y
 
     // Calculate the desired speed
-    const desiredSpeedX = desiredDeltaX / timeDiff
-    const desiredSpeedY = desiredDeltaY / timeDiff
-    const desiredSpeedTotal = sqrt(
-      desiredSpeedX * desiredSpeedX + desiredSpeedY * desiredSpeedY,
-    )
+    this.speed.x = positionDeltaX / timeDelta
+    this.speed.y = positionDeltaY / timeDelta
+    this.speed.total = sqrt(pow(this.speed.x, 2) + pow(this.speed.y, 2))
+
+    if (this.options.shakeEnabled) {
+      const shook = this.handleShake()
+      if (shook) {
+        this.pinPointer()
+        return this.lastPosition
+      }
+    }
+
+    if (
+      this.options.freezeOnAbruptSpeedIncreaseFactor &&
+      this.speed.total >
+        max(this.avgSpeedTotal, 100) *
+          this.options.freezeOnAbruptSpeedIncreaseFactor &&
+      !this.pointerPinned &&
+      !this.pointerFrozen
+    ) {
+      this.pinPointer()
+      return this.lastPosition
+    }
 
     // If speed is within limits, no capping needed
-    if (desiredSpeedTotal <= this.options.maxSpeed) {
+    if (!this.options.capValues || this.speed.total <= this.options.maxSpeed) {
       return rawPosition
     }
 
     // Cap the speed and calculate new position delta
-    const speedFactor = this.options.maxSpeed / desiredSpeedTotal
-    const cappedDeltaX = desiredDeltaX * speedFactor
-    const cappedDeltaY = desiredDeltaY * speedFactor
+    const speedFactor = this.options.maxSpeed / this.speed.total
+    const cappedPositionDeltaX = positionDeltaX * speedFactor
+    const cappedPositionDeltaY = positionDeltaY * speedFactor
 
     // Calculate the new position based on capped speed
     const cappedPosition = {
-      x: this.lastPosition.x + cappedDeltaX,
-      y: this.lastPosition.y + cappedDeltaY,
+      x: this.lastPosition.x + cappedPositionDeltaX,
+      y: this.lastPosition.y + cappedPositionDeltaY,
       timestamp: rawPosition.timestamp,
     }
 
     // Check acceleration cap if we have previous speed data
     if (this.options.maxAcceleration < Infinity && this.lastSpeed) {
       // Calculate desired acceleration
-      const desiredAccelX = (desiredSpeedX - this.lastSpeed.x) / timeDiff
-      const desiredAccelY = (desiredSpeedY - this.lastSpeed.y) / timeDiff
+      const desiredAccelX = (this.speed.x - this.lastSpeed.x) / timeDelta
+      const desiredAccelY = (this.speed.y - this.lastSpeed.y) / timeDelta
       const desiredAccelTotal = sqrt(
         desiredAccelX * desiredAccelX + desiredAccelY * desiredAccelY,
       )
@@ -334,117 +404,197 @@ export default class Controls extends CustomEventTarget {
 
         // Calculate new speed based on capped acceleration
         const cappedSpeedX =
-          this.lastSpeed.x + (desiredSpeedX - this.lastSpeed.x) * accelFactor
+          this.lastSpeed.x + (this.speed.x - this.lastSpeed.x) * accelFactor
         const cappedSpeedY =
-          this.lastSpeed.y + (desiredSpeedY - this.lastSpeed.y) * accelFactor
+          this.lastSpeed.y + (this.speed.y - this.lastSpeed.y) * accelFactor
 
         // Calculate new position based on capped acceleration
-        cappedPosition.x = this.lastPosition.x + cappedSpeedX * timeDiff
-        cappedPosition.y = this.lastPosition.y + cappedSpeedY * timeDiff
+        cappedPosition.x = this.lastPosition.x + cappedSpeedX * timeDelta
+        cappedPosition.y = this.lastPosition.y + cappedSpeedY * timeDelta
       }
     }
 
     return cappedPosition
   }
 
-  calculateSpeed() {
-    // Use the two most recent positions
-    const current = this.positions[this.positions.length - 1]
-    const previous = this.positions[this.positions.length - 2]
+  // calculateSpeed() {
+  //   // Use the two most recent positions
+  //   const current = this.positionHistory[this.positionHistory.length - 1]
+  //   const previous = this.positionHistory[this.positionHistory.length - 2]
+  //
+  //   // Time difference in seconds
+  //   const timeDiff = (current.timestamp - previous.timestamp) / 1000
+  //
+  //   if (timeDiff > 0) {
+  //     // Calculate speed components (pixels per second)
+  //     this.speed.x = (current.x - previous.x) / timeDiff
+  //     this.speed.y = (current.y - previous.y) / timeDiff
+  //
+  //     // Calculate total speed (magnitude of velocity vector)
+  //     this.speed.total = sqrt(pow(this.speed.x, 2) + pow(this.speed.y, 2))
+  //
+  //     // Apply maximum speed threshold if specified
+  //     if (this.options.maxSpeed < Infinity) {
+  //       // Check if we're over the threshold
+  //       const isOverSpeedThreshold = this.speed.total > this.options.maxSpeed
+  //
+  //       // Optionally cap the speed at the maximum value
+  //       if (this.options.capValues && isOverSpeedThreshold) {
+  //         const factor = this.options.maxSpeed / this.speed.total
+  //         this.speed.x *= factor
+  //         this.speed.y *= factor
+  //         this.speed.total = this.options.maxSpeed
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // calculateDirection() {
+  //   // Calculate direction in degrees (0 = right, 90 = down, 180 = left, 270 = up)
+  //   if (abs(this.speed.x) > 0.1 || abs(this.speed.y) > 0.1) {
+  //     this.direction = atan2(this.speed.y, this.speed.x) * (180 / PI)
+  //     // Convert to 0-360 range
+  //     if (this.direction < 0) {
+  //       this.direction += 360
+  //     }
+  //   }
+  // }
+  //
+  // calculateAcceleration() {
+  //   // We need at least 3 positions to calculate acceleration
+  //   const current = this.positionHistory[this.positionHistory.length - 1]
+  //   const middle = this.positionHistory[this.positionHistory.length - 2]
+  //   const oldest = this.positionHistory[this.positionHistory.length - 3]
+  //
+  //   // Time differences in seconds
+  //   const timeDiff1 = (middle.timestamp - oldest.timestamp) / 1000
+  //   const timeDiff2 = (current.timestamp - middle.timestamp) / 1000
+  //
+  //   if (timeDiff1 > 0 && timeDiff2 > 0) {
+  //     // Calculate speed at two points in time
+  //     const speed1 = {
+  //       x: (middle.x - oldest.x) / timeDiff1,
+  //       y: (middle.y - oldest.y) / timeDiff1,
+  //     }
+  //
+  //     const speed2 = {
+  //       x: (current.x - middle.x) / timeDiff2,
+  //       y: (current.y - middle.y) / timeDiff2,
+  //     }
+  //
+  //     // Calculate acceleration (change in speed over time)
+  //     const timeDiffTotal = timeDiff1 + timeDiff2
+  //
+  //     if (timeDiffTotal > 0) {
+  //       this.acceleration.x = (speed2.x - speed1.x) / timeDiffTotal
+  //       this.acceleration.y = (speed2.y - speed1.y) / timeDiffTotal
+  //
+  //       // Calculate total acceleration (magnitude)
+  //       this.acceleration.total = sqrt(
+  //         pow(this.acceleration.x, 2) + pow(this.acceleration.y, 2),
+  //       )
+  //
+  //       // Apply maximum acceleration threshold if specified
+  //       if (this.options.maxAcceleration < Infinity) {
+  //         // Check if we're over the threshold
+  //         const isOverAccelerationThreshold =
+  //           this.acceleration.total > this.options.maxAcceleration
+  //
+  //         // Optionally cap the acceleration at the maximum value
+  //         if (this.options.capValues && isOverAccelerationThreshold) {
+  //           const factor =
+  //             this.options.maxAcceleration / this.acceleration.total
+  //           this.acceleration.x *= factor
+  //           this.acceleration.y *= factor
+  //           this.acceleration.total = this.options.maxAcceleration
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
-    // Time difference in seconds
-    const timeDiff = (current.timestamp - previous.timestamp) / 1000
+  resetShake() {
+    this.shakeDirectionXChangeCount = 0
+    this.shakeDirectionYChangeCount = 0
+    this.lastShakeDirectionX = null
+    this.lastShakeDirectionX = null
+  }
 
-    if (timeDiff > 0) {
-      // Calculate speed components (pixels per second)
-      this.speed.x = (current.x - previous.x) / timeDiff
-      this.speed.y = (current.y - previous.y) / timeDiff
-
-      // Calculate total speed (magnitude of velocity vector)
-      this.speed.total = sqrt(pow(this.speed.x, 2) + pow(this.speed.y, 2))
-
-      // Apply maximum speed threshold if specified
-      if (this.options.maxSpeed < Infinity) {
-        // Check if we're over the threshold
-        this.isOverSpeedThreshold = this.speed.total > this.options.maxSpeed
-
-        // Optionally cap the speed at the maximum value
-        if (this.options.capValues && this.isOverSpeedThreshold) {
-          const factor = this.options.maxSpeed / this.speed.total
-          this.speed.x *= factor
-          this.speed.y *= factor
-          this.speed.total = this.options.maxSpeed
-        }
-      }
+  clearShakeDirChangeTimeout() {
+    if (this.shakeDirChangeTimeout) {
+      clearTimeout(this.shakeDirChangeTimeout)
     }
   }
 
-  calculateDirection() {
-    // Calculate direction in degrees (0 = right, 90 = down, 180 = left, 270 = up)
-    if (abs(this.speed.x) > 0.1 || abs(this.speed.y) > 0.1) {
-      this.direction = atan2(this.speed.y, this.speed.x) * (180 / PI)
-      // Convert to 0-360 range
-      if (this.direction < 0) {
-        this.direction += 360
-      }
-    }
+  refreshShakeDirChangeTimeout() {
+    this.clearShakeDirChangeTimeout()
+    this.shakeDirChangeTimeout = setTimeout(() => {
+      this.resetShake()
+    }, this.options.shakeDirChangeTimeout)
   }
 
-  calculateAcceleration() {
-    // We need at least 3 positions to calculate acceleration
-    const current = this.positions[this.positions.length - 1]
-    const middle = this.positions[this.positions.length - 2]
-    const oldest = this.positions[this.positions.length - 3]
+  handleShake() {
+    if (this.pointerFrozen || this.speed.total <= this.options.shakeMinSpeed) {
+      this.resetShake()
+      return
+    }
 
-    // Time differences in seconds
-    const timeDiff1 = (middle.timestamp - oldest.timestamp) / 1000
-    const timeDiff2 = (current.timestamp - middle.timestamp) / 1000
+    const directionX = this.speed.x > 0 ? 'right' : 'left'
+    const directionY = this.speed.y > 0 ? 'down' : 'up'
 
-    if (timeDiff1 > 0 && timeDiff2 > 0) {
-      // Calculate speed at two points in time
-      const speed1 = {
-        x: (middle.x - oldest.x) / timeDiff1,
-        y: (middle.y - oldest.y) / timeDiff1,
-      }
+    if (this.lastShakeDirectionX && directionX !== this.lastShakeDirectionX) {
+      this.shakeDirectionXChangeCount++
+      this.refreshShakeDirChangeTimeout()
+    }
+    if (this.lastShakeDirectionY && directionY !== this.lastShakeDirectionY) {
+      this.shakeDirectionYChangeCount++
+      this.refreshShakeDirChangeTimeout()
+    }
 
-      const speed2 = {
-        x: (current.x - middle.x) / timeDiff2,
-        y: (current.y - middle.y) / timeDiff2,
-      }
+    // this.reinitShakeTimeout()
 
-      // Calculate acceleration (change in speed over time)
-      const timeDiffTotal = timeDiff1 + timeDiff2
+    this.lastShakeDirectionX = directionX
+    this.lastShakeDirectionY = directionY
 
-      if (timeDiffTotal > 0) {
-        this.acceleration.x = (speed2.x - speed1.x) / timeDiffTotal
-        this.acceleration.y = (speed2.y - speed1.y) / timeDiffTotal
+    // Check if we've reached the threshold for a shake
+    if (
+      (this.shakeDirectionXChangeCount >= this.options.minShakes ||
+        this.shakeDirectionYChangeCount >= this.options.minShakes) &&
+      !this.shakeCooldownActive
+    ) {
+      // Trigger shake event
+      this.dispatchEvent(
+        new PointerShakeEvent({
+          pointer: this.pointer,
+          speed: this.speed.total,
+          directionXChanges: this.shakeDirectionXChangeCount,
+          directionYChanges: this.shakeDirectionYChangeCount,
+        }),
+      )
 
-        // Calculate total acceleration (magnitude)
-        this.acceleration.total = sqrt(
-          pow(this.acceleration.x, 2) + pow(this.acceleration.y, 2),
-        )
+      // Reset
+      this.resetShake()
 
-        // Apply maximum acceleration threshold if specified
-        if (this.options.maxAcceleration < Infinity) {
-          // Check if we're over the threshold
-          this.isOverAccelerationThreshold =
-            this.acceleration.total > this.options.maxAcceleration
+      // Set cooldown
+      this.shakeCooldownActive = true
+      setTimeout(() => {
+        this.shakeCooldownActive = false
+      }, this.options.shakeCooldown)
 
-          // Optionally cap the acceleration at the maximum value
-          if (this.options.capValues && this.isOverAccelerationThreshold) {
-            const factor =
-              this.options.maxAcceleration / this.acceleration.total
-            this.acceleration.x *= factor
-            this.acceleration.y *= factor
-            this.acceleration.total = this.options.maxAcceleration
-          }
-        }
-      }
+      console.log('shook')
+      return true
     }
   }
 
   onPointerOut(event) {
     this.handlePointerOut()
+  }
+
+  handlePointerOut() {
+    if (this.cells.focused) {
+      this.freezePointer()
+    }
+    this.position = undefined
   }
 
   handlePointerClick() {
@@ -463,13 +613,6 @@ export default class Controls extends CustomEventTarget {
 
   handlePointerMove() {
     this.dispatchEvent(new PointerMoveEvent(this.pointer))
-  }
-
-  handlePointerOut() {
-    if (this.cells.focused) {
-      this.freezePointerUntilRefocus()
-    }
-    this.position = undefined
   }
 
   initEventListeners() {
@@ -508,10 +651,9 @@ export default class Controls extends CustomEventTarget {
   }
 
   resize(dimensions) {
-    this.maxPointerSpeed = this.config.maxPointerSpeed * dimensions.diagonal
-    this.pointerRadius = this.activePointerRadiusScale * dimensions.diagonal
+    // this.maxSpeed = this.config.maxPointerSpeed * dimensions.diagonal
     if (this.cells.focused) {
-      this.freezePointerUntilRefocus()
+      this.freezePointer()
       Object.assign(this.pointer, {
         x: this.cells.focused.x,
         y: this.cells.focused.y,

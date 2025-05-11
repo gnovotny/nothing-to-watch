@@ -14,7 +14,7 @@ export const FadeTransition = ({
   transitionOptions?: Partial<Parameters<typeof useTransitionState>[0]>
 }>) => {
   const [{ status, isMounted }, toggle] = useTransitionState({
-    timeout: 1000,
+    shakeDirChangeTimeout: 1000,
     ...transitionOptions,
   })
 
