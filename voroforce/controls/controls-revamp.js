@@ -74,11 +74,12 @@ export default class Controls extends CustomEventTarget {
       freezeOnAbruptSpeedIncreaseFactor: 10,
       unfreezePointerSpeedLimit: 300,
 
-      shakeEnabled: options.shakeEnabled || true,
+      shakeEnabled: options.shakeEnabled || false,
       shakeMinSpeed: options.shakeMinSpeed || 200, // Minimum velocity to count as a shake
       shakeDirChangeTimeout: options.shakeDirChangeTimeout || 100, // Reset after this many ms of no dir change
       minShakes: options.minShakes || 4, // Minimum direction changes to trigger a shake
       shakeCooldown: options.shakeCooldown || 2000, // Minimum time between shake events
+      maxShakeDistance: options.maxShakeDistance || 300,
     }
 
     // Store previous positions and timestamps

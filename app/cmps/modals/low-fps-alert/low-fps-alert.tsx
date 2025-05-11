@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useMediaQuery } from '../../../hks/use-media-query'
 import { orientation, up } from '../../../utls/mq'
@@ -41,8 +41,20 @@ export const LowFpsAlert = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [openedCount, setOpenedCount] = useState(0)
   const [alignContentToBottom, setAlignContentToBottom] = useState(false)
+  const [cooldown, setCooldown] = useState(true)
+
+  const cooldownTimeoutRef = useRef<NodeJS.Timeout>(null)
 
   const open = useCallback(() => {
+    if (cooldown) {
+      if (!cooldownTimeoutRef.current) {
+        setTimeout(() => {
+          setCooldown(false)
+          cooldownTimeoutRef.current = null
+        }, 30000)
+      }
+      return
+    }
     if (!isLgScreen) {
       setAboutOpen(false)
       setSettingsOpen(false)
@@ -61,6 +73,7 @@ export const LowFpsAlert = () => {
     ticker.freeze()
     setIsOpen(true)
     setOpenedCount((opened) => opened + 1)
+    setCooldown(true)
   }, [
     ticker,
     preset,
@@ -68,6 +81,7 @@ export const LowFpsAlert = () => {
     isLgScreen,
     setAboutOpen,
     setSettingsOpen,
+    cooldown,
   ])
 
   const close = useCallback(() => {

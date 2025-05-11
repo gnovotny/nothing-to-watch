@@ -84,7 +84,9 @@ uniform int iForceMaxNeighborLevel;
 uniform float fRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
-uniform float fFishEyeMod;
+uniform float fFishEyeStrength;
+uniform float fFishEyeRadius;
+uniform float fWeightOffsetScale;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
@@ -646,24 +648,19 @@ Data update() {
 
 
     #if FISHEYE_STRENGTH != 0
-        if (fFishEyeMod > 0.) {
-
+        if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
             vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
             float r = sqrt(dist(p, forceCenterCoords));
 
-            float percent = r / FISHEYE_RADIUS;
+            float percent = r / (FISHEYE_RADIUS * fFishEyeRadius);
             float step = smoothstep(0.0, 1. / percent, percent);
-            float strength = float(FISHEYE_STRENGTH) / 100.;
-            //        float strengthMod = 1. - step;
-            float strengthMod = fFishEyeMod;
-            //        if (step <1.) discard;
-            float zoomFactor = mix(1.0, step, strength * strengthMod);
+            float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength;
+            float zoomFactor = mix(1.0, step, strength);
 
             p -= forceCenterCoords;
             p *= zoomFactor;
             p += forceCenterCoords;
-
 
             //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
 
@@ -680,7 +677,7 @@ Data update() {
     float mediaWeightOffsetScale = 1.;
 
     #if WEIGHTED_DIST == 1
-        weightOffsetScale = WEIGHT_OFFSET_SCALE * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
+        weightOffsetScale = WEIGHT_OFFSET_SCALE * (fWeightOffsetScale > 0. ? fWeightOffsetScale : 1.) * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
         mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
     #endif
 
@@ -764,21 +761,13 @@ Data update() {
 
         float zoomFactor = 1.;
         #if FISHEYE_STRENGTH != 0
-            if (fFishEyeMod > 0.) {
+            if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
                 vec2 forceCenterNCoords = normalizeCoords(forceCenter);
-                vec2 d = cellNCoords - forceCenterNCoords;
-                float r = sqrt(dot(d, d));
-
-                float radius = 1.;
-                float percent = r / radius;
-                float iPercent = radius / r;
-                float step = smoothstep(0.0, iPercent, percent);
-                //        float strength = 1.;
-                float strength = float(FISHEYE_STRENGTH) / 100.;
-                //        float strengthMod = 1. - step;
-                float strengthMod = fFishEyeMod;
-                //        if (step <1.) discard;
-                zoomFactor = mix(1.0, step, strength * strengthMod);
+                float r = sqrt(dist(cellNCoords, forceCenterNCoords));
+                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius);
+                float step = smoothstep(0.0, 1. / percent, percent);
+                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength;
+                zoomFactor = mix(1.0, step, strength);
 
 
                 cellNCoords -= forceCenterNCoords;

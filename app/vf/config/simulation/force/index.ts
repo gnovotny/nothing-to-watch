@@ -1,10 +1,10 @@
-import { forceSimulationStepIntroConfig } from './intro'
-import { forceSimulationStepPreviewConfig } from './preview'
-import { forceSimulationStepSelectConfig } from './select'
+import { introForceSimulationStepConfig } from './intro-force'
+import { previewForceSimulationStepConfig } from './preview-force'
+import { selectForceSimulationStepConfig } from './select-force'
 import { VOROFORCE_MODE } from '../../../types'
 
 export const forceSimulationStepConfigs = {
-  [VOROFORCE_MODE.preview]: forceSimulationStepPreviewConfig,
-  [VOROFORCE_MODE.select]: forceSimulationStepSelectConfig,
-  [VOROFORCE_MODE.intro]: forceSimulationStepIntroConfig,
+  [VOROFORCE_MODE.preview]: previewForceSimulationStepConfig,
+  [VOROFORCE_MODE.select]: selectForceSimulationStepConfig,
+  [VOROFORCE_MODE.intro]: introForceSimulationStepConfig,
 }

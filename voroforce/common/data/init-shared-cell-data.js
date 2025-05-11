@@ -111,7 +111,7 @@ const initSharedCellNeighborsData = (cellOptions, config) => {
 const initSharedCellCoordsData = (cellOptions, config) => {
   const numCells = getNumCellsFromOptions(cellOptions)
 
-  const lenSqrd = Math.ceil(Math.sqrt(numCells * 2))
+  const lenSqrd = Math.ceil(Math.sqrt(numCells /* * 2*/))
   const sharedCellCoordsTextureWidth = lenSqrd
   const sharedCellCoordsTextureHeight = lenSqrd
 

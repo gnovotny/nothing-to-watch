@@ -2,7 +2,7 @@ import { getGPUTier } from 'detect-gpu'
 import { mergeConfigs } from '√'
 import baseConfig, { introModeLatticeConfig } from '../config'
 import presets from '../presets'
-import { forceSimulationStepIntroConfig } from '../config/simulation/force/intro'
+import { introForceSimulationStepConfig } from '../config/simulation/force/intro-force'
 
 import { down, matchMediaQuery } from '../../utls/mq'
 
@@ -29,7 +29,7 @@ const getIntroConfig = () => ({
   lattice: introModeLatticeConfig,
   simulation: {
     steps: {
-      force: forceSimulationStepIntroConfig,
+      force: introForceSimulationStepConfig,
     },
   },
   media: {

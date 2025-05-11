@@ -1,4 +1,4 @@
-export const forceSimulationStepPreviewConfig = {
+export const previewForceSimulationStepConfig = {
   parameters: {
     // alpha: 0.2,
     alpha: 0.15,
@@ -29,11 +29,7 @@ export const forceSimulationStepPreviewConfig = {
         yFactor: 2.5,
         // yFactor: 3,
         alignmentMaxLevelsX: 40,
-        // centerXStretchMod: 1,
-        // centerXStretchMod: 1.25,
-        // centerXStretchMod: 0.5,
-        centerXStretchMod: 1.5,
-        // centerXStretchMod: 0,
+        // centerXStretchMod: 1.5,
         speedFactor: 1,
       },
       lattice: {

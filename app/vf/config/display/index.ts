@@ -67,11 +67,33 @@ export default {
             },
           },
         },
-        fFishEyeMod: {
+        fFishEyeStrength: {
           animatable: true,
           modes: {
             default: {
-              value: 0,
+              value: 0.75,
+            },
+            [VOROFORCE_MODE.select]: {
+              value: 1,
+            },
+          },
+        },
+        fFishEyeRadius: {
+          animatable: true,
+          modes: {
+            default: {
+              value: 0.5,
+            },
+            [VOROFORCE_MODE.select]: {
+              value: 1,
+            },
+          },
+        },
+        fWeightOffsetScale: {
+          animatable: true,
+          modes: {
+            default: {
+              value: 0.5,
             },
             [VOROFORCE_MODE.select]: {
               value: 1,

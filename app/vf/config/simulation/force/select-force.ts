@@ -1,4 +1,4 @@
-export const forceSimulationStepSelectConfig = {
+export const selectForceSimulationStepConfig = {
   parameters: {
     alpha: 0.2,
     velocityDecay: 0.5,
@@ -60,12 +60,12 @@ export const forceSimulationStepSelectConfig = {
         yFactor: 2.75,
         xFactor: 1,
         maxLevelsFromPrimary: 50,
-        cellSizeMod: 10,
+        // cellSizeMod: 10,
       },
       origin: {
         strength: 0.1,
         // yFactor: 1.5,
-        latticeScale: 4,
+        latticeScale: 10,
       },
     },
   ],

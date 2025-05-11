@@ -202,6 +202,8 @@ export const omniForce = ({
 
   let centerX,
     centerY,
+    latticeCenterX = originLatticeX,
+    latticeCenterY = originLatticeY,
     centerLerp = defaultLerpFactor,
     primaryCell,
     newPrimaryCell,
@@ -327,7 +329,8 @@ export const omniForce = ({
     // )
     // centerLerp = inversePointerSpeedScale
     // centerLerp = defaultLerpFactor
-    centerLerp = 1
+    // centerLerp = 1
+    centerLerp = max(defaultLerpFactor, inversePointerSpeedScale)
 
     newRelativePointerSpeedScale =
       pointerSpeedScale <= 0.005 ? pointerSpeedScale / 0.005 : 1
@@ -361,6 +364,9 @@ export const omniForce = ({
       // inversePointerSpeedScale,
       centerLerp,
     )
+
+    latticeCenterX = centerX
+    latticeCenterY = centerY
 
     // centerX = easedMinLerp(centerX, primaryCellX, defaultLerpFactor)
     // centerY = easedMinLerp(centerY, primaryCellY, defaultLerpFactor)
@@ -520,7 +526,7 @@ export const omniForce = ({
       cell.vx +=
         ((originLatticeScale === 1
           ? cell.ix
-          : (cell.ix - centerX) * originLatticeScale + centerX) -
+          : (cell.ix - latticeCenterX) * originLatticeScale + latticeCenterX) -
           cell.x) *
         originStrength *
         alpha *
@@ -529,7 +535,7 @@ export const omniForce = ({
       cell.vy +=
         ((originLatticeScale === 1
           ? cell.iy
-          : (cell.iy - centerY) * originLatticeScale + centerY) -
+          : (cell.iy - latticeCenterY) * originLatticeScale + latticeCenterY) -
           cell.y) *
         originStrength *
         alpha *

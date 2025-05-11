@@ -22,7 +22,7 @@ export const FilmRatingGauge = ({
   className,
   ...restSvgProps
 }: RatingGaugeProps) => {
-  const normalizedValue = clamp(value, 0, total)
+  const normalizedValue = clamp(value ?? 0, 0, total)
 
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius

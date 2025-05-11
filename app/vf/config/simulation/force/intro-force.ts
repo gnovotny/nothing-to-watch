@@ -1,4 +1,4 @@
-export const forceSimulationStepIntroConfig = {
+export const introForceSimulationStepConfig = {
   parameters: {
     alpha: 0.8,
     velocityDecay: 0.8,
