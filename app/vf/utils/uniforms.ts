@@ -4,14 +4,14 @@ import type { VOROFORCE_MODE } from '../consts'
 
 export type BaseConfigUniform =
   | {
-      value: string | boolean
+      value?: boolean
       animatable: never
       targetValue: never
       targetFactor: never
       targetEasing: never
     }
   | {
-      value: number
+      value?: number
       animatable?: boolean
       targetValue?: number
       targetFactor?: number
@@ -21,6 +21,7 @@ export type BaseConfigUniform =
 export type ConfigUniform = BaseConfigUniform & {
   modes?: Record<VOROFORCE_MODE | 'default', BaseConfigUniform>
   themes?: Record<THEME | 'default', BaseConfigUniform>
+  initial?: BaseConfigUniform
 }
 
 export type ConfigUniforms = Map<string, ConfigUniform>

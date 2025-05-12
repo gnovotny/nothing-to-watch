@@ -264,6 +264,11 @@ export const omniForce = ({
 
     sharedData.forceCenterX = centerX
     sharedData.forceCenterY = centerY
+    sharedData.forceCenterSpeedScale = easedMinLerp(
+      sharedData.forceCenterSpeedScale,
+      pointer.speedScale,
+      defaultLerpFactor * 0.1,
+    )
   }
 
   function forceSetup(alpha) {
@@ -275,8 +280,12 @@ export const omniForce = ({
 
     if (!primaryCell) return
 
-    // pointerSpeedScale = pointer.speedScale
     pointerSpeedScale = easedMinLerp(pointerSpeedScale, pointer.speedScale, 0.1)
+    // pointerSpeedScale = easedMinLerp(
+    //   pointerSpeedScale,
+    //   pointer.speedScale,
+    //   defaultLerpFactor,
+    // )
 
     // console.log('pointerSpeedScale', pointerSpeedScale)
     inversePointerSpeedScale = 1 - pointerSpeedScale

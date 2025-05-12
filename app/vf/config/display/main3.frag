@@ -55,6 +55,8 @@ precision highp float;
 #define EDGE_1 .009
 #define EDGE_2 .0005
 
+#define UNWEIGHTED_MOD_OPACITY 0.7
+
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
 uniform highp sampler2D uVoroIndexBuffer2Texture;
@@ -90,10 +92,11 @@ uniform float fWeightOffsetScale;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
+uniform float fForceCenterSpeedScale;
 uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
-uniform float fUnfocusedEffectMod;
+uniform float fUnWeightedEffectMod;
 
 in vec2 vUv;
 
@@ -650,12 +653,14 @@ Data update() {
     #if FISHEYE_STRENGTH != 0
         if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
+            float inverseForceCenterSpeedScale =  (1. - fForceCenterSpeedScale);
+
             vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
             float r = sqrt(dist(p, forceCenterCoords));
 
-            float percent = r / (FISHEYE_RADIUS * fFishEyeRadius);
+            float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
             float step = smoothstep(0.0, 1. / percent, percent);
-            float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength;
+            float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
             float zoomFactor = mix(1.0, step, strength);
 
             p -= forceCenterCoords;
@@ -762,11 +767,14 @@ Data update() {
         float zoomFactor = 1.;
         #if FISHEYE_STRENGTH != 0
             if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
+
+                float inverseForceCenterSpeedScale =  (1. - fForceCenterSpeedScale);
+
                 vec2 forceCenterNCoords = normalizeCoords(forceCenter);
                 float r = sqrt(dist(cellNCoords, forceCenterNCoords));
-                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius);
+                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
                 float step = smoothstep(0.0, 1. / percent, percent);
-                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength;
+                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
                 zoomFactor = mix(1.0, step, strength);
 
 
@@ -917,11 +925,11 @@ void main() {
 //    if (focusCenterDist > 725.) {
 //        c = fBaseColor;
 //    }
-    if (fUnfocusedEffectMod > 0.) {
+    if (fUnWeightedEffectMod > 0.) {
 //        if (indices.x != uint(iFocusedIndex)) {
-//            c = mix(c, fBaseColor, 0.7 * fUnfocusedEffectMod);
+//            c = mix(c, fBaseColor, 0.7 * fUnWeightedEffectMod);
 //        }
-        c = mix(c, fBaseColor, 0.7 * fUnfocusedEffectMod * (1.-data.weight));
+        c = mix(c, fBaseColor, UNWEIGHTED_MOD_OPACITY * fUnWeightedEffectMod * (1.-data.weight));
     }
     outputColor = vec4(c, a);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*inverseScaleMod)), 1.);

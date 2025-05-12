@@ -17,9 +17,7 @@ uniform vec3 fBaseColor;
 in vec2 vUv;
 out vec4 fragColor;
 
-// Scene object ID, and individual cell IDs. Used for coloring.
 float objID; // The rounded web lattice, or the individual Voronoi cells.
-//vec2 cellID; // Individual Voronoi cell IDs.
 
 
 // Standard 2D rotation formula.
@@ -101,15 +99,8 @@ void main(){
     }
 
     vec2 fragCoord = gl_FragCoord.xy;
-    //SETUP.
-    //
-    // Aspect correct screen coordinates.
-//    vec2 uv = (fragCoord - iResolution.xy*.5)/min(iResolution.y, 800.);
-    vec2 uv = vUv;
 
-    // Very subtle screen warping, for that bulbous fish-eye look.
-//    vec2 aspect = vec2(iResolution.y/iResolution.x, 1);
-//    uv *= 1. + dot(uv*aspect, uv*aspect)*.05;
+    vec2 uv = vUv;
 
     // Unit direction ray.
     vec3 r = normalize(vec3(uv.xy, 1.));
@@ -138,7 +129,6 @@ void main(){
 
 
     // BUMP MAPPING AND EDGING. Pretty standard stuff. 
-    //
     vec2 e = vec2(8./iResolution.y, 0); // Sample spred.
     float bf = .4; // Bump factor.
 

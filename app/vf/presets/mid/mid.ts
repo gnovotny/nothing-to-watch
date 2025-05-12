@@ -1,6 +1,7 @@
 import baseConfig from '../../config/config'
-import postFrag from './post-mid.frag'
 import { uncompressedSingleMediaVersionConfig } from '../../config/media'
+// import postFrag from './post-mid.frag'
+import postFrag from './post-mid2.frag'
 
 export default {
   cells: 25000,
@@ -19,11 +20,11 @@ export default {
         fragmentShader: postFrag,
         uniforms: {
           fBaseColor: {
-            value: [0.005, 0.005, 0.005],
             animatable: true,
             themes: {
               default: {
-                value: [0.005, 0.005, 0.005],
+                // value: [0.005, 0.005, 0.005],
+                value: [0.02, 0.02, 0.02],
               },
               light: {
                 value: [0.995, 0.995, 0.995],
@@ -31,8 +32,6 @@ export default {
             },
           },
           fAlphaStrength: {
-            // value: 0.3,
-            value: 1,
             animatable: true,
             modes: {
               default: {
@@ -45,8 +44,6 @@ export default {
             },
           },
           fEdgeStrength: {
-            // value: 0.3,
-            value: 1,
             animatable: true,
             modes: {
               default: {

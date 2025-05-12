@@ -59,6 +59,9 @@ export default {
         },
         fFishEyeStrength: {
           animatable: true,
+          initial: {
+            value: 0,
+          },
           modes: {
             default: {
               value: 0.75,
@@ -70,6 +73,9 @@ export default {
         },
         fFishEyeRadius: {
           animatable: true,
+          initial: {
+            value: 0,
+          },
           modes: {
             default: {
               value: 0.5,
@@ -90,7 +96,7 @@ export default {
             },
           },
         },
-        fUnfocusedEffectMod: {
+        fUnWeightedEffectMod: {
           animatable: true,
           value: 0,
         },

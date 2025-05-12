@@ -26,7 +26,7 @@ export const handleControls = () => {
   controls.listen('pointerFrozenChange', (async ({
     frozen,
   }: { frozen: boolean }) => {
-    const uniformKey = 'fUnfocusedEffectMod'
+    const uniformKey = 'fUnWeightedEffectMod'
     const uniform = mainUniforms.get(uniformKey)
     if (!uniform) return
     const value = frozen ? 1 : 0

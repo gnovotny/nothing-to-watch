@@ -136,19 +136,35 @@ export const getConfig = async (state: StoreState) => {
 
 const processVoroforceStageConfigUniforms = (
   stageConfigUniforms: Record<string, ConfigUniform>,
+  animating: Map<string, ConfigUniform>,
   mode: VOROFORCE_MODE,
   theme: THEME,
 ) => {
   return new Map<string, ConfigUniform>(
     Object.entries(stageConfigUniforms).map(([key, uniform]) => {
       if (typeof uniform.value === 'undefined') {
-        uniform.value = uniform.modes
+        const uniformValue = uniform.modes
           ? typeof uniform.modes?.[mode]?.value !== 'undefined'
             ? uniform.modes[mode].value
             : (uniform.modes?.default?.value ?? 0)
           : typeof uniform.themes?.[theme]?.value !== 'undefined'
             ? uniform.themes[theme].value
             : (uniform.themes?.default?.value ?? 0)
+
+        if (
+          uniform.animatable &&
+          typeof uniform.initial?.value === 'number' &&
+          typeof uniformValue === 'number'
+        ) {
+          uniform.value = uniform.initial.value
+
+          uniform.targetValue = uniformValue
+          if (!animating.has(key)) {
+            animating.set(key, uniform)
+          }
+        } else {
+          uniform.value = uniformValue as number
+        }
       }
       return [key, uniform]
     }),
@@ -170,10 +186,22 @@ const getVoroforceConfigUniforms = (
     },
   } = config
 
+  const animating = new Map<string, ConfigUniform>()
+
   return {
-    main: processVoroforceStageConfigUniforms(mainConfigUniforms, mode, theme),
-    post: processVoroforceStageConfigUniforms(postConfigUniforms, mode, theme),
-    animating: new Map<string, ConfigUniform>(),
+    main: processVoroforceStageConfigUniforms(
+      mainConfigUniforms,
+      animating,
+      mode,
+      theme,
+    ),
+    post: processVoroforceStageConfigUniforms(
+      postConfigUniforms,
+      animating,
+      mode,
+      theme,
+    ),
+    animating,
   }
 }
 

@@ -80,6 +80,8 @@ export default class BaseScene {
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
       this.baseUniforms.fPointer.value = this.getPointer()
       this.baseUniforms.fForceCenter.value = this.getForceCenter()
+      this.baseUniforms.fForceCenterSpeedScale.value =
+        this.sharedData?.forceCenterSpeedScale ?? 0
     }
 
     this.beforeUpdateCustom()
@@ -431,6 +433,9 @@ export default class BaseScene {
         iTime: { value: 0 },
         fPointer: { value: this.getPointer() },
         fForceCenter: { value: this.getForceCenter() },
+        fForceCenterSpeedScale: {
+          value: this.sharedData?.forceCenterSpeedScale ?? 0,
+        },
       }
     }
 

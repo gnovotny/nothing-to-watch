@@ -32,4 +32,12 @@ export class SharedData {
   set forceCenterY(value) {
     this.data[8] = value
   }
+
+  get forceCenterSpeedScale() {
+    return this.data[9]
+  }
+
+  set forceCenterSpeedScale(value) {
+    this.data[9] = value
+  }
 }
