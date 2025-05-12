@@ -1,5 +1,6 @@
 import { forceSimulationStepConfigs } from './force'
-import { DEFAULT_VOROFORCE_MODE } from '../../types'
+
+import {DEFAULT_VOROFORCE_MODE} from "../../consts";
 
 export default {
   steps: {

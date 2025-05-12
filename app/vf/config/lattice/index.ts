@@ -1,5 +1,6 @@
 import { mergeConfigs } from '√'
-import { VOROFORCE_MODE } from '../../types'
+
+import {VOROFORCE_MODE} from "../../consts";
 
 export const baseLatticeConfig = {
   enabled: true,

@@ -5,7 +5,7 @@ import { Button } from '../../ui/button'
 
 import { useTheme } from './theme-provider'
 import type { MouseEventHandler } from 'react'
-import {THEME} from "../../../types";
+import { THEME } from '../../../consts'
 
 export function ThemeToggle({
   className = '',

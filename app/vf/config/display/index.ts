@@ -1,16 +1,7 @@
-// import mainFrag from './main.frag'
-// import mainFrag from './main-test.frag'
-// import mainFrag from './main-test-new.frag'
-// import mainFrag from './main-castle-mountain.frag'
-// import mainFrag from './main-test-new2.frag'
-// import mainFrag from './main-test-new3.frag'
-// import mainFrag from './main.frag'
-// import mainFrag from './main2.frag'
 import mainFrag from './main3.frag'
-import { THEME } from '../../../types'
-import { VOROFORCE_MODE } from '../../types'
-// import mainFrag from './main-fisheye-test.frag'
-// import postFrag from './post-fisheye-test.frag'
+import { THEME } from '../../../consts'
+
+import { VOROFORCE_MODE } from '../../consts'
 
 export default {
   scene: {
@@ -21,7 +12,6 @@ export default {
       fragmentShader: mainFrag,
       uniforms: {
         iForceMaxNeighborLevel: { value: 0 },
-        bForceMaxQuality: { value: false },
         bPixelSearch: { value: true },
         fBaseColor: {
           animatable: true,
@@ -110,17 +100,6 @@ export default {
       enabled: false,
       fragmentShader: undefined,
       uniforms: {},
-    },
-  },
-  renderer: {
-    scissor: {
-      enabled: true,
-      offset: {
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-      },
     },
   },
 }

@@ -1,7 +1,8 @@
 import { baseLatticeConfig, forceSimulationStepConfigs } from '../config'
 import { store } from '@/store'
 import { type VoroforceCell, updateUniformsByMode } from '../utils'
-import { VOROFORCE_MODE } from '../types'
+
+import {VOROFORCE_MODE} from "../consts";
 
 export const revealVoroforceContainer = () => {
   store.getState().container.classList.remove('opacity-0')

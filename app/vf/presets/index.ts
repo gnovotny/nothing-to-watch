@@ -2,7 +2,8 @@ import { default as mobile } from './mobile'
 import { default as low } from './low'
 import { default as mid } from './mid'
 import { default as high } from './high'
-import { VOROFORCE_PRESET } from '../types'
+
+import {VOROFORCE_PRESET} from "../consts";
 
 const presets = {
   [VOROFORCE_PRESET.mobile]: mobile,

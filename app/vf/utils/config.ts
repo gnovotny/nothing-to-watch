@@ -8,8 +8,8 @@ import { down, matchMediaQuery } from '../../utls/mq'
 
 import type { StoreState } from '../../store'
 import type { ConfigUniform } from './uniforms'
-import { type VOROFORCE_MODE, VOROFORCE_PRESET } from '../types'
-import type { THEME } from '../../types'
+import type { THEME } from '../../consts'
+import { type VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
 
 export type CustomLink = {
   name: string

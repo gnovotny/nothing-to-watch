@@ -17,7 +17,7 @@ import {
   type PerformanceMonitorApi,
 } from './vf'
 
-import { THEME } from './types'
+import { THEME } from './consts'
 
 export type StoreState = {
   theme: THEME
