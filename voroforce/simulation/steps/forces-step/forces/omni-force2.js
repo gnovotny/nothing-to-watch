@@ -338,8 +338,8 @@ export const omniForce = ({
     // )
     // centerLerp = inversePointerSpeedScale
     // centerLerp = defaultLerpFactor
-    // centerLerp = 1
-    centerLerp = max(defaultLerpFactor, inversePointerSpeedScale)
+    centerLerp = 1
+    // centerLerp = max(defaultLerpFactor, inversePointerSpeedScale)
 
     newRelativePointerSpeedScale =
       pointerSpeedScale <= 0.005 ? pointerSpeedScale / 0.005 : 1

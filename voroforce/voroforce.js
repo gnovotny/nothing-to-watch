@@ -155,21 +155,15 @@ export class Voroforce {
           console.log('visible')
           this.visible = true
           this.ticker.unfreeze()
-          this.ticker.next()
         },
         () => {
-          console.log('hidden')
           this.visible = false
-
-          if (this.config.handleVisibilityChange.hiddenDelay > 0) {
-            setTimeout(() => {
-              if (this.visible) return
-              console.log('frozen')
-              this.ticker.freeze()
-            }, this.config.handleVisibilityChange.hiddenDelay)
-          } else {
+          console.log('hidden')
+          setTimeout(() => {
+            if (this.visible) return
+            console.log('hidden freeze')
             this.ticker.freeze()
-          }
+          }, this.config.handleVisibilityChange.hiddenDelay)
         },
       )
     }

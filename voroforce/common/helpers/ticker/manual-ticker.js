@@ -52,5 +52,6 @@ export class ManualTicker extends CustomEventTarget {
 
   unfreeze() {
     this.frozen = false
+    this.ticker.next()
   }
 }

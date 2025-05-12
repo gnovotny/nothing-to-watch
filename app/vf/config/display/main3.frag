@@ -55,7 +55,7 @@ precision highp float;
 #define EDGE_1 .009
 #define EDGE_2 .0005
 
-#define UNWEIGHTED_MOD_OPACITY 0.7
+#define UNWEIGHTED_MOD_OPACITY 0.3
 
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
@@ -420,7 +420,7 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
 //        mediaCols = 1;
 //        mediaRows = 1;
 //        numLayers = int(ceil(50000./54.));
-        numLayers = 10;
+        numLayers = 50;
         mediaCols = 9;
         mediaRows = 6;
     } else {
@@ -672,8 +672,6 @@ Data update() {
         }
     #endif
 
-
-
     float prevMaxWeight = weightTexData(prevIndices.x);
     prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices.y));
 
@@ -682,7 +680,7 @@ Data update() {
     float mediaWeightOffsetScale = 1.;
 
     #if WEIGHTED_DIST == 1
-        weightOffsetScale = WEIGHT_OFFSET_SCALE * (fWeightOffsetScale > 0. ? fWeightOffsetScale : 1.) * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
+        weightOffsetScale = WEIGHT_OFFSET_SCALE * fWeightOffsetScale * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
         mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
     #endif
 
@@ -929,7 +927,7 @@ void main() {
 //        if (indices.x != uint(iFocusedIndex)) {
 //            c = mix(c, fBaseColor, 0.7 * fUnWeightedEffectMod);
 //        }
-        c = mix(c, fBaseColor, UNWEIGHTED_MOD_OPACITY * fUnWeightedEffectMod * (1.-data.weight));
+        c = mix(c, fBaseColor, (1.-UNWEIGHTED_MOD_OPACITY) * fUnWeightedEffectMod * (1.-data.weight));
     }
     outputColor = vec4(c, a);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*inverseScaleMod)), 1.);

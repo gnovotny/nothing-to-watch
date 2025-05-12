@@ -29,6 +29,7 @@ export const previewForceSimulationStepConfig = {
         yFactor: 2.5,
         // yFactor: 3,
         alignmentMaxLevelsX: 40,
+        centerXStretchMod: 0.4,
         // centerXStretchMod: 1.5,
         speedFactor: 1,
       },

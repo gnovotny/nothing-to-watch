@@ -37,6 +37,7 @@ export const handleAnimatingUniforms = (uniforms: ConfigUniforms) => {
         uniform.targetValue,
         uniform.targetFactor ?? 0.025,
         uniform.targetEasing ?? MIN_LERP_EASING_TYPES.linear,
+        0.001,
       )
       if (uniform.value === uniform.targetValue) {
         uniform.targetValue = undefined

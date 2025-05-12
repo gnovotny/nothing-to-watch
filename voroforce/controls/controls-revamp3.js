@@ -69,7 +69,11 @@ export default class Controls extends CustomEventTarget {
     //   : Infinity
 
     this.options = {
-      maxSpeed: this.config.maxSpeed || 300,
+      noProcessing: this.config.noProcessing || false,
+
+      maxSpeed: this.config.maxSpeed || 10,
+      minSpeed: this.config.minSpeed || 2,
+      ease: this.config.ease || 0.15,
       maxAcceleration: this.config.maxAcceleration || 50000,
       capValues: this.config.capValues || false,
 
@@ -107,12 +111,7 @@ export default class Controls extends CustomEventTarget {
       })
     }
 
-    if (this.rawPosition) {
-      this.handlePointerPosition({
-        ...this.rawPosition,
-        timestamp: performance.now(),
-      })
-    }
+    this.handleRawPointerPosition()
 
     if (!this.position) return
 
@@ -147,11 +146,18 @@ export default class Controls extends CustomEventTarget {
     })
   }
 
-  handlePointerPosition(rawPosition) {
-    if (!rawPosition) return
+  handleRawPointerPosition() {
+    if (!this.rawPosition) return
+
+    if (this.options.noProcessing) {
+      this.position = { x: this.rawPosition.x, y: this.rawPosition.y }
+      return
+    }
+
+    const timestamp = performance.now()
 
     // Process the position with capping if needed
-    const position = this.processPosition(rawPosition)
+    const position = this.processPosition(this.rawPosition, timestamp)
 
     // Update current position
     this.position = { x: position.x, y: position.y }
@@ -185,34 +191,15 @@ export default class Controls extends CustomEventTarget {
 
     // Save last processed values for next calculation
     this.lastPosition = { ...this.position }
-    this.lastTimestamp = rawPosition.timestamp
+    this.lastRawPosition = this.rawPosition
+    this.lastTimestamp = timestamp
     this.lastSpeed = { ...this.speed }
-    this.lastAcceleration = { ...this.acceleration }
   }
 
   processPosition(rawPosition) {
     // If this is the first position, just return raw position
-    if (!this.lastPosition || !this.lastTimestamp) return rawPosition
-
-    // Calculate time delta in seconds
-    const timeDelta = (rawPosition.timestamp - this.lastTimestamp) / 1000
-    if (timeDelta <= 0) return rawPosition // Safety check
-
-    // Calculate position delta
-    const positionDeltaX = rawPosition.x - this.lastPosition.x
-    const positionDeltaY = rawPosition.y - this.lastPosition.y
-
-    // Calculate speed
-    this.speed.x = positionDeltaX / timeDelta
-    this.speed.y = positionDeltaY / timeDelta
-    this.speed.total = sqrt(pow(this.speed.x, 2) + pow(this.speed.y, 2))
-
-    if (this.options.shake?.enabled) {
-      if (this.detectShake()) {
-        this.pinPointer()
-        return this.lastPosition
-      }
-    }
+    if (!this.lastPosition || !this.lastRawPosition || !this.lastTimestamp)
+      return rawPosition
 
     if (
       this.options.freezeOnJolt?.enabled &&
@@ -226,149 +213,46 @@ export default class Controls extends CustomEventTarget {
       return this.lastPosition
     }
 
-    // If speed is within limits, no capping needed
-    if (!this.options.capValues || this.speed.total <= this.options.maxSpeed) {
-      // console.log('UNDER', this.speed.total)
-      return rawPosition
-    } else {
-      // console.log('OVER', this.speed.total)
+    if (this.options.shake?.enabled) {
+      if (this.detectShake()) {
+        this.pinPointer()
+        return this.lastPosition
+      }
     }
 
-    // Cap the speed and calculate new position delta
-    const speedFactor = this.options.maxSpeed / this.speed.total
-    const cappedPositionDeltaX = positionDeltaX * speedFactor
-    const cappedPositionDeltaY = positionDeltaY * speedFactor
+    // Calculate position delta
+    const deltaX = rawPosition.x - this.lastPosition.x
+    const deltaY = rawPosition.y - this.lastPosition.y
 
-    // Calculate the new position based on capped speed
-    const cappedPosition = {
-      x: this.lastPosition.x + cappedPositionDeltaX,
-      y: this.lastPosition.y + cappedPositionDeltaY,
-      timestamp: rawPosition.timestamp,
+    const distance = sqrt(pow(deltaX, 2) + pow(deltaY, 2))
+
+    if (distance < 0.1) return rawPosition // Small threshold to stop when extremely close
+
+    // Approach 1: Consistent interpolation with minimum speed
+    const easeAmount = Math.max(
+      this.options.ease,
+      this.options.minSpeed / distance,
+    )
+
+    // Calculate the movement for this frame
+    let cappedDeltaX = deltaX * easeAmount
+    let cappedDeltaY = deltaY * easeAmount
+
+    // Approach 2: Apply speed limit while maintaining direction
+    const currentSpeed = Math.sqrt(
+      cappedDeltaX * cappedDeltaX + cappedDeltaY * cappedDeltaY,
+    )
+    if (currentSpeed > this.options.maxSpeed) {
+      const ratio = this.options.maxSpeed / currentSpeed
+      cappedDeltaX *= ratio
+      cappedDeltaY *= ratio
     }
 
-    // Check acceleration cap if we have previous speed data
-    // if (this.options.maxAcceleration < Infinity && this.lastSpeed) {
-    //   // Calculate desired acceleration
-    //   const desiredAccelX = (this.speed.x - this.lastSpeed.x) / timeDelta
-    //   const desiredAccelY = (this.speed.y - this.lastSpeed.y) / timeDelta
-    //   const desiredAccelTotal = sqrt(
-    //     desiredAccelX * desiredAccelX + desiredAccelY * desiredAccelY,
-    //   )
-    //
-    //   // If acceleration is over limit, cap it
-    //   if (desiredAccelTotal > this.options.maxAcceleration) {
-    //     const accelFactor = this.options.maxAcceleration / desiredAccelTotal
-    //
-    //     // Calculate new speed based on capped acceleration
-    //     const cappedSpeedX =
-    //       this.lastSpeed.x + (this.speed.x - this.lastSpeed.x) * accelFactor
-    //     const cappedSpeedY =
-    //       this.lastSpeed.y + (this.speed.y - this.lastSpeed.y) * accelFactor
-    //
-    //     // Calculate new position based on capped acceleration
-    //     cappedPosition.x = this.lastPosition.x + cappedSpeedX * timeDelta
-    //     cappedPosition.y = this.lastPosition.y + cappedSpeedY * timeDelta
-    //   }
-    // }
-
-    return cappedPosition
+    return {
+      x: this.lastPosition.x + cappedDeltaX,
+      y: this.lastPosition.y + cappedDeltaY,
+    }
   }
-
-  // calculateSpeed() {
-  //   // Use the two most recent positions
-  //   const current = this.positionHistory[this.positionHistory.length - 1]
-  //   const previous = this.positionHistory[this.positionHistory.length - 2]
-  //
-  //   // Time difference in seconds
-  //   const timeDiff = (current.timestamp - previous.timestamp) / 1000
-  //
-  //   if (timeDiff > 0) {
-  //     // Calculate speed components (pixels per second)
-  //     this.speed.x = (current.x - previous.x) / timeDiff
-  //     this.speed.y = (current.y - previous.y) / timeDiff
-  //
-  //     // Calculate total speed (magnitude of velocity vector)
-  //     this.speed.total = sqrt(pow(this.speed.x, 2) + pow(this.speed.y, 2))
-  //
-  //     // Apply maximum speed threshold if specified
-  //     if (this.options.maxSpeed < Infinity) {
-  //       // Check if we're over the threshold
-  //       const isOverSpeedThreshold = this.speed.total > this.options.maxSpeed
-  //
-  //       // Optionally cap the speed at the maximum value
-  //       if (this.options.capValues && isOverSpeedThreshold) {
-  //         const factor = this.options.maxSpeed / this.speed.total
-  //         this.speed.x *= factor
-  //         this.speed.y *= factor
-  //         this.speed.total = this.options.maxSpeed
-  //       }
-  //     }
-  //   }
-  // }
-  //
-  // calculateDirection() {
-  //   // Calculate direction in degrees (0 = right, 90 = down, 180 = left, 270 = up)
-  //   if (abs(this.speed.x) > 0.1 || abs(this.speed.y) > 0.1) {
-  //     this.direction = atan2(this.speed.y, this.speed.x) * (180 / PI)
-  //     // Convert to 0-360 range
-  //     if (this.direction < 0) {
-  //       this.direction += 360
-  //     }
-  //   }
-  // }
-  //
-  // calculateAcceleration() {
-  //   // We need at least 3 positions to calculate acceleration
-  //   const current = this.positionHistory[this.positionHistory.length - 1]
-  //   const middle = this.positionHistory[this.positionHistory.length - 2]
-  //   const oldest = this.positionHistory[this.positionHistory.length - 3]
-  //
-  //   // Time differences in seconds
-  //   const timeDiff1 = (middle.timestamp - oldest.timestamp) / 1000
-  //   const timeDiff2 = (current.timestamp - middle.timestamp) / 1000
-  //
-  //   if (timeDiff1 > 0 && timeDiff2 > 0) {
-  //     // Calculate speed at two points in time
-  //     const speed1 = {
-  //       x: (middle.x - oldest.x) / timeDiff1,
-  //       y: (middle.y - oldest.y) / timeDiff1,
-  //     }
-  //
-  //     const speed2 = {
-  //       x: (current.x - middle.x) / timeDiff2,
-  //       y: (current.y - middle.y) / timeDiff2,
-  //     }
-  //
-  //     // Calculate acceleration (change in speed over time)
-  //     const timeDiffTotal = timeDiff1 + timeDiff2
-  //
-  //     if (timeDiffTotal > 0) {
-  //       this.acceleration.x = (speed2.x - speed1.x) / timeDiffTotal
-  //       this.acceleration.y = (speed2.y - speed1.y) / timeDiffTotal
-  //
-  //       // Calculate total acceleration (magnitude)
-  //       this.acceleration.total = sqrt(
-  //         pow(this.acceleration.x, 2) + pow(this.acceleration.y, 2),
-  //       )
-  //
-  //       // Apply maximum acceleration threshold if specified
-  //       if (this.options.maxAcceleration < Infinity) {
-  //         // Check if we're over the threshold
-  //         const isOverAccelerationThreshold =
-  //           this.acceleration.total > this.options.maxAcceleration
-  //
-  //         // Optionally cap the acceleration at the maximum value
-  //         if (this.options.capValues && isOverAccelerationThreshold) {
-  //           const factor =
-  //             this.options.maxAcceleration / this.acceleration.total
-  //           this.acceleration.x *= factor
-  //           this.acceleration.y *= factor
-  //           this.acceleration.total = this.options.maxAcceleration
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 
   detectShake() {
     if (this.pointerFrozen || this.speed.total <= this.options.shake.minSpeed) {
@@ -562,7 +446,6 @@ export default class Controls extends CustomEventTarget {
     this.rawPosition = {
       x: e.x,
       y: e.y,
-      timestamp: performance.now(),
     }
   }
 
