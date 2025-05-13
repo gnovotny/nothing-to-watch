@@ -64,6 +64,9 @@ export default {
           },
           modes: {
             default: {
+              value: 0,
+            },
+            [VOROFORCE_MODE.preview]: {
               // value: 0.75,
               value: 1.25,
               // value: 0,
@@ -81,6 +84,9 @@ export default {
           },
           modes: {
             default: {
+              value: 0,
+            },
+            [VOROFORCE_MODE.preview]: {
               value: 0.5,
             },
             [VOROFORCE_MODE.select]: {
@@ -89,7 +95,7 @@ export default {
             },
           },
         },
-        fWeightOffsetScale: {
+        fWeightOffsetScaleMod: {
           animatable: true,
           modes: {
             default: {
@@ -97,7 +103,8 @@ export default {
               value: 0,
             },
             [VOROFORCE_MODE.select]: {
-              value: 1,
+              // value: 1,
+              value: 0,
             },
           },
         },

@@ -5,7 +5,7 @@ import { diaphragmaticBreathing } from './utils/diaphragmatic-breathing'
 
 const LERP_FACTOR_DEFAULT = 0.025
 
-const { abs, max, min, sqrt } = Math
+const { abs, max, min, sqrt, pow } = Math
 
 const getPushRadius = (dimensions) => {
   return dimensions.get('diagonal')
@@ -264,10 +264,11 @@ export const omniForce = ({
 
     sharedData.forceCenterX = centerX
     sharedData.forceCenterY = centerY
-    sharedData.forceCenterSpeedScale = easedMinLerp(
+    sharedData.forceCenterSpeedScale = lerp(
       sharedData.forceCenterSpeedScale,
       pointer.speedScale,
-      defaultLerpFactor * 0.1,
+      defaultLerpFactor *
+        pow(abs(sharedData.forceCenterSpeedScale - pointer.speedScale), 2),
     )
   }
 
@@ -344,15 +345,21 @@ export const omniForce = ({
     newRelativePointerSpeedScale =
       pointerSpeedScale <= 0.005 ? pointerSpeedScale / 0.005 : 1
 
+    // newRelativePointerSpeedScale =
+    //   pointerSpeedScale <= 0.01 ? pointerSpeedScale / 0.01 : 1
+
     relativePointerSpeedScale = easedMinLerp(
       relativePointerSpeedScale,
       newRelativePointerSpeedScale,
+
       newRelativePointerSpeedScale > relativePointerSpeedScale
-        ? max(relativePointerSpeedScale / newRelativePointerSpeedScale, 0.1) *
-            defaultLerpFactor
+        ? defaultLerpFactor * 2
         : defaultLerpFactor,
-      // defaultLerpFactor *
-      //   max(newRelativePointerSpeedScale, 0.5),
+
+      // newRelativePointerSpeedScale > relativePointerSpeedScale
+      //   ? max(relativePointerSpeedScale / newRelativePointerSpeedScale, 0.1) *
+      //       defaultLerpFactor
+      //   : defaultLerpFactor,
     )
 
     // console.log('pointerSpeedScale', pointerSpeedScale)

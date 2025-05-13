@@ -21,9 +21,10 @@ precision highp float;
 #define DOUBLE_INDEX_POOL_BUFFER 0
 #define FISHEYE_STRENGTH 50
 #define FISHEYE_RADIUS 1.
+#define FISHEYE_SQUARED 1
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
-#define MEDIA_UV_ROTATE_FACTOR 1
+#define MEDIA_UV_ROTATE_FACTOR 0
 #define WEIGHTED_DIST 1
 //#define WEIGHTED_DIST 0
 //#define WEIGHT_OFFSET_SCALE 2000.
@@ -32,8 +33,8 @@ precision highp float;
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
 #define X_DIST_SCALING 1
 //#define X_DIST_SCALING 0
-#define BASE_X_DIST_SCALE 1.5
-#define WEIGHTED_X_DIST_SCALE 1.5
+#define DEFAULT_BASE_X_DIST_SCALE 1.5
+#define DEFAULT_WEIGHTED_X_DIST_SCALE 1.5
 #define MEDIA_BBOX_SCALE 1. // TODO TMP
 //#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
@@ -44,10 +45,9 @@ precision highp float;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 #define TRANSPARENT_BG 0
-//#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-//#define ROUNDNESS 0.025 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-#define ROUNDNESS 0.1 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
-//#define ROUNDNESS 0.01 * BASE_X_DIST_SCALE // adjust roundness to match x dist scale
+//#define ROUNDNESS 0.01
+//#define ROUNDNESS 0.025
+#define ROUNDNESS 0.1
 
 //#define EDGE_1 .005
 //#define EDGE_2 .001
@@ -55,7 +55,8 @@ precision highp float;
 #define EDGE_1 .009
 #define EDGE_2 .0005
 
-#define UNWEIGHTED_MOD_OPACITY 0.3
+//#define UNWEIGHTED_MOD_OPACITY 0.5
+#define UNWEIGHTED_MOD_OPACITY 1.
 
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
@@ -88,7 +89,7 @@ uniform float fEdge1Mod;
 uniform float fEdge0Mod;
 uniform float fFishEyeStrength;
 uniform float fFishEyeRadius;
-uniform float fWeightOffsetScale;
+uniform float fWeightOffsetScaleMod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
@@ -97,6 +98,8 @@ uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
 uniform float fUnWeightedEffectMod;
+uniform float fBaseXDistScale;
+uniform float fWeightedXDistScale;
 
 in vec2 vUv;
 
@@ -112,9 +115,9 @@ struct Data {
     uvec4 indices2;
     vec2 minEdgeDists;
     vec4 mediaBbox;
-    bool debugFlag;
     float scaleMod;
     float weight;
+    bool debugFlag;
 };
 
 #if BICUBIC_MEDIA_FILTER == 1
@@ -267,8 +270,18 @@ vec3 randomColor(uint seed) {
     return vec3(r, g, b);
 }
 
+float getBaseXDistScale() {
+    return fBaseXDistScale > 0. ? fBaseXDistScale : DEFAULT_BASE_X_DIST_SCALE;
+}
+
+float getWeightedXDistScale() {
+    return fWeightedXDistScale > 0. ? fWeightedXDistScale : DEFAULT_WEIGHTED_X_DIST_SCALE;;
+}
+
 float getXDistScale(float weight) {
-    return BASE_X_DIST_SCALE + weight * (WEIGHTED_X_DIST_SCALE-BASE_X_DIST_SCALE);
+    float baseXDistScale = getBaseXDistScale();
+    float weightedXDistScale = getWeightedXDistScale();
+    return baseXDistScale + weight * (weightedXDistScale-baseXDistScale);
 }
 
 float weightedDist(vec2 p1, vec2 p2, float weight, float weightOffset) {
@@ -284,6 +297,10 @@ float weightedDist(vec2 p1, vec2 p2, float weight, float weightOffset) {
         dist -= weightOffset;
     #endif
     return dist;
+}
+
+float getRoundness() {
+    return fRoundnessMod * ROUNDNESS  * getBaseXDistScale(); // adjust roundness to match x dist scale;
 }
 
 bool indexIsUndefined(uint id) {
@@ -524,7 +541,7 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
 
 
 
-    minEdgeDists.x = cSmin(minEdgeDists.x, len, fRoundnessMod*ROUNDNESS*scaleMod);
+    minEdgeDists.x = cSmin(minEdgeDists.x, len, getRoundness()*scaleMod);
     minEdgeDists.y = min(minEdgeDists.y, len);
 
 
@@ -621,7 +638,7 @@ void fetchAndSortIndices( inout vec4 distances, inout vec4 distances2, inout uve
 //        indices.x = (row-1u) * uint(iLatticeCols) + col;
 //    }
 //
-//    return Data(indices, uvec4(uint(-1)), vec2(0.), vec4(0.), false, 0.);
+//    return Data(indices, uvec4(uint(-1)), vec2(0.), vec4(0.), 0., 0., false);
 //}
 
 Data init(vec2 p) {
@@ -635,7 +652,7 @@ Data init(vec2 p) {
         indices.x = (row-1u) * uint(iLatticeCols) + col;
     }
 
-    return Data(indices, uvec4(uint(-1)), vec2(0.), vec4(0.), false, 0., 0.);
+    return Data(indices, uvec4(uint(-1)), vec2(0.), vec4(0.), 0., 0., false);
 }
 
 Data update() {
@@ -646,9 +663,9 @@ Data update() {
     uvec4 prevIndices = fetchIndices(fragCoord);
     if (indexIsUndefined(prevIndices.x)) return init(p);
 
+    bool debugFlag = false;
 
     vec2 forceCenter = vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
-
 
     #if FISHEYE_STRENGTH != 0
         if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
@@ -656,14 +673,38 @@ Data update() {
             float inverseForceCenterSpeedScale =  (1. - fForceCenterSpeedScale);
 
             vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
-            float r = sqrt(dist(p, forceCenterCoords));
 
-            float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
-            float step = smoothstep(0.0, 1. / percent, percent);
+            vec2 d = p - forceCenterCoords;
+            # if FISHEYE_SQUARED == 1
+//                float r = sqrt(dot2(d));
+                float r = length(d); // length(v) is more or less equivalent to sqrt(dot2(d)) (might be optimized), or 1.0 / inversesqrt(dot(v, v))
+                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
+            # else // has straighter borders when not "squared"
+                float r = dot2(d);
+                float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale, 2.0);
+            # endif
+
+            // next 2 lines equivalent to: float step = smoothstep(0.0, 1. / percent, percent);
+            float sCPercent = clamp(percent * percent, 0., 1.); // flatten the top by increasing min value: float sCPercent = clamp(percent * percent, 0.5, 1.0), zoom everything in by flatten the top by increasing max value: float sCPercent = clamp(percent * percent, 0., 1.5)
+            float step = sCPercent * sCPercent * (3.0 - 2.0 * sCPercent);
+
+            // just playing
+//        step *= step*step*step;
+//            float step = sCPercent *sCPercent *sCPercent * sCPercent * (3.0 - 2.0  * sCPercent *sCPercent *sCPercent);
+
+
+
+        //            if (percent > 1.) {
+//                if (step > 0.9999999) {
+//                    debugFlag = true;
+//                }
+//            }
+
             float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
             float zoomFactor = mix(1.0, step, strength);
 
             p -= forceCenterCoords;
+//            p *= normalize(d) * zoomFactor;
             p *= zoomFactor;
             p += forceCenterCoords;
 
@@ -675,12 +716,11 @@ Data update() {
     float prevMaxWeight = weightTexData(prevIndices.x);
     prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices.y));
 
-    bool debugFlag = false;
     float weightOffsetScale = 1.;
     float mediaWeightOffsetScale = 1.;
 
     #if WEIGHTED_DIST == 1
-        weightOffsetScale = WEIGHT_OFFSET_SCALE * fWeightOffsetScale * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
+        weightOffsetScale = WEIGHT_OFFSET_SCALE * fWeightOffsetScaleMod * min(fetchResolutionScale(), 0.1)/* * 1./float(iNumCells)*/;
         mediaWeightOffsetScale =  weightOffsetScale * WEIGHT_OFFSET_SCALE_MEDIA_MOD;
     #endif
 
@@ -762,22 +802,37 @@ Data update() {
         vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex)/* * (1./zoomFactor)*/;
 
 
-        float zoomFactor = 1.;
+        float inverseZoomFactor = 1.;
         #if FISHEYE_STRENGTH != 0
             if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
                 float inverseForceCenterSpeedScale =  (1. - fForceCenterSpeedScale);
 
                 vec2 forceCenterNCoords = normalizeCoords(forceCenter);
-                float r = sqrt(dist(cellNCoords, forceCenterNCoords));
-                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
-                float step = smoothstep(0.0, 1. / percent, percent);
-                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
-                zoomFactor = mix(1.0, step, strength);
 
+                vec2 d = cellNCoords - forceCenterNCoords;
+                # if FISHEYE_SQUARED == 1
+//                    float r = sqrt(dot2(d));
+                    float r = length(d);
+                    float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
+                # else
+                    float r = dot2(d);
+                    float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale, 2.0);
+                # endif
+
+              float step = smoothstep(0.0, 1. / percent, percent);
+//                float step = percent * percent; // Quadratic ease-in
+//                float step = percent * percent * (3.0 - 2.0 * percent); // Smoother cubic ease
+
+//                if (step > 0.99) {
+//                    debugFlag = true;
+//                }
+
+                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
+                inverseZoomFactor = 1./ mix(1.0, step, strength);
 
                 cellNCoords -= forceCenterNCoords;
-                cellNCoords *= (1./zoomFactor);
+                cellNCoords *= inverseZoomFactor;
                 cellNCoords += forceCenterNCoords;
             }
         #endif
@@ -812,7 +867,7 @@ Data update() {
         float bbY = mediaBbox.w - mediaBbox.y;
 
 //        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
-        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*(1./zoomFactor));
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*inverseZoomFactor);
         #if LOCK_MEDIA_ASPECT == 1
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
@@ -863,7 +918,7 @@ Data update() {
         calcMinEdgeDists(indices2.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, scaleMod);
     #endif
 
-    return Data(indices, indices2, minEdgeDists, mediaBbox, debugFlag, scaleMod, weight);
+    return Data(indices, indices2, minEdgeDists, mediaBbox, scaleMod, weight, debugFlag);
 }
 
 void main() {
@@ -904,9 +959,10 @@ void main() {
                     smoothstep(edge1, edge2, data.minEdgeDists.x)
                 );
             # else
+                vec3 bgColor = !data.debugFlag ? fBaseColor : vec3(1.,0.,0.);
                 c = mix(
                     c,
-                    fBaseColor,
+                    bgColor,
                     smoothstep(edge1, edge2, data.minEdgeDists.x)
                     //                smoothstep(edge1*scaleMod, edge2*scaleMod*5., data.minEdgeDists.x)
                 );

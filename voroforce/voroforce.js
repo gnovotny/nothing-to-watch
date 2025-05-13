@@ -154,12 +154,14 @@ export class Voroforce {
         () => {
           console.log('visible')
           this.visible = true
+          clearTimeout(this.tickerFreezeTimeout)
           this.ticker.unfreeze()
         },
         () => {
-          this.visible = false
           console.log('hidden')
-          setTimeout(() => {
+          this.visible = false
+          clearTimeout(this.tickerFreezeTimeout)
+          this.tickerFreezeTimeout = setTimeout(() => {
             if (this.visible) return
             console.log('hidden freeze')
             this.ticker.freeze()

@@ -1,5 +1,6 @@
 import { store } from '../../store'
 import { getCellFilm, type VoroforceCell } from '../utils'
+import { VOROFORCE_MODE } from '../consts'
 
 export const handleControls = () => {
   const {
@@ -7,6 +8,7 @@ export const handleControls = () => {
     voroforce: { controls },
     filmBatches,
     configUniforms: { main: mainUniforms, animating: animatingUniforms },
+    mode,
   } = store.getState()
 
   controls.listen('focused', (async ({ cell }: { cell: VoroforceCell }) => {
@@ -29,7 +31,10 @@ export const handleControls = () => {
     const uniformKey = 'fUnWeightedEffectMod'
     const uniform = mainUniforms.get(uniformKey)
     if (!uniform) return
-    const value = frozen ? 1 : 0
+    const value =
+      [VOROFORCE_MODE.preview, VOROFORCE_MODE.select].includes(mode) && frozen
+        ? 1
+        : 0
     if (animatingUniforms && uniform.animatable) {
       if (uniform.value !== value) {
         uniform.targetValue = value

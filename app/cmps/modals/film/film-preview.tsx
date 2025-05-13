@@ -218,7 +218,7 @@ export const FilmPreview = ({ poster = false }) => {
             )}
             <div
               className={cn(
-                'flex basis-full flex-row justify-between gap-3 md:basis-3/4 md:flex-col md:justify-start md:gap-6',
+                'flex basis-full flex-row justify-between gap-3 md:basis-3/4 md:flex-col md:justify-start md:gap-4',
                 {
                   'items-end text-right': reverseX,
                   'md:flex-col-reverse': reverseY,

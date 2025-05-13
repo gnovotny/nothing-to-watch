@@ -142,3 +142,29 @@ export const easedMinLerp = (
   // Apply the eased factor to the difference
   return start + diff * easedFactor
 }
+
+/**
+ *
+ * This function performs Hermite interpolation between 0 and 1 when x is between edge0 and edge1.
+ *
+ * Computes a smooth Hermite interpolation between 0 and 1 when given
+ * a value `x` between two edge values `edge0` and `edge1`.
+ *
+ * The function clamps `x` to the range [0, 1] and then applies the
+ * smoothstep formula: 3*x² - 2*x³, which produces a gradual, smooth
+ * transition.
+ *
+ * The result is 0 when x ≤ edge0 and 1 when x ≥ edge1.
+ *
+ * @param {number} edge0 - The lower edge of the interpolation range.
+ * @param {number} edge1 - The upper edge of the interpolation range.
+ * @param {number} x - The input value to interpolate, expected within the range [edge0, edge1].
+ * @returns {number} A number between 0 and 1 representing the interpolated value.
+ */
+export const smoothstep = (edge0, edge1, x) => {
+  // Clamp x to the range [0, 1]
+  const y = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)))
+
+  // Apply the smoothstep formula: 3x² - 2x³
+  return y * y * (3 - 2 * y)
+}
