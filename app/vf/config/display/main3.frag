@@ -71,9 +71,12 @@ uniform mediump sampler2DArray uMediaV0Texture;
 uniform mediump sampler2DArray uMediaV1Texture;
 uniform mediump sampler2DArray uMediaV2Texture;
 uniform mediump sampler2DArray uMediaV3Texture;
-uniform ivec3 iStdNumMediaVersionCols;
-uniform ivec3 iStdNumMediaVersionRows;
-uniform ivec3 iStdNumMediaVersionLayers;
+uniform ivec3 iStdMediaVersionNumCols;
+uniform ivec3 iStdMediaVersionNumRows;
+uniform ivec3 iStdMediaVersionNumLayers;
+uniform int iVirtMediaVersionNumCols;
+uniform int iVirtMediaVersionNumRows;
+uniform int iVirtMediaVersionNumLayers;
 
 uniform vec3 iResolution;
 uniform int iNumCells;
@@ -93,7 +96,7 @@ uniform float fWeightOffsetScaleMod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fForceCenter;
-uniform float fForceCenterSpeedScale;
+uniform float fForceCenterStrengthMod;
 uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
@@ -423,27 +426,23 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
     int numLayers;
     int mediaCols;
     int mediaRows;
-    // dynamic indexing of vectors and matrices is emulated and can be slow.
+    // edge reports that dynamic indexing [] of vectors and matrices is emulated and can be slow.
     if (iMediaVersion == 1) {
-        numLayers = iStdNumMediaVersionLayers.y;
-        mediaCols = iStdNumMediaVersionCols.y;
-        mediaRows = iStdNumMediaVersionRows.y;
+        numLayers = iStdMediaVersionNumLayers.y;
+        mediaCols = iStdMediaVersionNumCols.y;
+        mediaRows = iStdMediaVersionNumRows.y;
     } else if (iMediaVersion == 2) {
-        numLayers = iStdNumMediaVersionLayers.z;
-        mediaCols = iStdNumMediaVersionCols.z;
-        mediaRows = iStdNumMediaVersionRows.z;
+        numLayers = iStdMediaVersionNumLayers.z;
+        mediaCols = iStdMediaVersionNumCols.z;
+        mediaRows = iStdMediaVersionNumRows.z;
     } else if (iMediaVersion == 3) {
-//        numLayers = 50000;
-//        mediaCols = 1;
-//        mediaRows = 1;
-//        numLayers = int(ceil(50000./54.));
-        numLayers = 50;
-        mediaCols = 9;
-        mediaRows = 6;
+        numLayers = iVirtMediaVersionNumLayers;
+        mediaCols = iVirtMediaVersionNumCols;
+        mediaRows = iVirtMediaVersionNumRows;
     } else {
-        numLayers = iStdNumMediaVersionLayers.x;
-        mediaCols = iStdNumMediaVersionCols.x;
-        mediaRows = iStdNumMediaVersionRows.x;
+        numLayers = iStdMediaVersionNumLayers.x;
+        mediaCols = iStdMediaVersionNumCols.x;
+        mediaRows = iStdMediaVersionNumRows.x;
     }
 
     int id = int(cellIdMapTexData(index));
@@ -670,18 +669,16 @@ Data update() {
     #if FISHEYE_STRENGTH != 0
         if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
-            float inverseForceCenterSpeedScale =  (1. - fForceCenterSpeedScale);
-
             vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
 
             vec2 d = p - forceCenterCoords;
             # if FISHEYE_SQUARED == 1
 //                float r = sqrt(dot2(d));
                 float r = length(d); // length(v) is more or less equivalent to sqrt(dot2(d)) (might be optimized), or 1.0 / inversesqrt(dot(v, v))
-                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
+                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
             # else // has straighter borders when not "squared"
                 float r = dot2(d);
-                float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale, 2.0);
+                float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
             # endif
 
             // next 2 lines equivalent to: float step = smoothstep(0.0, 1. / percent, percent);
@@ -692,15 +689,13 @@ Data update() {
 //        step *= step*step*step;
 //            float step = sCPercent *sCPercent *sCPercent * sCPercent * (3.0 - 2.0  * sCPercent *sCPercent *sCPercent);
 
-
-
-        //            if (percent > 1.) {
+//            if (percent > 1.) {
 //                if (step > 0.9999999) {
 //                    debugFlag = true;
 //                }
 //            }
 
-            float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
+            float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
             float zoomFactor = mix(1.0, step, strength);
 
             p -= forceCenterCoords;
@@ -788,6 +783,8 @@ Data update() {
 
     // update closest
     closestIndex = indices.x;
+    vec2 cellCoords = fetchCellCoords(closestIndex);
+
 
     float scaleMod = 1.;
     // media bbox
@@ -806,18 +803,18 @@ Data update() {
         #if FISHEYE_STRENGTH != 0
             if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
-                float inverseForceCenterSpeedScale =  (1. - fForceCenterSpeedScale);
-
                 vec2 forceCenterNCoords = normalizeCoords(forceCenter);
+                vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
 
-                vec2 d = cellNCoords - forceCenterNCoords;
+//                vec2 d = cellNCoords - forceCenterNCoords;
+                vec2 d = cellCoords - forceCenterCoords;
                 # if FISHEYE_SQUARED == 1
 //                    float r = sqrt(dot2(d));
                     float r = length(d);
-                    float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale);
+                    float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
                 # else
                     float r = dot2(d);
-                    float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * inverseForceCenterSpeedScale, 2.0);
+                    float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
                 # endif
 
               float step = smoothstep(0.0, 1. / percent, percent);
@@ -828,7 +825,7 @@ Data update() {
 //                    debugFlag = true;
 //                }
 
-                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * inverseForceCenterSpeedScale;
+                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
                 inverseZoomFactor = 1./ mix(1.0, step, strength);
 
                 cellNCoords -= forceCenterNCoords;
@@ -897,8 +894,10 @@ Data update() {
         #endif
     #endif
 
+
+
+
     // edge calc using the other 3 indices
-    vec2 cellCoords = fetchCellCoords(closestIndex);
     float weight = weightTexData(closestIndex);
     float weightOffset = weightOffsetScale * weight;
     vec2 minEdgeDists = vec2(0.1);

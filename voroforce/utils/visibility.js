@@ -53,7 +53,7 @@ function onHidden(handleOnHidden) {
 
 function handleVisibilityChange(forcedFlag, handleOnVisible, handleOnHidden) {
   // forcedFlag is a boolean when this event handler is triggered by a
-  // focus or blur eventotherwise it's an Event object
+  // focus or blur event otherwise it's an Event object
   if (typeof forcedFlag === 'boolean') {
     if (forcedFlag) {
       return onVisible(handleOnVisible)

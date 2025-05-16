@@ -33,11 +33,11 @@ export class SharedData {
     this.data[8] = value
   }
 
-  get forceCenterSpeedScale() {
+  get forceCenterStrengthMod() {
     return this.data[9]
   }
 
-  set forceCenterSpeedScale(value) {
+  set forceCenterStrengthMod(value) {
     this.data[9] = value
   }
 }

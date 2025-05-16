@@ -4,7 +4,7 @@ import devPointVertexShader from './shaders/dev/dev-points.vert'
 import { CompressedMediaGridArrayTexture } from './utils/compressed-media-grid-array-texture'
 import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
 import { NoDepthMultiRenderTarget } from './utils/no-depth-multi-render-target'
-import { DynamicMediaGridArrayTexture } from './utils/dynamic-media-grid-array-texture'
+import { VirtualMediaGridArrayTexture } from './utils/virtual-media-grid-array-texture'
 import { readPixelsAsync } from './utils/read-pixels-async'
 import { easedMinLerp } from '../../utils'
 
@@ -80,8 +80,8 @@ export default class BaseScene {
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
       this.baseUniforms.fPointer.value = this.getPointer()
       this.baseUniforms.fForceCenter.value = this.getForceCenter()
-      this.baseUniforms.fForceCenterSpeedScale.value =
-        this.sharedData?.forceCenterSpeedScale ?? 0
+      this.baseUniforms.fForceCenterStrengthMod.value =
+        this.sharedData?.forceCenterStrengthMod ?? 0
     }
 
     this.beforeUpdateCustom()
@@ -282,30 +282,32 @@ export default class BaseScene {
     const compressedMediaVersions = this.globalConfig.media.versions.filter(
       ({ type }) => !type || type === 'compressed-grid',
     )
-    compressedMediaVersions.length = 3
+    compressedMediaVersions.length = 3 // todo hard limit
     return compressedMediaVersions
   }
 
   getUnCompressedMediaVersions() {
-    return this.globalConfig.media.versions.filter(
+    const uncompressedMediaVersions = this.globalConfig.media.versions.filter(
       ({ type }) => type && type !== 'compressed-grid',
     )
+    uncompressedMediaVersions.length = 1 // todo hard limit
+    return uncompressedMediaVersions
   }
 
   initMedia() {
     if (!this.globalConfig.media?.enabled) {
       const emptyTex = new Texture(this.gl, {})
-      this.compressedMediaTextures = this.getCompressedMediaVersions().map(
+      this.compressedMediaGridTextures = this.getCompressedMediaVersions().map(
         () => emptyTex,
       )
-      this.mediaTextures = this.globalConfig.media.versions
+      this.virtualMediaGridTextures = this.globalConfig.media.versions
         .filter(({ type }) => type && type !== 'compressed-grid')
         .map(() => emptyTex)
 
       return
     }
 
-    this.compressedMediaTextures = this.getCompressedMediaVersions().map(
+    this.compressedMediaGridTextures = this.getCompressedMediaVersions().map(
       (mediaVersion) => {
         if (!mediaVersion) return new Texture(this.gl, {})
         const { width, height, layers } = mediaVersion
@@ -318,10 +320,10 @@ export default class BaseScene {
       },
     )
 
-    this.mediaTextures = this.getUnCompressedMediaVersions().map(
+    this.virtualMediaGridTextures = this.getUnCompressedMediaVersions().map(
       (mediaVersion) => {
         const { width, height, layers } = mediaVersion
-        return new DynamicMediaGridArrayTexture(this.gl, {
+        return new VirtualMediaGridArrayTexture(this.gl, {
           width,
           height,
           length: layers,
@@ -332,18 +334,15 @@ export default class BaseScene {
 
     this.loader.addEventListener(
       'mediaLayerLoaded',
-      ({ data: { versionIndex, layerIndex, bytes, type, compression } }) => {
+      ({ data: { versionIndex, layerIndex, bytes, type } }) => {
         if (!type || type === 'compressed-grid') {
-          this.compressedMediaTextures[versionIndex].prepareLayerUpdate?.(
+          this.compressedMediaGridTextures[versionIndex].prepareLayerUpdate?.(
             layerIndex,
             bytes,
           )
         } else {
-          // TODO
-          this.mediaTextures[versionIndex - 3].prepareLayerUpdate(
-            layerIndex,
-            bytes,
-          )
+          // TODO hardcoded to single version
+          this.virtualMediaGridTextures[0].prepareLayerUpdate(layerIndex, bytes)
         }
       },
     )
@@ -363,23 +362,37 @@ export default class BaseScene {
   }
 
   initBaseMediaUniforms() {
+    console.log(
+      'this.virtualMediaGridTextures[0]',
+      this.virtualMediaGridTextures[0],
+    )
     const compressedMediaVersions = this.getCompressedMediaVersions()
+    const uncompressedMediaVersions = this.getUnCompressedMediaVersions()
     return {
       bMediaEnabled: { value: this.globalConfig.media?.enabled ?? false },
-      uMediaV0Texture: { value: this.compressedMediaTextures[0] },
-      uMediaV1Texture: { value: this.compressedMediaTextures[1] },
-      uMediaV2Texture: { value: this.compressedMediaTextures[2] },
+      uMediaV0Texture: { value: this.compressedMediaGridTextures[0] },
+      uMediaV1Texture: { value: this.compressedMediaGridTextures[1] },
+      uMediaV2Texture: { value: this.compressedMediaGridTextures[2] },
       uMediaV3Texture: {
-        value: this.mediaTextures[0] ?? new Texture(this.gl, {}),
+        value: this.virtualMediaGridTextures[0] ?? new Texture(this.gl, {}),
       },
-      iStdNumMediaVersionCols: {
+      iStdMediaVersionNumCols: {
         value: compressedMediaVersions?.map((v) => v?.cols ?? 0) ?? [0, 0, 0],
       },
-      iStdNumMediaVersionRows: {
+      iStdMediaVersionNumRows: {
         value: compressedMediaVersions?.map((v) => v?.rows ?? 0) ?? [0, 0, 0],
       },
-      iStdNumMediaVersionLayers: {
+      iStdMediaVersionNumLayers: {
         value: compressedMediaVersions?.map((v) => v?.layers ?? 0) ?? [0, 0, 0],
+      },
+      iVirtMediaVersionNumCols: {
+        value: uncompressedMediaVersions[0]?.virtualCols ?? 0,
+      },
+      iVirtMediaVersionNumRows: {
+        value: uncompressedMediaVersions[0]?.virtualRows ?? 0,
+      },
+      iVirtMediaVersionNumLayers: {
+        value: uncompressedMediaVersions[0]?.virtualLayers ?? 0,
       },
     }
   }
@@ -398,6 +411,8 @@ export default class BaseScene {
   // }
 
   getForceCenter() {
+    return [this.sharedData.forceCenterX, this.sharedData.forceCenterY]
+
     this.targetForceCenter = [
       !Number.isNaN(this.sharedData?.forceCenterX) &&
       this.sharedData?.forceCenterX
@@ -433,8 +448,8 @@ export default class BaseScene {
         iTime: { value: 0 },
         fPointer: { value: this.getPointer() },
         fForceCenter: { value: this.getForceCenter() },
-        fForceCenterSpeedScale: {
-          value: this.sharedData?.forceCenterSpeedScale ?? 0,
+        fForceCenterStrengthMod: {
+          value: this.sharedData?.forceCenterStrengthMod ?? 0,
         },
       }
     }

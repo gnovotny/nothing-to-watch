@@ -12,8 +12,16 @@ import { MultiThreadedSimulation, Simulation } from './simulation'
 import { mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
 import { ManualTicker } from './common/helpers/ticker'
+import { CustomEventTarget } from './utils/custom-event-target'
 
-export class Voroforce {
+export class VisibilityChangeEvent extends Event {
+  constructor(visible) {
+    super('visibilityChange')
+    this.visible = visible
+  }
+}
+
+export class Voroforce extends CustomEventTarget {
   mediaEnabled = false
   multiThreading = false
   parallelDisplay = false
@@ -21,6 +29,7 @@ export class Voroforce {
   displayIsWarm = false
 
   constructor(container, config = {}) {
+    super()
     this.config = mergeConfigs(defaultConfig, config)
     this.container = container
     this.init()
@@ -94,6 +103,7 @@ export class Voroforce {
 
   initData() {
     this.sharedData = initSharedData(this.config)
+    // this.sharedPointer = initSharedPointer(this.config)
     this.sharedCellData = initSharedCellData(
       this.config.cells ?? 512,
       this.config,
@@ -129,10 +139,11 @@ export class Voroforce {
       loader: this.loader,
       controls: this.controls,
       ...this.sharedData,
+      // ...this.sharedPointer,
       ...this.sharedCellData,
       ...this.sharedLoadedMediaVersionLayersData,
     })
-    this.loader.store = this.store // TODO TMP?
+    this.loader.store = this.store // TODO
   }
 
   start() {
@@ -152,23 +163,56 @@ export class Voroforce {
     if (this.config.handleVisibilityChange?.enabled) {
       initVisibilityEventHandlers(
         () => {
-          console.log('visible')
+          console.log('window visible')
           this.visible = true
           clearTimeout(this.tickerFreezeTimeout)
           this.ticker.unfreeze()
+          this.dispatchEvent(
+            new VisibilityChangeEvent({
+              visible: true,
+            }),
+          )
         },
         () => {
-          console.log('hidden')
+          console.log('window hidden')
           this.visible = false
+          this.dispatchEvent(
+            new VisibilityChangeEvent({
+              visible: false,
+            }),
+          )
           clearTimeout(this.tickerFreezeTimeout)
           this.tickerFreezeTimeout = setTimeout(() => {
             if (this.visible) return
-            console.log('hidden freeze')
+            console.log('window hidden freeze')
             this.ticker.freeze()
           }, this.config.handleVisibilityChange.hiddenDelay)
         },
       )
     }
+
+    // setTimeout drift detection
+    let last = performance.now()
+    setInterval(() => {
+      const now = performance.now()
+      const diff = now - last
+      last = now
+
+      if (this.config.handleVisibilityChange?.enabled && !this.visible) return
+
+      if (diff > 2000) {
+        if (this.ticker.running) {
+          // System probably suspended or throttled
+          console.log('Throttling or sleep detected')
+          this.ticker.freeze()
+        }
+      } else {
+        if (!this.ticker.running) {
+          console.log('Resuming from sleep or throttling')
+          this.ticker.unfreeze()
+        }
+      }
+    }, 1000)
   }
 
   async initDevTools() {

@@ -83,6 +83,7 @@ export class Store extends CustomEventTarget {
       dimensions,
       cells,
       sharedDataArray,
+      sharedPointerArray,
       sharedCellCoords,
       sharedCellAttributes,
       sharedCellWeights,
@@ -91,33 +92,36 @@ export class Store extends CustomEventTarget {
       sharedCellCollectionAttributes,
       sharedLoadedMediaVersionLayersDataArrays,
     } = state
-    return new Store(state)
-      .set('dimensions', new Dimensions(null, dimensions))
-      .set(
-        'cells',
-        SharedCellCollection.from(
-          cells.map(
-            (cell) =>
-              new SharedCell(
-                cell,
-                sharedCellCoords,
-                sharedCellAttributes,
-                sharedCellWeights,
-                sharedCellMediaVersions,
-                sharedCellIds,
-              ),
+    return (
+      new Store(state)
+        .set('dimensions', new Dimensions(null, dimensions))
+        .set(
+          'cells',
+          SharedCellCollection.from(
+            cells.map(
+              (cell) =>
+                new SharedCell(
+                  cell,
+                  sharedCellCoords,
+                  sharedCellAttributes,
+                  sharedCellWeights,
+                  sharedCellMediaVersions,
+                  sharedCellIds,
+                ),
+            ),
+            sharedCellCollectionAttributes,
           ),
-          sharedCellCollectionAttributes,
-        ),
-      )
-      .set('sharedData', new SharedData(sharedDataArray))
-      .set('sharedPointer', new SharedPointer(sharedDataArray))
-      .set(
-        'sharedLoadedMediaVersionLayersData',
-        sharedLoadedMediaVersionLayersDataArrays?.map(
-          (arr) => new SharedLoadedMediaVersionLayersData(arr),
-        ),
-      )
+        )
+        .set('sharedData', new SharedData(sharedDataArray))
+        .set('sharedPointer', new SharedPointer(sharedDataArray))
+        // .set('sharedPointer', new SharedPointer(sharedPointerArray))
+        .set(
+          'sharedLoadedMediaVersionLayersData',
+          sharedLoadedMediaVersionLayersDataArrays?.map(
+            (arr) => new SharedLoadedMediaVersionLayersData(arr),
+          ),
+        )
+    )
   }
 
   getSimulationWorkerConfig() {

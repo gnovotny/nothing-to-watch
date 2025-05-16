@@ -112,6 +112,14 @@ export default {
           animatable: true,
           value: 0,
         },
+        fBaseXDistScale: {
+          animatable: true,
+          value: 1.5, // 0 = undefined, will use fallback
+        },
+        fWeightedXDistScale: {
+          animatable: true,
+          value: 1.5, // 0 = undefined, will use fallback
+        },
       },
     },
     post: {

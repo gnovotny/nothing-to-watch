@@ -3,7 +3,7 @@ import { TickEvent } from './utils'
 
 export class ManualTicker extends CustomEventTarget {
   nextRequests = 0
-  frozen = false
+  running = false
   constructor(fpsGraph) {
     super()
     this.fpsGraph = fpsGraph
@@ -15,6 +15,8 @@ export class ManualTicker extends CustomEventTarget {
   }
 
   start() {
+    if (this.running) return
+    this.running = true
     requestAnimationFrame(this.tick)
   }
 
@@ -39,7 +41,7 @@ export class ManualTicker extends CustomEventTarget {
   }
 
   next() {
-    if (this.frozen) return
+    if (!this.running) return
     this.nextRequests++
     if (this.nextRequests !== 2) return
     this.fpsGraph?.end()
@@ -47,11 +49,12 @@ export class ManualTicker extends CustomEventTarget {
   }
 
   freeze() {
-    this.frozen = true
+    this.running = false
   }
 
   unfreeze() {
-    this.frozen = false
+    if (this.running) return
+    this.running = true
     this.ticker.next()
   }
 }

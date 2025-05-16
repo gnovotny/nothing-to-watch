@@ -1,6 +1,6 @@
 import { Texture } from 'ogl'
 
-export class DynamicMediaGridArrayTexture extends Texture {
+export class VirtualMediaGridArrayTexture extends Texture {
   constructor(gl, args) {
     super(gl, {
       ...args,
@@ -13,8 +13,8 @@ export class DynamicMediaGridArrayTexture extends Texture {
     })
 
     const {
-      realCols: cols,
-      realRows: rows,
+      virtualCols: cols,
+      virtualRows: rows,
       tileWidth,
       tileHeight,
       virtualLayers: length = 50,

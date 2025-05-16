@@ -6,6 +6,8 @@ type PerformanceMonitorSubscriptionApi = {
 }
 
 export type PerformanceMonitorApi = {
+  /** Whether the page is visible */
+  visible: boolean
   /** Current fps */
   fps: number
   /** Current performance factor, between 0 and 1 */
@@ -22,6 +24,7 @@ export type PerformanceMonitorApi = {
   subscriptions: Map<symbol, Partial<PerformanceMonitorSubscriptionApi>>
   subscribe: (sub: Partial<PerformanceMonitorSubscriptionApi>) => () => void
   onTick: () => void
+  onVisibilityChange: (visible: boolean) => void
 }
 
 type PerformanceMonitorProps = {
@@ -68,8 +71,10 @@ export function initPerformanceMonitor(
 ) {
   const decimalPlacesRatio = 10 ** 0
   let lastFactor = 0
+  let previous = performance.now()
 
   const api: PerformanceMonitorApi = {
+    visible: true,
     fps: 0,
     index: 0,
     factor: _factor,
@@ -84,13 +89,27 @@ export function initPerformanceMonitor(
       api.subscriptions.set(key, sub)
       return () => void api.subscriptions.delete(key)
     },
+    onVisibilityChange: (visible) => {
+      api.visible = visible
+      api.samples = []
+    },
     onTick: () => {
       const { samples, averages } = api
 
       if (api.fallback) return // If the fallback has been reached, abort
       if (averages.length >= iterations) return
 
-      samples.push(performance.now())
+      const now = performance.now()
+      const delta = now - previous
+      previous = now
+
+      if (delta > 500) {
+        // Throttling or sleep likely happening
+        api.samples = []
+        return
+      }
+
+      samples.push(now)
       const msPassed = samples[samples.length - 1] - samples[0]
 
       if (msPassed < ms) return

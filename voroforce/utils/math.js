@@ -39,7 +39,7 @@ export const easedMinLerp = (
   end,
   factor,
   easingType = MIN_LERP_EASING_TYPES.linear,
-  min = 0.01,
+  min = 0.001,
 ) => {
   // Calculate the raw difference
   const diff = end - start

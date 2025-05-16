@@ -1,10 +1,10 @@
 import { store } from '../../store'
-import { handleAnimatingUniforms } from '../utils'
-import { initPerformanceMonitor } from '../utils/performance-monitor'
+import { handleAnimatingUniforms, initPerformanceMonitor } from '../utils'
+import type { VisibilityChangeEvent } from '√'
 
 export const handleTicker = () => {
   const {
-    voroforce: { ticker },
+    voroforce,
     configUniforms: { animating: animatingUniforms },
   } = store.getState()
 
@@ -14,8 +14,12 @@ export const handleTicker = () => {
   })
 
   // controls.addEventListener('pointerMove', ({ pointer }) => {})
-  ticker.listen('tick', (() => {
+  voroforce.ticker.listen('tick', (() => {
     handleAnimatingUniforms(animatingUniforms)
     performanceMonitor.onTick()
+  }) as unknown as EventListener)
+
+  voroforce.listen('visibilityChange', ((e: VisibilityChangeEvent) => {
+    performanceMonitor.onVisibilityChange(e.visible)
   }) as unknown as EventListener)
 }

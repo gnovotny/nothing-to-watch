@@ -16,9 +16,9 @@ uniform mediump sampler2DArray uMediaV0Texture;
 uniform mediump sampler2DArray uMediaV1Texture;
 uniform mediump sampler2DArray uMediaV2Texture;
 uniform mediump sampler2DArray uMediaV3Texture;
-uniform ivec3 iStdNumMediaVersionCols;
-uniform ivec3 iStdNumMediaVersionRows;
-uniform ivec3 iStdNumMediaVersionLayers;
+uniform ivec3 iStdMediaVersionNumCols;
+uniform ivec3 iStdMediaVersionNumRows;
+uniform ivec3 iStdMediaVersionNumLayers;
 
 uniform vec3 iResolution;
 uniform int iNumCells;
@@ -393,13 +393,13 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
     int mediaRows;
     // dynamic indexing of vectors and matrices is emulated and can be slow.
     if (iMediaVersion == 1) {
-        numLayers = iStdNumMediaVersionLayers.y;
-        mediaCols = iStdNumMediaVersionCols.y;
-        mediaRows = iStdNumMediaVersionRows.y;
+        numLayers = iStdMediaVersionNumLayers.y;
+        mediaCols = iStdMediaVersionNumCols.y;
+        mediaRows = iStdMediaVersionNumRows.y;
     } else if (iMediaVersion == 2) {
-        numLayers = iStdNumMediaVersionLayers.z;
-        mediaCols = iStdNumMediaVersionCols.z;
-        mediaRows = iStdNumMediaVersionRows.z;
+        numLayers = iStdMediaVersionNumLayers.z;
+        mediaCols = iStdMediaVersionNumCols.z;
+        mediaRows = iStdMediaVersionNumRows.z;
     } else if (iMediaVersion == 3) {
 //        numLayers = 50000;
 //        mediaCols = 1;
@@ -409,9 +409,9 @@ vec3 mediaColor(vec2 p, uint index, vec4 mediaBbox) {
         mediaCols = 9;
         mediaRows = 6;
     } else {
-        numLayers = iStdNumMediaVersionLayers.x;
-        mediaCols = iStdNumMediaVersionCols.x;
-        mediaRows = iStdNumMediaVersionRows.x;
+        numLayers = iStdMediaVersionNumLayers.x;
+        mediaCols = iStdMediaVersionNumCols.x;
+        mediaRows = iStdMediaVersionNumRows.x;
     }
 
     int id = int(cellIdMapTexData(index));

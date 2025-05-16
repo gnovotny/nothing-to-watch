@@ -1,2 +1,2 @@
-export { Voroforce, default } from './voroforce'
+export { Voroforce, default, VisibilityChangeEvent } from './voroforce'
 export * from './utils/merge-configs'

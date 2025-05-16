@@ -19,8 +19,8 @@ export const previewForceSimulationStepConfig = {
         enabled: true,
       },
       breathing: {
-        // enabled: true,
-        enabled: false, // todo
+        enabled: true,
+        // enabled: false, // todo
       },
       push: {
         // strength: 0.15,

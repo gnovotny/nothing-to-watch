@@ -39,8 +39,8 @@ export default {
 export const uncompressedSingleMediaVersionConfig = {
   cols: 1,
   rows: 1,
-  realCols: 9,
-  realRows: 6,
+  virtualCols: 9,
+  virtualRows: 6,
   tileWidth: 220,
   tileHeight: 330,
   width: 1980,
