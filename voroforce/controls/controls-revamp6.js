@@ -4,14 +4,10 @@ import {
   CellFocusedEvent,
   CellSelectedEvent,
   PointerFrozenChangeEvent,
-  PointerMoveEvent,
   PointerShakeEvent,
 } from './controls-events'
 
-// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional
-const Infinity = Number.POSITIVE_INFINITY
-
-const { abs, atan2, pow, sqrt, random, min, max, PI } = Math
+const { pow, sqrt, random, min, max } = Math
 
 const getAverageSpeedTotal = (array) =>
   array.reduce((a, b) => a + b.total, 0) / array.length
@@ -29,7 +25,6 @@ export default class Controls extends CustomEventTarget {
   }
 
   reset() {
-    // Current values
     this.positionHistory = []
     this.speeds = []
     this.rawSpeeds = []
@@ -66,14 +61,6 @@ export default class Controls extends CustomEventTarget {
   }
 
   handleConfig() {
-    // const d = this.dimensions.get('diagonal')
-    // this.maxSpeed = this.config.maxPointerSpeed
-    //   ? this.config.maxPointerSpeed * d
-    //   : Infinity
-    // this.maxAcceleration = this.config.maxPointerAcceleration
-    //   ? this.config.maxPointerAcceleration * d
-    //   : Infinity
-
     this.options = {
       noProcessing: this.config.noProcessing || false,
 
@@ -90,6 +77,8 @@ export default class Controls extends CustomEventTarget {
       },
 
       unfreezePointerSpeedLimit: this.config.unfreezePointerSpeedLimit || 5,
+
+      selectSpeedLimit: this.config.selectSpeedLimit || 2,
 
       freezeOnShake: {
         enabled: this.config.freezeOnShake?.enabled || false,
@@ -117,41 +106,28 @@ export default class Controls extends CustomEventTarget {
       })
     }
 
-    if (this.rawPosition) {
-      this.assignPointer({
-        rawX: this.rawPosition.x,
-        rawY: this.rawPosition.y,
-      })
-      this.handleRawPointerPosition()
-    }
+    this.handleRawPosition()
 
     if (!this.position) return
 
-    if (!this.pointerFrozen) {
+    if (this.pointerFrozen) {
+      if (this.avgSpeedTotal < this.options.unfreezePointerSpeedLimit) {
+        this.getCellIndices(this.rawPosition, (primaryIndex) => {
+          if (this.cells.focusedIndex === primaryIndex) {
+            this.unfreezePointer()
+          }
+        })
+      }
+    } else {
       this.assignPointer({
         x: this.position.x,
         y: this.position.y,
-        speedScale:
-          // Math.min(this.speed.total, this.options.maxSpeed) /
-          Math.min(this.avgSpeedTotal, this.options.maxSpeed) /
-          this.options.maxSpeed,
+        speedScale: this.avgSpeedTotal / this.options.maxSpeed,
       })
-      // this.handlePointerMove()
-    }
 
-    this.getCellIndices(this.position, (primaryIndex, indices) => {
-      if (this.pointerFrozen) {
-        if (
-          // this.speed.total < this.options.unfreezePointerSpeedLimit &&
-          this.avgSpeedTotal < this.options.unfreezePointerSpeedLimit &&
-          this.cells.focusedIndex === primaryIndex
-        ) {
-          this.unfreezePointer()
-        }
-      } else {
+      this.getCellIndices(this.position, (primaryIndex, indices) => {
         if (this.pointerPinned && this.cells.focusedIndex !== primaryIndex) {
-          this.assignPointer(this.pinnedPointer)
-          this.unpinPointer()
+          // this.assignPointer(this.pinnedPointer)
           this.freezePointer()
         } else {
           this.assignPointer({
@@ -159,29 +135,26 @@ export default class Controls extends CustomEventTarget {
           })
           this.focusCell(primaryIndex)
         }
-      }
-    })
+      })
+    }
   }
 
-  handleRawPointerPosition() {
+  handleRawPosition() {
     if (!this.rawPosition) return
 
-    if (this.options.noProcessing) {
-      this.position = { x: this.rawPosition.x, y: this.rawPosition.y }
-      return
-    }
-
-    const timestamp = performance.now()
+    this.assignPointer({
+      rawX: this.rawPosition.x,
+      rawY: this.rawPosition.y,
+    })
 
     // Process the position with capping if needed
-    const position = this.processPosition(this.rawPosition, timestamp)
+    this.position = this.processPosition(this.rawPosition)
 
-    // Update current position
-    this.position = { x: position.x, y: position.y }
+    // if (this.options.noProcessing) return
 
     // console.log('this.position', this.position)
 
-    this.positionHistory.push(position)
+    this.positionHistory.push(this.position)
     // Keep array at max size
     if (this.positionHistory.length > this.maxHistory) {
       this.positionHistory.shift()
@@ -208,48 +181,29 @@ export default class Controls extends CustomEventTarget {
     // Save last processed values for next calculation
     this.lastPosition = { ...this.position }
     this.lastRawPosition = { ...this.rawPosition }
-    this.lastTimestamp = timestamp
     this.lastSpeed = { ...this.speed }
     this.lastRawSpeed = { ...this.rawSpeed }
   }
 
-  processPosition(rawPosition, timestamp) {
+  processPosition(rawPosition) {
     // If this is the first position, just return raw position
-    if (!this.lastPosition || !this.lastRawPosition || !this.lastTimestamp)
-      return rawPosition
+    if (!this.lastPosition || !this.lastRawPosition) return rawPosition
 
-    // Calculate time delta in seconds
-    // const timeDelta = (timestamp - this.lastTimestamp) / 1000
-    // if (timeDelta <= 0) return rawPosition
-
-    // Calculate position delta
-    const rawDeltaX = rawPosition.x - this.lastRawPosition.x
-    const rawDeltaY = rawPosition.y - this.lastRawPosition.y
-
-    // Calculate speed
-    this.rawSpeed.x = rawDeltaX /* / timeDelta*/
-    this.rawSpeed.y = rawDeltaY /* / timeDelta*/
+    // raw speed
+    this.rawSpeed.x = rawPosition.x - this.lastRawPosition.x
+    this.rawSpeed.y = rawPosition.y - this.lastRawPosition.y
     this.rawSpeed.total = sqrt(
       pow(this.rawSpeed.x, 2) + pow(this.rawSpeed.y, 2),
     )
 
-    if (
-      this.options.freezeOnJolt?.enabled &&
-      !this.pointerPinned &&
-      !this.pointerFrozen &&
-      this.rawSpeed.total >
-        max(this.avgRawSpeedTotal, this.options.freezeOnJolt.minSpeedValue) *
-          this.options.freezeOnJolt.factor
-    ) {
-      this.pinPointer()
-      return this.lastPosition
+    if (this.options.noProcessing) {
+      this.speed = this.rawSpeed
+      return rawPosition
     }
 
-    if (this.options.freezeOnShake?.enabled) {
-      if (this.detectShake()) {
-        this.pinPointer()
-        return this.lastPosition
-      }
+    if (this.detectJolt() || this.detectShake()) {
+      this.pinPointer()
+      return this.lastPosition
     }
 
     if (this.pointerFrozen) {
@@ -265,50 +219,38 @@ export default class Controls extends CustomEventTarget {
 
     const distance = sqrt(pow(deltaX, 2) + pow(deltaY, 2))
 
-    // console.log('distance', distance)
-    // console.log('this.speed.total', this.speed.total)
-
     // Small threshold to stop when extremely close
     if (distance < 0.1) {
       this.speed.x = 0
       this.speed.y = 0
       this.speed.total = 0
-
       return rawPosition
     }
 
     // Consistent interpolation with minimum speed
-    const easeAmount = Math.max(
-      this.options.ease,
-      this.options.minSpeed / distance,
-    )
-    // const easeAmount = this.options.ease
+    // const easeAmount = Math.max(
+    //   this.options.ease,
+    //   this.options.minSpeed / distance,
+    // )
+    const easeAmount = this.options.ease
 
     // Calculate the movement for this frame
     let cappedDeltaX = deltaX * easeAmount
     let cappedDeltaY = deltaY * easeAmount
 
-    const currentSpeed = sqrt(
-      cappedDeltaX * cappedDeltaX + cappedDeltaY * cappedDeltaY,
-    )
+    let speed = sqrt(cappedDeltaX * cappedDeltaX + cappedDeltaY * cappedDeltaY)
 
-    // console.log('currentSpeed', currentSpeed)
+    // Apply speed limit while maintaining direction
+    if (speed > this.options.maxSpeed) {
+      const ratio = this.options.maxSpeed / speed
+      cappedDeltaX *= ratio
+      cappedDeltaY *= ratio
+      speed = this.options.maxSpeed
+    }
 
     this.speed.x = cappedDeltaX
     this.speed.y = cappedDeltaY
-    this.speed.total = currentSpeed
-    // this.speed.x = deltaX
-    // this.speed.y = deltaY
-    // this.speed.total = sqrt(deltaX * deltaX + deltaY * deltaY)
-
-    // Apply speed limit while maintaining direction
-    if (currentSpeed > this.options.maxSpeed) {
-      const ratio = this.options.maxSpeed / currentSpeed
-      cappedDeltaX *= ratio
-      cappedDeltaY *= ratio
-    }
-
-    // console.log('cappedDeltaX', this.lastPosition.x + cappedDeltaX)
+    this.speed.total = speed
 
     return {
       x: this.lastPosition.x + cappedDeltaX,
@@ -316,7 +258,20 @@ export default class Controls extends CustomEventTarget {
     }
   }
 
+  detectJolt() {
+    if (!this.options.freezeOnJolt?.enabled) return
+    if (this.pointerPinned || this.pointerFrozen) return
+
+    return (
+      this.rawSpeed.total >
+      max(this.avgRawSpeedTotal, this.options.freezeOnJolt.minSpeedValue) *
+        this.options.freezeOnJolt.factor
+    )
+  }
+
   detectShake() {
+    if (!this.options.freezeOnShake?.enabled) return
+
     if (
       this.pointerFrozen ||
       this.rawSpeed.total <= this.options.freezeOnShake.minSpeed
@@ -346,8 +301,6 @@ export default class Controls extends CustomEventTarget {
       this.shakeDirectionYChangeCount++
       this.refreshShakeDirChangeTimeout()
     }
-
-    // this.reinitShakeTimeout()
 
     this.lastShakeDirectionX = directionX
     this.lastShakeDirectionY = directionY
@@ -459,10 +412,13 @@ export default class Controls extends CustomEventTarget {
     }
   }
 
-  freezePointer() {
+  freezePointer(frozenPointer) {
+    if (this.pointerPinned) {
+      this.unpinPointer()
+    }
     this.pointerFrozen = true
     this.pointer.speedScale = 0
-    this.frozenPointer ??= this.savePointer()
+    this.frozenPointer ??= frozenPointer ?? this.savePointer()
 
     this.dispatchEvent(
       new PointerFrozenChangeEvent({
@@ -470,11 +426,16 @@ export default class Controls extends CustomEventTarget {
         frozen: this.pointerFrozen,
       }),
     )
-    // console.log('freezePointer')
   }
 
   unfreezePointer() {
     this.pointerFrozen = false
+    if (this.frozenPointer) {
+      this.lastPosition = {
+        x: this.frozenPointer.x,
+        y: this.frozenPointer.y,
+      }
+    }
     this.frozenPointer = null
 
     this.dispatchEvent(
@@ -483,14 +444,12 @@ export default class Controls extends CustomEventTarget {
         frozen: this.pointerFrozen,
       }),
     )
-    // console.log('unfreezePointer')
   }
 
   pinPointer() {
     this.speed.total = 0
     this.pointerPinned = true
     this.pinnedPointer ??= this.savePointer()
-    // console.log('pinPointer')
   }
 
   unpinPointer() {
@@ -532,22 +491,20 @@ export default class Controls extends CustomEventTarget {
       // Object.assign(this.pointer, this.frozenPointer)
       this.unfreezePointer()
     } else {
-      this.cells.selectedIndex =
-        this.cells.selectedIndex !== this.cells.focusedIndex
-          ? this.cells.focusedIndex
-          : undefined
+      if (this.speed.total < this.options.selectSpeedLimit) {
+        this.cells.selectedIndex =
+          this.cells.selectedIndex !== this.cells.focusedIndex
+            ? this.cells.focusedIndex
+            : undefined
 
-      this.dispatchEvent(new CellSelectedEvent(this.cells.selected))
+        this.dispatchEvent(new CellSelectedEvent(this.cells.selected))
+      }
     }
   }
 
   deselect() {
     this.cells.selectedIndex = undefined
     this.dispatchEvent(new CellSelectedEvent(undefined))
-  }
-
-  handlePointerMove() {
-    this.dispatchEvent(new PointerMoveEvent(this.pointer))
   }
 
   initEventListeners() {
@@ -586,15 +543,14 @@ export default class Controls extends CustomEventTarget {
   }
 
   resize(dimensions) {
-    // this.maxSpeed = this.config.maxPointerSpeed * dimensions.diagonal
-    if (this.cells.focused) {
-      this.freezePointer()
-      this.assignPointer({
-        x: this.cells.focused.x,
-        y: this.cells.focused.y,
-      })
-      this.dispatchEvent(new CellFocusedEvent(this.cells.focused, this.cells))
-    }
+    if (!this.cells.focused) return
+
+    this.freezePointer()
+    this.assignPointer({
+      x: this.cells.focused.x,
+      y: this.cells.focused.y,
+    })
+    this.dispatchEvent(new CellFocusedEvent(this.cells.focused, this.cells))
   }
 
   dispose() {

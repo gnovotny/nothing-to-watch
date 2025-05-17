@@ -242,9 +242,12 @@ export const omniForce = ({
     nextPrimaryCell,
     nextPrimaryCellIndex,
     prevPrimaryCell,
+    slowIdlePrimaryCellMod = 1,
     idlePrimaryCellMod = 1,
     primaryCellX,
     primaryCellY,
+    prevPrimaryCellX,
+    prevPrimaryCellY,
     secondaryCell,
     secondaryCellX,
     secondaryCellY,
@@ -311,39 +314,17 @@ export const omniForce = ({
 
   function force(alpha) {
     forceSetup(alpha)
-    latticeForcePass(alpha) // lattice pass must run in isolation
+    latticeForcePass(alpha) // lattice pass must run in isolation (for reasons)
     mainForcePass(alpha)
 
     sharedData.forceCenterX = centerX
     sharedData.forceCenterY = centerY
-    // sharedData.forceCenterStrengthMod = min(commonMod / 1.125, 1) // todo
-    // sharedData.forceCenterStrengthMod = lerp(
-    //   sharedData.forceCenterStrengthMod,
-    //   min(commonMod / 1.125, 1),
-    //   defaultLerpFactor *
-    //     // 10 *
-    //     // max(pointer.speedScale, 0.1) *
-    //     pow(
-    //       abs(sharedData.forceCenterStrengthMod - min(commonMod / 1.125, 1)),
-    //       2,
-    //     ),
-    // )
     sharedData.forceCenterStrengthMod = lerp(
       sharedData.forceCenterStrengthMod,
       min(basePushDistMod / 1.125, 1),
       // centerLerp,
       defaultLerpFactor,
     )
-
-    // console.log(
-    //   'sharedData.forceCenterStrengthMod',
-    //   sharedData.forceCenterStrengthMod,
-    // )
-
-    // console.log(
-    //   'sharedData.forceCenterStrengthMod',
-    //   sharedData.forceCenterStrengthMod,
-    // )
   }
 
   function forceSetup(alpha) {
@@ -351,10 +332,14 @@ export const omniForce = ({
     nextPrimaryCellIndex = nextPrimaryCell?.index
     if (nextPrimaryCellIndex !== primaryCellIndex) {
       prevPrimaryCell = primaryCell ?? nextPrimaryCell
+      prevPrimaryCellX = prevPrimaryCell.localX + prevPrimaryCell.vx
+      prevPrimaryCellY = prevPrimaryCell.localY + prevPrimaryCell.vy
+
       primaryCell = nextPrimaryCell
       primaryCellIndex = nextPrimaryCellIndex
       primaryCellCol = nextPrimaryCell.localCol
       primaryCellRow = nextPrimaryCell.localRow
+      slowIdlePrimaryCellMod = 0
       idlePrimaryCellMod = 0
     }
 
@@ -367,22 +352,34 @@ export const omniForce = ({
     )
     complementPointerSpeedScale = 1 - pointerSpeedScale
 
-    idlePrimaryCellMod = easedMinLerp(
-      idlePrimaryCellMod,
+    slowIdlePrimaryCellMod = easedMinLerp(
+      slowIdlePrimaryCellMod,
       1,
-      max(defaultLerpFactor, idlePrimaryCellMod) *
+      max(defaultLerpFactor, slowIdlePrimaryCellMod) *
         0.05 *
         complementPointerSpeedScale,
     )
 
+    idlePrimaryCellMod = easedMinLerp(
+      idlePrimaryCellMod,
+      1,
+      defaultLerpFactor * 4,
+    )
+
     primaryCellX = primaryCell.localX + primaryCell.vx
     primaryCellY = primaryCell.localY + primaryCell.vy
+
+    // todo tmp?
+    if (idlePrimaryCellMod < 1) {
+      primaryCellX = lerp(prevPrimaryCellX, primaryCellX, idlePrimaryCellMod)
+      primaryCellY = lerp(prevPrimaryCellY, primaryCellY, idlePrimaryCellMod)
+    }
+
     centerX ??= primaryCellX
     centerY ??= primaryCellY
     pointerX = pointer?.x ?? primaryCellX
     pointerY = pointer?.y ?? primaryCellX
 
-    // todo not working properly as speed never reaches 0 if not frozen, see controls
     easedIdlePointerMod = easedMinLerp(
       easedIdlePointerMod,
       pointerSpeedScale > 0 ? 0 : 1,
@@ -484,7 +481,8 @@ export const omniForce = ({
     // primaryCellPushFactorX = primaryCellPushFactorY =
     //   min(centerDistRatio, 1) * slowPointerMod
 
-    primaryCellPushFactor = min(centerDistRatio, 1) * (1 - idlePrimaryCellMod)
+    primaryCellPushFactor =
+      min(centerDistRatio, 1) * (1 - slowIdlePrimaryCellMod)
     // primaryCellPushFactor = min(centerDistRatio, 1)
     // primaryCellPushFactor *=
     //   (1 - idlePrimaryCellMod) *
@@ -514,7 +512,7 @@ export const omniForce = ({
       pushSpeedFactor = easedMinLerp(
         pushSpeedFactor,
         // max(complementPointerSpeedScale, 0.2),
-        lerp(max(complementPointerSpeedScale, 0.2), 1, idlePrimaryCellMod),
+        lerp(max(complementPointerSpeedScale, 0.2), 1, slowIdlePrimaryCellMod),
         defaultLerpFactor,
       )
 

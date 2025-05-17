@@ -14,6 +14,9 @@ precision highp float;
 #define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
 
 #define MEDIA_ENABLED 1
+#define HIDE_MEDIA 0
+#define GAMMA_FACTOR 2
+#define GRAYSCALE 0
 #define BICUBIC_MEDIA_FILTER 0
 #define DRAW_EDGES 1
 #define EDGE_SCALING 1
@@ -57,6 +60,7 @@ precision highp float;
 
 //#define UNWEIGHTED_MOD_OPACITY 0.5
 #define UNWEIGHTED_MOD_OPACITY 1.
+#define UNWEIGHTED_MOD_GRAYSCALE 1.
 
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
@@ -122,6 +126,22 @@ struct Data {
     float weight;
     bool debugFlag;
 };
+
+const vec3 lumcoeff = vec3(0.2125, 0.7154, 0.0721);
+const vec4 dark = vec4(0.125, 0.125, 0.133, 1);
+//const vec4 dark = vec4(0., 0., 0., 1);
+//const vec4 light = vec4(0.996, 0.224, 0.294, 1);
+//const vec4 light = vec4(0.18, 0.18, 0.188, 1);
+//const vec4 light = vec4(0.957, 0.957, 0.957, 1);
+const vec4 light = vec4(0.769, 0.729, 0.69, 1);
+
+vec3 linearToGamma( in vec3 value ) {
+    return vec3( pow( value.xyz, vec3( 1.0 / float( GAMMA_FACTOR ) ) ));
+}
+
+vec3 gammaToLinear( in vec3 value ) {
+    return vec3( pow( value.xyz, vec3( float( GAMMA_FACTOR ) ) ));
+}
 
 #if BICUBIC_MEDIA_FILTER == 1
     // Cubic function for interpolation
@@ -921,7 +941,7 @@ void main() {
 
     Data data = update();
     uvec4 indices = data.indices;
-    #if MEDIA_ENABLED == 1
+    #if MEDIA_ENABLED == 1 && HIDE_MEDIA == 0
         vec3 c = mediaColor(indices.x, data.mediaBbox);
     #else
         vec3 c = randomColor(indices.x);
@@ -981,6 +1001,16 @@ void main() {
 //        }
         c = mix(c, fBaseColor, (1.-UNWEIGHTED_MOD_OPACITY) * fUnWeightedEffectMod * (1.-data.weight));
     }
+
+    #if GRAYSCALE != 0
+        float grayScale = float(GRAYSCALE) / 100.;
+        c = linearToGamma(c);
+        vec3 gray = vec3(dot(lumcoeff, c));
+        vec3 duotone = mix(dark.rgb, light.rgb, gray);
+        c = mix(c, duotone, grayScale);
+        c = gammaToLinear(c);
+    #endif
+
     outputColor = vec4(c, a);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*inverseScaleMod)), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)*scaleMod), 1.);
