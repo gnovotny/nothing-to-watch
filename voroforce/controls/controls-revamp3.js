@@ -85,12 +85,12 @@ export default class Controls extends CustomEventTarget {
 
       unfreezePointerSpeedLimit: this.config.unfreezePointerSpeedLimit || 300,
 
-      shake: {
-        enabled: this.config.shake?.enabled || false,
-        minSpeed: this.config.shake?.minSpeed || 100, // Minimum velocity to count as a shake
-        dirChangeTimeout: this.config.shake?.dirChangeTimeout || 250, // Reset after this many ms of no dir change
-        minShakes: this.config.shake?.minShakes || 3, // Minimum direction changes to trigger a shake
-        cooldown: this.config.shake?.cooldown || 2000, // Minimum time between shake events
+      freezeOnShake: {
+        enabled: this.config.freezeOnShake?.enabled || false,
+        minSpeed: this.config.freezeOnShake?.minSpeed || 100, // Minimum velocity to count as a shake
+        dirChangeTimeout: this.config.freezeOnShake?.dirChangeTimeout || 250, // Reset after this many ms of no dir change
+        minShakes: this.config.freezeOnShake?.minShakes || 3, // Minimum direction changes to trigger a shake
+        cooldown: this.config.freezeOnShake?.cooldown || 2000, // Minimum time between shake events
       },
     }
 
@@ -213,7 +213,7 @@ export default class Controls extends CustomEventTarget {
       return this.lastPosition
     }
 
-    if (this.options.shake?.enabled) {
+    if (this.options.freezeOnShake?.enabled) {
       if (this.detectShake()) {
         this.pinPointer()
         return this.lastPosition
@@ -255,7 +255,10 @@ export default class Controls extends CustomEventTarget {
   }
 
   detectShake() {
-    if (this.pointerFrozen || this.speed.total <= this.options.shake.minSpeed) {
+    if (
+      this.pointerFrozen ||
+      this.speed.total <= this.options.freezeOnShake.minSpeed
+    ) {
       this.resetShake()
       return
     }
@@ -289,8 +292,10 @@ export default class Controls extends CustomEventTarget {
 
     // Check if we've reached the threshold for a shake
     if (
-      (this.shakeDirectionXChangeCount >= this.options.shake.minShakes ||
-        this.shakeDirectionYChangeCount >= this.options.shake.minShakes) &&
+      (this.shakeDirectionXChangeCount >=
+        this.options.freezeOnShake.minShakes ||
+        this.shakeDirectionYChangeCount >=
+          this.options.freezeOnShake.minShakes) &&
       !this.shakeCooldownActive
     ) {
       // Trigger shake event
@@ -310,7 +315,7 @@ export default class Controls extends CustomEventTarget {
       this.shakeCooldownActive = true
       setTimeout(() => {
         this.shakeCooldownActive = false
-      }, this.options.shake.cooldown)
+      }, this.options.freezeOnShake.cooldown)
 
       console.log('shook')
       return true
@@ -334,7 +339,7 @@ export default class Controls extends CustomEventTarget {
     this.clearShakeDirChangeTimeout()
     this.shakeDirChangeTimeout = setTimeout(() => {
       this.resetShake()
-    }, this.options.shake.dirChangeTimeout)
+    }, this.options.freezeOnShake.dirChangeTimeout)
   }
 
   focusCell(cellOrCellIndex) {

@@ -15,7 +15,7 @@ export const defaultControlsConfig = {
   ease: 0.15, // smoothing factor
 
   capValues: true,
-  shake: {
+  freezeOnShake: {
     enabled: true,
   },
   freezeOnJolt: {

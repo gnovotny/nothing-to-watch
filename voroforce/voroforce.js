@@ -25,8 +25,8 @@ export class Voroforce extends CustomEventTarget {
   mediaEnabled = false
   multiThreading = false
   parallelDisplay = false
-  simulationIsWarm = false
-  displayIsWarm = false
+  simulationWarmedUp = false
+  displayWarmedUp = false
 
   constructor(container, config = {}) {
     super()
@@ -147,8 +147,8 @@ export class Voroforce extends CustomEventTarget {
   }
 
   start() {
-    this.simulationIsWarm = false
-    this.displayIsWarm = false
+    this.simulationWarmedUp = false
+    this.displayWarmedUp = false
     this.ticker.start()
     return this
   }
@@ -256,7 +256,7 @@ export class Voroforce extends CustomEventTarget {
   }
 
   onSimulationUpdated() {
-    this.simulationIsWarm = true
+    this.simulationWarmedUp = true
 
     if (!this.parallelDisplay) this.updateDisplay()
 
@@ -270,15 +270,15 @@ export class Voroforce extends CustomEventTarget {
   }
 
   updateDisplay() {
-    if (this.simulationIsWarm) {
+    if (this.simulationWarmedUp) {
       this.display.update()
-      this.displayIsWarm = true
+      this.displayWarmedUp = true
     }
     if (this.tickerMode === 'manual') this.ticker.next()
   }
 
   updateControls() {
-    if (this.displayIsWarm) this.controls.update()
+    if (this.displayWarmedUp) this.controls.update()
   }
 
   removeEventListeners() {

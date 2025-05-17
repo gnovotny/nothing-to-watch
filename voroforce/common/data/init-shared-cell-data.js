@@ -76,7 +76,7 @@ const initSharedCellNeighborsData = (cellOptions, config) => {
   let maxNeighbors = 8
 
   const latticeNeighborLevels =
-    config.simulation?.steps?.voronoi?.latticeNeighborLevels
+    config.simulation?.steps?.neighbors?.latticeNeighborLevels
   switch (latticeNeighborLevels) {
     case 2:
       maxNeighbors = 24

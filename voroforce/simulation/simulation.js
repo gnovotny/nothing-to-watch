@@ -1,17 +1,17 @@
 import BaseSimulation from './base-simulation'
 import ForcesSimulationStep from './steps/forces-step'
-import VoronoiSimulationStep from './steps/voronoi-step'
+import NeighborsSimulationStep from './steps/neighbors-step'
 
 export default class Simulation extends BaseSimulation {
   constructor(store, options) {
     super(store, options)
     this.forceStep = new ForcesSimulationStep(this.store)
-    this.voronoiStep = new VoronoiSimulationStep(this.store)
+    this.neighborsStep = new NeighborsSimulationStep(this.store)
   }
 
   update() {
     this.forceStep.update()
-    this.voronoiStep.update()
+    this.neighborsStep.update()
 
     this.onUpdated()
   }
@@ -22,7 +22,7 @@ export default class Simulation extends BaseSimulation {
 
   resize(dimensions, onResize) {
     this.forceStep.resize(dimensions)
-    this.voronoiStep?.resize(dimensions)
+    this.neighborsStep?.resize(dimensions)
     onResize?.()
   }
 

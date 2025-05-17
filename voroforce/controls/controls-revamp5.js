@@ -32,12 +32,16 @@ export default class Controls extends CustomEventTarget {
     // Current values
     this.positionHistory = []
     this.speeds = []
+    this.rawSpeeds = []
     this.position = null
     this.rawPosition = null
     this.lastPosition = null
     this.lastRawPosition = null
     this.speed = { x: 0, y: 0, total: 0 }
-    this.lastSpeed = { x: 0, y: 0, total: 0 } // Last adjusted speed
+    this.rawSpeed = { x: 0, y: 0, total: 0 }
+    this.lastSpeed = { x: 0, y: 0, total: 0 }
+    this.lastRawSpeed = { x: 0, y: 0, total: 0 }
+    this.avgRawSpeedTotal = 0
     this.avgSpeedTotal = 0
     this.acceleration = { x: 0, y: 0, total: 0 }
     this.direction = 0
@@ -85,14 +89,14 @@ export default class Controls extends CustomEventTarget {
         minSpeedValue: this.config.freezeOnJolt?.minSpeedValue || 2,
       },
 
-      unfreezePointerSpeedLimit: this.config.unfreezePointerSpeedLimit || 300,
+      unfreezePointerSpeedLimit: this.config.unfreezePointerSpeedLimit || 5,
 
-      shake: {
-        enabled: this.config.shake?.enabled || false,
-        minSpeed: this.config.shake?.minSpeed || 2, // Minimum velocity to count as a shake
-        dirChangeTimeout: this.config.shake?.dirChangeTimeout || 250, // Reset after this many ms of no dir change
-        minShakes: this.config.shake?.minShakes || 3, // Minimum direction changes to trigger a shake
-        cooldown: this.config.shake?.cooldown || 2000, // Minimum time between shake events
+      freezeOnShake: {
+        enabled: this.config.freezeOnShake?.enabled || false,
+        minSpeed: this.config.freezeOnShake?.minSpeed || 2, // Minimum velocity to count as a shake
+        dirChangeTimeout: this.config.freezeOnShake?.dirChangeTimeout || 250, // Reset after this many ms of no dir change
+        minShakes: this.config.freezeOnShake?.minShakes || 3, // Minimum direction changes to trigger a shake
+        cooldown: this.config.freezeOnShake?.cooldown || 2000, // Minimum time between shake events
       },
     }
 
@@ -174,14 +178,14 @@ export default class Controls extends CustomEventTarget {
     // Update current position
     this.position = { x: position.x, y: position.y }
 
-    // Add current position to our array
+    // console.log('this.position', this.position)
+
     this.positionHistory.push(position)
     // Keep array at max size
     if (this.positionHistory.length > this.maxHistory) {
       this.positionHistory.shift()
     }
 
-    // Add current position to our array
     this.speeds.push({
       ...this.speed,
     })
@@ -191,11 +195,21 @@ export default class Controls extends CustomEventTarget {
       this.avgSpeedTotal = getAverageSpeedTotal(this.speeds)
     }
 
+    this.rawSpeeds.push({
+      ...this.rawSpeed,
+    })
+    // Keep array at max size
+    if (this.rawSpeeds.length > this.maxHistory) {
+      this.rawSpeeds.shift()
+      this.avgRawSpeedTotal = getAverageSpeedTotal(this.rawSpeeds)
+    }
+
     // Save last processed values for next calculation
     this.lastPosition = { ...this.position }
     this.lastRawPosition = this.rawPosition
     this.lastTimestamp = timestamp
     this.lastSpeed = { ...this.speed }
+    this.lastRawSpeed = { ...this.rawSpeed }
   }
 
   processPosition(rawPosition, timestamp) {
@@ -212,23 +226,25 @@ export default class Controls extends CustomEventTarget {
     const rawDeltaY = rawPosition.y - this.lastRawPosition.y
 
     // Calculate speed
-    this.speed.x = rawDeltaX /* / timeDelta*/
-    this.speed.y = rawDeltaY /* / timeDelta*/
-    this.speed.total = sqrt(pow(this.speed.x, 2) + pow(this.speed.y, 2))
+    this.rawSpeed.x = rawDeltaX /* / timeDelta*/
+    this.rawSpeed.y = rawDeltaY /* / timeDelta*/
+    this.rawSpeed.total = sqrt(
+      pow(this.rawSpeed.x, 2) + pow(this.rawSpeed.y, 2),
+    )
 
     if (
       this.options.freezeOnJolt?.enabled &&
       !this.pointerPinned &&
       !this.pointerFrozen &&
-      this.speed.total >
-        max(this.avgSpeedTotal, this.options.freezeOnJolt.minSpeedValue) *
+      this.rawSpeed.total >
+        max(this.avgRawSpeedTotal, this.options.freezeOnJolt.minSpeedValue) *
           this.options.freezeOnJolt.factor
     ) {
       this.pinPointer()
       return this.lastPosition
     }
 
-    if (this.options.shake?.enabled) {
+    if (this.options.freezeOnShake?.enabled) {
       if (this.detectShake()) {
         this.pinPointer()
         return this.lastPosition
@@ -241,27 +257,46 @@ export default class Controls extends CustomEventTarget {
 
     const distance = sqrt(pow(deltaX, 2) + pow(deltaY, 2))
 
-    if (distance < 0.1) return rawPosition // Small threshold to stop when extremely close
+    if (distance < 0.1) {
+      // this.speed.x = 0
+      // this.speed.y = 0
+      // this.speed.total = 0
 
-    // Approach 1: Consistent interpolation with minimum speed
-    const easeAmount = Math.max(
-      this.options.ease,
-      this.options.minSpeed / distance,
-    )
+      return rawPosition // Small threshold to stop when extremely close
+    }
+
+    // Consistent interpolation with minimum speed
+    // const easeAmount = Math.max(
+    //   this.options.ease,
+    //   this.options.minSpeed / distance,
+    // )
+    const easeAmount = this.options.ease
 
     // Calculate the movement for this frame
     let cappedDeltaX = deltaX * easeAmount
     let cappedDeltaY = deltaY * easeAmount
 
-    // Approach 2: Apply speed limit while maintaining direction
-    const currentSpeed = Math.sqrt(
+    const currentSpeed = sqrt(
       cappedDeltaX * cappedDeltaX + cappedDeltaY * cappedDeltaY,
     )
+
+    // console.log('currentSpeed', currentSpeed)
+
+    this.speed.x = cappedDeltaX
+    this.speed.y = cappedDeltaY
+    this.speed.total = currentSpeed
+    // this.speed.x = deltaX
+    // this.speed.y = deltaY
+    // this.speed.total = sqrt(deltaX * deltaX + deltaY * deltaY)
+
+    // Apply speed limit while maintaining direction
     if (currentSpeed > this.options.maxSpeed) {
       const ratio = this.options.maxSpeed / currentSpeed
       cappedDeltaX *= ratio
       cappedDeltaY *= ratio
     }
+
+    // console.log('cappedDeltaX', this.lastPosition.x + cappedDeltaX)
 
     return {
       x: this.lastPosition.x + cappedDeltaX,
@@ -270,15 +305,18 @@ export default class Controls extends CustomEventTarget {
   }
 
   detectShake() {
-    if (this.pointerFrozen || this.speed.total <= this.options.shake.minSpeed) {
+    if (
+      this.pointerFrozen ||
+      this.rawSpeed.total <= this.options.freezeOnShake.minSpeed
+    ) {
       this.resetShake()
       return
     }
 
     const directionX =
-      this.speed.x > 0 ? 'right' : this.speed.x < 0 ? 'left' : null
+      this.rawSpeed.x > 0 ? 'right' : this.rawSpeed.x < 0 ? 'left' : null
     const directionY =
-      this.speed.y > 0 ? 'down' : this.speed.y < 0 ? 'up' : null
+      this.rawSpeed.y > 0 ? 'down' : this.rawSpeed.y < 0 ? 'up' : null
 
     if (
       this.lastShakeDirectionX &&
@@ -304,15 +342,17 @@ export default class Controls extends CustomEventTarget {
 
     // Check if we've reached the threshold for a shake
     if (
-      (this.shakeDirectionXChangeCount >= this.options.shake.minShakes ||
-        this.shakeDirectionYChangeCount >= this.options.shake.minShakes) &&
+      (this.shakeDirectionXChangeCount >=
+        this.options.freezeOnShake.minShakes ||
+        this.shakeDirectionYChangeCount >=
+          this.options.freezeOnShake.minShakes) &&
       !this.shakeCooldownActive
     ) {
       // Trigger shake event
       this.dispatchEvent(
         new PointerShakeEvent({
           pointer: this.pointer,
-          speed: this.speed.total,
+          speed: this.rawSpeed.total,
           directionXChanges: this.shakeDirectionXChangeCount,
           directionYChanges: this.shakeDirectionYChangeCount,
         }),
@@ -325,7 +365,7 @@ export default class Controls extends CustomEventTarget {
       this.shakeCooldownActive = true
       setTimeout(() => {
         this.shakeCooldownActive = false
-      }, this.options.shake.cooldown)
+      }, this.options.freezeOnShake.cooldown)
 
       console.log('shook')
       return true
@@ -349,7 +389,7 @@ export default class Controls extends CustomEventTarget {
     this.clearShakeDirChangeTimeout()
     this.shakeDirChangeTimeout = setTimeout(() => {
       this.resetShake()
-    }, this.options.shake.dirChangeTimeout)
+    }, this.options.freezeOnShake.dirChangeTimeout)
   }
 
   focusCell(cellOrCellIndex) {

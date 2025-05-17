@@ -8,7 +8,7 @@ export default class MultiThreadedSimulation extends BaseSimulation {
 
     const workerState = this.store.getSimulationWorkerState()
     this.initForceWorker(workerState)
-    this.initVoronoiWorker(workerState)
+    this.initNeighborsWorker(workerState)
 
     for (let i = 0; i < this.workers.length; i++) {
       this.workers[i].addEventListener(
@@ -18,20 +18,20 @@ export default class MultiThreadedSimulation extends BaseSimulation {
     }
   }
 
-  initVoronoiWorker(workerState) {
-    this.voronoiWorker = new Worker(
-      new URL('./steps/voronoi-step/worker', import.meta.url),
+  initNeighborsWorker(workerState) {
+    this.neighborsWorker = new Worker(
+      new URL('./steps/neighbors-step/worker', import.meta.url),
       {
         type: 'module',
-        name: 'voronoi-worker',
+        name: 'neighbors-worker',
       },
     )
 
-    this.voronoiWorker.postMessage({
+    this.neighborsWorker.postMessage({
       type: 'init',
       state: workerState,
     })
-    this.workers.push(this.voronoiWorker)
+    this.workers.push(this.neighborsWorker)
   }
 
   initForceWorker(workerState) {
@@ -59,7 +59,7 @@ export default class MultiThreadedSimulation extends BaseSimulation {
 
   update() {
     this.updatingWorkersCount = this.workers.length
-    for (let i = 0; i < this.workers.length; i++) {
+    for (let i = 0; i < this.updatingWorkersCount; i++) {
       this.workers[i].postMessage({ type: 'update' })
     }
   }
@@ -68,7 +68,7 @@ export default class MultiThreadedSimulation extends BaseSimulation {
     this.resizingWorkersCount = this.workers.length
 
     const config = this.store.getSimulationWorkerConfig()
-    for (let i = 0; i < this.workers.length; i++) {
+    for (let i = 0; i < this.resizingWorkersCount; i++) {
       this.workers[i].postMessage({
         type: 'resize',
         data: {

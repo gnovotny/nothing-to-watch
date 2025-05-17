@@ -14,6 +14,7 @@ const LERP_FACTOR_DEFAULT = 0.025
 const { abs, max, min, sqrt, pow } = Math
 
 const dist = (x1, y1, x2, y2) => sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2))
+const dist2d = (a, b) => sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2))
 
 const getPushRadius = (dimensions) => {
   return dimensions.get('diagonal')
@@ -39,6 +40,10 @@ export const omniForce = ({
     cellsLen = cells.length,
     primarySelector = 'focused',
     defaultLerpFactor = LERP_FACTOR_DEFAULT,
+
+    controls: {
+      maxSpeed: controlsMaxSpeed = globalConfig.controls.maxSpeed ?? 10,
+    } = {},
 
     manageWeights = false,
     pointer: {
@@ -117,17 +122,17 @@ export const omniForce = ({
         : mediaV2SpeedLimit,
       handleCellMediaVersions = (
         cell,
-        pointerSpeedScale,
+        speedScale,
         colLevelAdjacency,
         rowLevelAdjacency,
       ) => {
-        if (pointerSpeedScale > mediaHighestSpeedLimit) return
+        if (speedScale > mediaHighestSpeedLimit) return
         /** dynamic but possibly less performant fn **/
         for (let i = 0; i < validMediaVersions.length; ++i) {
           mediaVersion = validMediaVersions[i]
 
           if (
-            pointerSpeedScale < mediaVersion.speedLimit &&
+            speedScale < mediaVersion.speedLimit &&
             colLevelAdjacency <= mediaVersion.adjacencyThreshold.col &&
             rowLevelAdjacency <= mediaVersion.adjacencyThreshold.row
           ) {
@@ -143,20 +148,20 @@ export const omniForce = ({
 
         /** old hardcoded fn **/
         // if (
-        //   pointerSpeedScale < mediaV2SpeedLimit &&
+        //   speedScale < mediaV2SpeedLimit &&
         //   colLevelAdjacency <= mediaV2ColLevelAdjacencyThreshold &&
         //   rowLevelAdjacency <= mediaV2RowLevelAdjacencyThreshold
         // ) {
         //   cell.targetMediaVersion = max(cell.targetMediaVersion, 2)
         // } else if (
-        //   pointerSpeedScale < mediaV1SpeedLimit &&
+        //   speedScale < mediaV1SpeedLimit &&
         //   colLevelAdjacency <= mediaV1ColLevelAdjacencyThreshold &&
         //   rowLevelAdjacency <= mediaV1RowLevelAdjacencyThreshold
         // ) {
         //   cell.targetMediaVersion = max(cell.targetMediaVersion, 1)
         //   // cell.targetMediaVersion = 1 // reduce res if out of range (free mipmapping)
         // } else {
-        //   if (pointerSpeedScale < mediaV1SpeedLimit) {
+        //   if (speedScale < mediaV1SpeedLimit) {
         //     cell.targetMediaVersion = min(cell.targetMediaVersion, 1) // reduce res if out of range (free mipmapping)
         //   }
         // }
@@ -210,6 +215,16 @@ export const omniForce = ({
 
   let pointerX,
     pointerY,
+    pointerSpeedScale = 0,
+    complementPointerSpeedScale = 1,
+    verySlowPointerMod = 0,
+    nextVerySlowPointerMod = 0,
+    lastVerySlowPointerMod = 0,
+    slowPointerMod = 0,
+    easedIdlePointerMod = 1,
+    easedActivePointerMod = 0,
+    prevCenterX,
+    prevCenterY,
     centerX,
     centerY,
     targetCenterX,
@@ -217,19 +232,27 @@ export const omniForce = ({
     latticeCenterX = originLatticeX,
     latticeCenterY = originLatticeY,
     centerLerp = defaultLerpFactor,
+    centerSpeed = 0,
+    centerSpeedScale = 0,
+    complementCenterSpeedScale = 1,
     primaryCell,
-    newPrimaryCell,
+    primaryCellIndex,
+    primaryCellCol,
+    primaryCellRow,
+    nextPrimaryCell,
+    nextPrimaryCellIndex,
     prevPrimaryCell,
     idlePrimaryCellMod = 1,
-    easedIdlePointerMod = 1,
-    easedActivePointerMod = 0,
-    primaryCellChanged = false,
     primaryCellX,
     primaryCellY,
     secondaryCell,
     secondaryCellX,
     secondaryCellY,
-    commonMod = 1,
+    basePushDistMod = 1,
+    commonPushDistMod = 1,
+    commonPushXMod = 1,
+    commonPushYMod = 1,
+    commonOriginMod = 1,
     cellTypePushXMod = 1,
     cellTypePushYMod = 1,
     primaryCellPushFactor = 0,
@@ -250,14 +273,9 @@ export const omniForce = ({
     alignmentPushXMod = 1,
     alignmentPushYMod = 1,
     alignmentPushYModMod = 0,
-    startTime,
-    timestamp,
+    breathingStartTime,
+    breathingTimestamp,
     breathingPushMod = 1,
-    cell,
-    i,
-    x,
-    y,
-    l,
     colLevelAdjacency,
     rowLevelAdjacency,
     greatestDirLevelAdjacency,
@@ -270,17 +288,26 @@ export const omniForce = ({
     latticeStrengthMod,
     centerXStretchMod,
     isPrimaryCell = false,
-    pointerSpeedScale = 0,
-    complementPointerSpeedScale = 1,
-    verySlowPointerMod = 0,
-    newVerySlowPointerMod = 0,
-    lastVerySlowPointerMod = 0,
-    slowPointerMod = 0,
-    idlePointerTimeout,
-    idleLerpCenterToPrimaryCell = false,
     primaryCellWeight = 0,
     primaryCellWeightPushFactor = 1,
-    pushSpeedFactor = 1
+    pushSpeedFactor = 1,
+    cell,
+    i,
+    x,
+    y,
+    l
+
+  for (i = 0; i < cellsLen; ++i) {
+    cell = cells[i]
+
+    cell.localWeight = cell.weight
+    cell.localCol = cell.col
+    cell.localRow = cell.row
+    cell.localX = cell.x
+    cell.localY = cell.y
+    cell.localIx = cell.ix
+    cell.localIy = cell.iy
+  }
 
   function force(alpha) {
     forceSetup(alpha)
@@ -303,7 +330,7 @@ export const omniForce = ({
     // )
     sharedData.forceCenterStrengthMod = lerp(
       sharedData.forceCenterStrengthMod,
-      min(commonMod / 1.125, 1),
+      min(basePushDistMod / 1.125, 1),
       centerLerp,
     )
 
@@ -314,12 +341,14 @@ export const omniForce = ({
   }
 
   function forceSetup(alpha) {
-    newPrimaryCell = selectPrimary(cells)
-    primaryCellChanged = false
-    if (newPrimaryCell?.index !== primaryCell?.index) {
+    nextPrimaryCell = selectPrimary(cells)
+    nextPrimaryCellIndex = nextPrimaryCell?.index
+    if (nextPrimaryCellIndex !== primaryCellIndex) {
       prevPrimaryCell = primaryCell
-      primaryCell = newPrimaryCell
-      primaryCellChanged = true
+      primaryCell = nextPrimaryCell
+      primaryCellIndex = nextPrimaryCellIndex
+      primaryCellCol = nextPrimaryCell.localCol
+      primaryCellRow = nextPrimaryCell.localRow
       idlePrimaryCellMod = 0
     }
 
@@ -339,43 +368,38 @@ export const omniForce = ({
         0.05 *
         complementPointerSpeedScale,
     )
-    // console.log('idlePrimaryCellMod', idlePrimaryCellMod)
 
-    primaryCellX = primaryCell.x + primaryCell.vx
-    primaryCellY = primaryCell.y + primaryCell.vy
+    primaryCellX = primaryCell.localX + primaryCell.vx
+    primaryCellY = primaryCell.localY + primaryCell.vy
     centerX ??= primaryCellX
     centerY ??= primaryCellY
     pointerX = pointer?.x ?? primaryCellX
     pointerY = pointer?.y ?? primaryCellX
 
+    // todo not working properly as speed never reaches 0 if not frozen, see controls
     easedIdlePointerMod = easedMinLerp(
       easedIdlePointerMod,
       pointerSpeedScale > 0 ? 0 : 1,
-      defaultLerpFactor,
+      defaultLerpFactor * (pointerSpeedScale > 0 ? 1 : 0.25),
     )
+
+    // console.log('easedIdlePointerMod', easedIdlePointerMod)
 
     easedActivePointerMod = 1 - easedIdlePointerMod
 
-    // console.log('idlePointerMod', idlePointerMod)
+    // console.log('pointerSpeedScale', pointerSpeedScale)
 
-    newVerySlowPointerMod =
+    nextVerySlowPointerMod =
       pointerSpeedScale <= 0.005 ? pointerSpeedScale / 0.005 : 1
-
-    // newVerySlowPointerMod =
-    //   pointerSpeedScale <= 0.01 ? pointerSpeedScale / 0.01 : 1
-
     lastVerySlowPointerMod = verySlowPointerMod
-
     verySlowPointerMod = easedMinLerp(
       verySlowPointerMod,
-      newVerySlowPointerMod,
-
-      newVerySlowPointerMod > verySlowPointerMod
+      nextVerySlowPointerMod,
+      nextVerySlowPointerMod > verySlowPointerMod
         ? defaultLerpFactor * 2
         : defaultLerpFactor,
-
-      // newVerySlowPointerMod > verySlowPointerMod
-      //   ? max(verySlowPointerMod / newVerySlowPointerMod, 0.1) *
+      // nextVerySlowPointerMod > verySlowPointerMod
+      //   ? max(verySlowPointerMod / nextVerySlowPointerMod, 0.1) *
       //       defaultLerpFactor
       //   : defaultLerpFactor,
     )
@@ -401,45 +425,9 @@ export const omniForce = ({
 
     // console.log('centerLerp', centerLerp)
 
-    // if (verySlowPointerMod < 1) {
     // lastPointerPrimaryDist = pointerPrimaryDist
-    // lastPointerDistRatio = pointerDistRatio
-    // if (secondaryCell) {
-    //   secondaryCellX = secondaryCell.x + secondaryCell.vx
-    //   secondaryCellY = secondaryCell.y + secondaryCell.vy
-    //
-    //   pointerPrimaryDist = dist(pointerX, pointerY, primaryCellX, primaryCellY)
-    //   secondaryDist = dist(pointerX, pointerY, secondaryCellX, secondaryCellY)
-    //   pointerDistRatio = secondaryDist === 0 ? 0 : primaryDist / secondaryDist
-    //
-    //   if (pointerPrimaryDist < lastPointerPrimaryDist) {
-    //     centerLerp = 0
-    //     console.log('yup')
-    //   } else {
-    //     console.log('nope')
-    //   }
-    // }
-    // }
+    // pointerPrimaryDist = dist(pointerX, pointerY, primaryCellX, primaryCellY)
 
-    lastPointerPrimaryDist = pointerPrimaryDist
-    pointerPrimaryDist = dist(pointerX, pointerY, primaryCellX, primaryCellY)
-
-    // if (
-    //   // verySlowPointerMod < 1 &&
-    //   !primaryCellChanged &&
-    //   pointerPrimaryDist < lastPointerPrimaryDist
-    // ) {
-    //   targetCenterX = lerp(
-    //     primaryCellX,
-    //     pointerX,
-    //     min(verySlowPointerMod, lastVerySlowPointerMod),
-    //   )
-    //   targetCenterY = lerp(
-    //     primaryCellY,
-    //     pointerY,
-    //     min(verySlowPointerMod, lastVerySlowPointerMod),
-    //   )
-    // } else {
     targetCenterX = lerp(
       primaryCellX,
       pointerX,
@@ -450,149 +438,34 @@ export const omniForce = ({
       pointerY,
       verySlowPointerMod * easedActivePointerMod,
     )
-    // }
 
-    centerX = easedMinLerp(
-      centerX,
-      targetCenterX,
-      // defaultLerpFactor,
-      // complementPointerSpeedScale,
-      centerLerp,
-    )
+    prevCenterX = centerX
+    prevCenterY = centerY
 
-    centerY = easedMinLerp(
-      centerY,
-      targetCenterY,
-      // defaultLerpFactor,
-      // complementPointerSpeedScale,
-      centerLerp,
-    )
+    centerX = easedMinLerp(centerX, targetCenterX, centerLerp)
+
+    centerY = easedMinLerp(centerY, targetCenterY, centerLerp)
 
     latticeCenterX = centerX
     latticeCenterY = centerY
 
-    // centerX = easedMinLerp(centerX, primaryCellX, defaultLerpFactor)
-    // centerY = easedMinLerp(centerY, primaryCellY, defaultLerpFactor)
-    //
-    // console.log('centerLerp', centerLerp)
-    // // console.log('complementPointerSpeedScale', complementPointerSpeedScale)
-    //
-    // // centerLerp = max(
-    // //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
-    // //   defaultLerpFactor,
-    // // )
-    //
-    // centerLerp = easedMinLerp(
-    //   centerLerp,
-    //   complementPointerSpeedScale,
-    //   // max(
-    //   //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
-    //   //   defaultLerpFactor,
-    //   // ),
-    //   defaultLerpFactor * 0.01,
-    // )
-    //
-    // console.log('centerLerp', centerLerp)
-    //
-    // // console.log('centerLerp', centerLerp)
-    //
-    // centerX = easedMinLerp(
-    //   centerX,
-    //   pointer?.x ?? primaryCellX,
-    //   // defaultLerpFactor,
-    //   // complementPointerSpeedScale,
-    //   centerLerp,
-    // )
-    // centerY = easedMinLerp(
-    //   centerY,
-    //   pointer?.y ?? primaryCellY,
-    //   // defaultLerpFactor,
-    //   // complementPointerSpeedScale,
-    //   centerLerp,
-    // )
-
-    // if (lerpCenterToPrimaryCellOnIdlePointer && pointerSpeedScale === 0) {
-    //   // if (pointerSpeedScale < 0.05) {
-    //   // centerX = primaryCellX
-    //   // centerY = primaryCellY
-    //   centerX = easedMinLerp(centerX, primaryCellX, defaultLerpFactor)
-    //   centerY = easedMinLerp(centerY, primaryCellY, defaultLerpFactor)
-    //
-    //   centerLerp = easedMinLerp(centerLerp, 0, defaultLerpFactor)
-    //
-    //   console.log('centerLerp', centerLerp)
-    // } else {
-    //   // console.log('complementPointerSpeedScale', complementPointerSpeedScale)
-    //
-    //   // centerLerp = max(
-    //   //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
-    //   //   defaultLerpFactor,
-    //   // )
-    //
-    //   centerLerp = easedMinLerp(
-    //     centerLerp,
-    //     complementPointerSpeedScale,
-    //     // max(
-    //     //   pointerSpeedScale * pointerSpeedScale * defaultLerpFactor * 20,
-    //     //   defaultLerpFactor,
-    //     // ),
-    //     defaultLerpFactor * 0.01,
-    //   )
-    //
-    //   console.log('centerLerp', centerLerp)
-    //
-    //   // console.log('centerLerp', centerLerp)
-    //
-    //   centerX = easedMinLerp(
-    //     centerX,
-    //     pointer?.x ?? primaryCellX,
-    //     // defaultLerpFactor,
-    //     // complementPointerSpeedScale,
-    //     centerLerp,
-    //   )
-    //   centerY = easedMinLerp(
-    //     centerY,
-    //     pointer?.y ?? primaryCellY,
-    //     // defaultLerpFactor,
-    //     // complementPointerSpeedScale,
-    //     centerLerp,
-    //   )
-    // }
+    // centerSpeed = dist(centerX, centerY, prevCenterX, prevCenterY)
+    // centerSpeedScale =
+    //     Math.min(centerSpeed, controlsMaxSpeed) / controlsMaxSpeed
+    // complementCenterSpeedScale = 1 - pointerSpeedScale
+    // // console.log('complementCenterSpeedScale', complementCenterSpeedScale)
 
     secondaryCell =
-      primaryCell?.index === pointer.indices[0]
+      primaryCellIndex === pointer.indices[0]
         ? cells[pointer.indices[1]]
         : undefined
-
-    // centerDistRatio = 0
-    // pointerDistRatio = 0
-    // lastPointerPrimaryDist = pointerPrimaryDist
-    // lastPointerDistRatio = pointerDistRatio
-    lastCenterDistRatio = centerDistRatio
-
     if (secondaryCell) {
-      secondaryCellX = secondaryCell.x + secondaryCell.vx
-      secondaryCellY = secondaryCell.y + secondaryCell.vy
+      secondaryCellX = secondaryCell.localX + secondaryCell.vx
+      secondaryCellY = secondaryCell.localY + secondaryCell.vy
 
       primaryDist = dist(centerX, centerY, primaryCellX, primaryCellY)
       secondaryDist = dist(centerX, centerY, secondaryCellX, secondaryCellY)
       centerDistRatio = secondaryDist === 0 ? 0 : primaryDist / secondaryDist
-
-      // pointerPrimaryDist = dist(pointerX, pointerY, primaryCellX, primaryCellY)
-      // secondaryDist = dist(pointerX, pointerY, secondaryCellX, secondaryCellY)
-      // pointerDistRatio = secondaryDist === 0 ? 0 : primaryDist / secondaryDist
-
-      // if (pointerPrimaryDist < lastPointerPrimaryDist) {
-      //   centerDistRatio = min(centerDistRatio, lastCenterDistRatio)
-      //   // console.log('centerDistRatio', centerDistRatio)
-      //   // console.log('pointerDistRatio', pointerDistRatio)
-      // }
-
-      // if (pointerDistRatio < lastPointerDistRatio) {
-      //   centerDistRatio = min(centerDistRatio, lastCenterDistRatio)
-      //   // console.log('centerDistRatio', centerDistRatio)
-      //   // console.log('pointerDistRatio', pointerDistRatio)
-      // }
     }
 
     // console.log(centerDistRatio)
@@ -607,27 +480,24 @@ export const omniForce = ({
 
     primaryCellPushFactor = min(centerDistRatio, 1) * (1 - idlePrimaryCellMod)
     // primaryCellPushFactor = min(centerDistRatio, 1)
-
     // primaryCellPushFactor *=
     //   (1 - idlePrimaryCellMod) *
     //   (primaryCellPushFactor >= 0.5 ? 1 - primaryCellPushFactor : 1)
     // console.log('primaryCellPushFactor', primaryCellPushFactor)
-
     primaryCellPushFactorX = primaryCellPushFactorY = primaryCellPushFactor
-
     // primaryCellPushFactorX = primaryCellPushFactorY = 0
 
     // console.log('primaryCellPushFactorX', primaryCellPushFactorX)
     // console.log('slowPointerMod', slowPointerMod)
 
     if (breathing) {
-      timestamp = performance.now()
-      if (!startTime) startTime = timestamp
+      breathingTimestamp = performance.now()
+      if (!breathingStartTime) breathingStartTime = breathingTimestamp
       breathingPushMod =
         1 -
         breathingVariability +
         diaphragmaticBreathing(
-          ((timestamp - startTime) % breathingCycleDuration) /
+          ((breathingTimestamp - breathingStartTime) % breathingCycleDuration) /
             breathingCycleDuration,
         ) *
           breathingVariability *
@@ -643,6 +513,7 @@ export const omniForce = ({
       )
     }
 
+    // todo messy
     if (manageWeights) {
       primaryCellWeight =
         clamp(0, 1, (1 - centerDistRatio) ** 2) *
@@ -651,13 +522,16 @@ export const omniForce = ({
         // (1 - breathingPushMod) *
         complementPointerSpeedScale *
         pushSpeedFactor
-      primaryCellWeight = primaryCell.weight = easedMinLerp(
-        primaryCell.weight,
-        primaryCellWeight,
-        primaryCellWeight > primaryCell.weight
-          ? defaultLerpFactor * sqrt(complementPointerSpeedScale)
-          : defaultLerpFactor * 3,
-      )
+      primaryCellWeight =
+        primaryCell.weight =
+        primaryCell.localWeight =
+          easedMinLerp(
+            primaryCell.localWeight,
+            primaryCellWeight,
+            primaryCellWeight > primaryCell.localWeight
+              ? defaultLerpFactor * sqrt(complementPointerSpeedScale)
+              : defaultLerpFactor * 3,
+          )
 
       // primaryCellWeightPushFactor =
       //   1 + clamp(0, 0.125, mapRange(0.25, 1, 0, 0.25, primaryCellWeight))
@@ -668,12 +542,12 @@ export const omniForce = ({
         defaultLerpFactor,
       )
 
-      // console.log(primaryCellWeightPushFactor)
+      // console.log('primaryCellWeightPushFactor', primaryCellWeightPushFactor)
     }
 
     if (
-      primaryCell.row === secondaryCell?.row &&
-      primaryCell.row === prevPrimaryCell?.row
+      primaryCellRow === secondaryCell?.localRow &&
+      primaryCellRow === prevPrimaryCell?.localRow
     ) {
       alignmentPushYModMod = lerp(alignmentPushYModMod, 1, defaultLerpFactor)
     } else {
@@ -688,6 +562,14 @@ export const omniForce = ({
         )
       }
     }
+
+    commonOriginMod = originStrength * alpha * (1 - (1 - breathingPushMod) * 3)
+
+    basePushDistMod =
+      breathingPushMod * pushSpeedFactor * primaryCellWeightPushFactor
+    commonPushDistMod = basePushDistMod * pushStrength * alpha
+    commonPushXMod = configPushXMod * breathingPushMod
+    commonPushYMod = configPushYMod * (1 - (1 - sqrt(breathingPushMod)))
   }
 
   function mainForcePass(alpha) {
@@ -697,36 +579,40 @@ export const omniForce = ({
       // origin force
       cell.vx +=
         ((originLatticeScale === 1
-          ? cell.ix
-          : (cell.ix - latticeCenterX) * originLatticeScale + latticeCenterX) -
-          cell.x) *
-        originStrength *
-        alpha *
+          ? cell.localIx
+          : (cell.localIx - latticeCenterX) * originLatticeScale +
+            latticeCenterX) -
+          cell.localX) *
         originXFactor *
-        (1 - (1 - breathingPushMod) * 3)
+        commonOriginMod
       cell.vy +=
         ((originLatticeScale === 1
-          ? cell.iy
-          : (cell.iy - latticeCenterY) * originLatticeScale + latticeCenterY) -
-          cell.y) *
-        originStrength *
-        alpha *
+          ? cell.localIy
+          : (cell.localIy - latticeCenterY) * originLatticeScale +
+            latticeCenterY) -
+          cell.localY) *
         originYFactor *
-        (1 - (1 - breathingPushMod) * 3)
+        commonOriginMod
 
       if (primaryCell) {
-        isPrimaryCell = i === primaryCell.index
+        isPrimaryCell = i === primaryCellIndex
 
-        colLevelAdjacency = abs(cell.col - primaryCell.col)
-        rowLevelAdjacency = abs(cell.row - primaryCell.row)
-        greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
-
-        x = cell.x + cell.vx - centerX
-        y = cell.y + cell.vy - centerY
+        x = cell.localX + cell.vx - centerX
+        y = cell.localY + cell.vy - centerY
         l = x * x + y * y
 
         if (l !== 0 && (!pushRadiusLimit || l < pushRadius * pushRadius)) {
           l = sqrt(l)
+          l = (pushRadius - l) / l
+          l *= commonPushDistMod
+
+          x *= l
+          y *= l
+
+          colLevelAdjacency = abs(cell.localCol - primaryCellCol)
+          rowLevelAdjacency = abs(cell.localRow - primaryCellRow)
+          greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
+
           // media loading logic, might move it at some point
           if (!isPrimaryCell && requestMediaVersions) {
             handleCellMediaVersions(
@@ -736,20 +622,6 @@ export const omniForce = ({
               rowLevelAdjacency,
             )
           }
-
-          l = (pushRadius - l) / l
-
-          commonMod =
-            breathingPushMod * pushSpeedFactor * primaryCellWeightPushFactor
-
-          l *= commonMod * pushStrength * alpha
-
-          // center pull force
-          // cell.vx += centerPullX * l * configPushXMod * alpha
-          // cell.vy += centerPullY * l * configPushYMod * alpha
-
-          x *= l
-          y *= l
 
           cellTypePushXMod = 1
           cellTypePushYMod = 1
@@ -764,27 +636,12 @@ export const omniForce = ({
               colLevelAdjacency > 0 &&
               colLevelAdjacency < pushCenterXStretchMaxLevelsX
             ) {
-              // centerXStretchMod +=
-              //   pushCenterXStretchMod *
-              //   ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
-              //     (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
               centerXStretchMod +=
                 pushCenterXStretchMod *
                 ((colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
                   (1 - rowLevelAdjacency / pushCenterXStretchMaxLevelsY)) *
                 abs(x)
-              //  *(1 / max(abs(x), 1)) *
-              //   *(1 / max(abs(y), 1))
             }
-
-            // if (pushCenterXStretchMod > 0) {
-            //   centerXStretchMod += clamp(
-            //     0,
-            //     100,
-            //     clamp(0, 0.005, abs((pushRadius - abs(x)) / abs(x))) *
-            //       pushCenterXStretchMod,
-            //   )
-            // }
           }
 
           alignmentPushYMod = 1
@@ -805,22 +662,21 @@ export const omniForce = ({
           // push force
           cell.vx +=
             x *
-            configPushXMod *
+            commonPushXMod *
             cellTypePushXMod *
             alignmentPushXMod *
-            centerXStretchMod *
-            breathingPushMod
-          cell.vy +=
-            y *
-            configPushYMod *
-            cellTypePushYMod *
-            alignmentPushYMod *
-            (1 - (1 - sqrt(breathingPushMod)))
+            centerXStretchMod
+
+          cell.vy += y * commonPushYMod * cellTypePushYMod * alignmentPushYMod
         }
       }
 
-      if (cell.weight !== 0 && i !== primaryCell?.index) {
-        cell.weight = easedMinLerp(cell.weight, 0, defaultLerpFactor * 4)
+      if (cell.localWeight !== 0 && i !== primaryCellIndex) {
+        cell.weight = cell.localWeight = easedMinLerp(
+          cell.localWeight,
+          0,
+          defaultLerpFactor * 4,
+        )
       }
 
       handleEnd?.(cell)
@@ -830,14 +686,14 @@ export const omniForce = ({
   function latticeForcePass(alpha) {
     if (!primaryCell) return
 
-    minLatticeRow = max(primaryCell.row - latticeMaxLevelsFromPrimary, 1)
+    minLatticeRow = max(primaryCellRow - latticeMaxLevelsFromPrimary, 1)
     maxLatticeRow = min(
-      primaryCell.row + latticeMaxLevelsFromPrimary,
+      primaryCellRow + latticeMaxLevelsFromPrimary,
       latticeRows,
     )
-    minLatticeCol = max(primaryCell.col - latticeMaxLevelsFromPrimary, 1)
+    minLatticeCol = max(primaryCellCol - latticeMaxLevelsFromPrimary, 1)
     maxLatticeCol = min(
-      primaryCell.col + latticeMaxLevelsFromPrimary,
+      primaryCellCol + latticeMaxLevelsFromPrimary,
       latticeCols,
     )
 
@@ -852,8 +708,8 @@ export const omniForce = ({
         if (i < cellsLen) {
           cell = cells[i]
 
-          colLevelAdjacency = abs(cell.col - primaryCell.col)
-          rowLevelAdjacency = abs(cell.row - primaryCell.row)
+          colLevelAdjacency = abs(cell.localCol - primaryCellCol)
+          rowLevelAdjacency = abs(cell.localRow - primaryCellRow)
           greatestDirLevelAdjacency = max(colLevelAdjacency, rowLevelAdjacency)
           latticeStrengthMod =
             (latticeMaxLevelsFromPrimary - greatestDirLevelAdjacency) /
@@ -882,8 +738,8 @@ export const omniForce = ({
   }
 
   function latticeLinkForce(cell, target, alpha, size, strengthMod) {
-    x = target.x + target.initialVx - cell.x - cell.initialVx
-    y = target.y + target.initialVy - cell.y - cell.initialVy
+    x = target.localX + target.initialVx - cell.localX - cell.initialVx
+    y = target.localY + target.initialVy - cell.localY - cell.initialVy
 
     l = sqrt(x * x + y * y)
     l =

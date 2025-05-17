@@ -798,12 +798,10 @@ Data update() {
         float mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
         vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex)/* * (1./zoomFactor)*/;
 
-
-        float inverseZoomFactor = 1.;
+        float reciprocalZoomFactor = 1.;
         #if FISHEYE_STRENGTH != 0
             if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
-                vec2 forceCenterNCoords = normalizeCoords(forceCenter);
                 vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
 
 //                vec2 d = cellNCoords - forceCenterNCoords;
@@ -817,7 +815,7 @@ Data update() {
                     float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
                 # endif
 
-              float step = smoothstep(0.0, 1. / percent, percent);
+                float step = smoothstep(0.0, 1. / percent, percent);
 //                float step = percent * percent; // Quadratic ease-in
 //                float step = percent * percent * (3.0 - 2.0 * percent); // Smoother cubic ease
 
@@ -826,11 +824,10 @@ Data update() {
 //                }
 
                 float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
-                inverseZoomFactor = 1./ mix(1.0, step, strength);
+                reciprocalZoomFactor = 1./ mix(1.0, step, strength);
 
-                cellNCoords -= forceCenterNCoords;
-                cellNCoords *= inverseZoomFactor;
-                cellNCoords += forceCenterNCoords;
+                vec2 forceCenterNCoords = normalizeCoords(forceCenter);
+                cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalZoomFactor + forceCenterNCoords;
             }
         #endif
 
@@ -864,7 +861,7 @@ Data update() {
         float bbY = mediaBbox.w - mediaBbox.y;
 
 //        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
-        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*inverseZoomFactor);
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalZoomFactor);
         #if LOCK_MEDIA_ASPECT == 1
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;

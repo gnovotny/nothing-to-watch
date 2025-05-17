@@ -1,4 +1,4 @@
-export const defaultVoronoiSimulationStepConfig = {
+export const defaultNeighborsSimulationStepConfig = {
   latticeNeighborLevels: 1,
 }
 export const defaultForceSimulationStepConfig = {
@@ -31,7 +31,7 @@ export const defaultForceSimulationStepConfig = {
 
 export const defaultSimulationConfig = {
   steps: {
-    voronoi: defaultVoronoiSimulationStepConfig,
+    neighbors: defaultNeighborsSimulationStepConfig,
     force: defaultForceSimulationStepConfig,
   },
 }

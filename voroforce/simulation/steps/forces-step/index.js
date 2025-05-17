@@ -82,8 +82,8 @@ export default class ForcesSimulationStep extends BaseSimulationStep {
   }
 
   handleEnd(cell) {
-    cell.x += cell.vx *= 1 - this.parameters.velocityDecay
-    cell.y += cell.vy *= 1 - this.parameters.velocityDecay
+    cell.localX = cell.x += cell.vx *= 1 - this.parameters.velocityDecay
+    cell.localY = cell.y += cell.vy *= 1 - this.parameters.velocityDecay
 
     cell.initialVx = cell.vx
     cell.initialVy = cell.vy
