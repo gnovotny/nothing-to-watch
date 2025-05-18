@@ -27,7 +27,6 @@ precision highp float;
 #define FISHEYE_SQUARED 1
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
-#define MEDIA_UV_ROTATE_FACTOR 0
 #define WEIGHTED_DIST 1
 //#define WEIGHTED_DIST 0
 //#define WEIGHT_OFFSET_SCALE 2000.
@@ -41,8 +40,10 @@ precision highp float;
 #define MEDIA_BBOX_SCALE 1. // TODO TMP
 //#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
-#define LOCK_MEDIA_ASPECT 1
+#define MEDIA_LOCKED_ASPECT 0
 #define MEDIA_ASPECT 1.5
+#define MEDIA_UV_ROTATE_FACTOR 1
+#define MEDIA_FISHEYE 1
 #define PIXEL_SEARCH 1
 #define PIXEL_SEARCH_RADIUS 16.
 #define PIXEL_SEARCH_RANDOM_DIR 0
@@ -686,6 +687,7 @@ Data update() {
 
     vec2 forceCenter = vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
 
+    float fisheyeFactor = 1.;
     #if FISHEYE_STRENGTH != 0
         if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
@@ -716,11 +718,11 @@ Data update() {
 //            }
 
             float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
-            float zoomFactor = mix(1.0, step, strength);
+            fisheyeFactor = mix(1.0, step, strength);
 
             p -= forceCenterCoords;
 //            p *= normalize(d) * zoomFactor;
-            p *= zoomFactor;
+            p *= fisheyeFactor;
             p += forceCenterCoords;
 
             //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
@@ -818,36 +820,37 @@ Data update() {
         float mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
         vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex)/* * (1./zoomFactor)*/;
 
-        float reciprocalZoomFactor = 1.;
+        float reciprocalFisheyeFactor = 1.;
         #if FISHEYE_STRENGTH != 0
             if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
 
-                vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
+                #if MEDIA_FISHEYE == 1
+                    reciprocalFisheyeFactor = 1./ fisheyeFactor;
+                #else
+                    vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
 
-//                vec2 d = cellNCoords - forceCenterNCoords;
-                vec2 d = cellCoords - forceCenterCoords;
-                # if FISHEYE_SQUARED == 1
-//                    float r = sqrt(dot2(d));
-                    float r = length(d);
-                    float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
-                # else
-                    float r = dot2(d);
-                    float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
-                # endif
+                    //                vec2 d = cellNCoords - forceCenterNCoords;
+                    vec2 d = cellCoords - forceCenterCoords;
+                    # if FISHEYE_SQUARED == 1
+                        //                    float r = sqrt(dot2(d));
+                        float r = length(d);
+                        float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
+                    # else
+                        float r = dot2(d);
+                        float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
+                    # endif
 
-                float step = smoothstep(0.0, 1. / percent, percent);
-//                float step = percent * percent; // Quadratic ease-in
-//                float step = percent * percent * (3.0 - 2.0 * percent); // Smoother cubic ease
+                    float step = smoothstep(0.0, 1. / percent, percent);
 
-//                if (step > 0.99) {
-//                    debugFlag = true;
-//                }
+                    float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
+                    reciprocalFisheyeFactor = 1./ mix(1.0, step, strength);
 
-                float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
-                reciprocalZoomFactor = 1./ mix(1.0, step, strength);
+                    vec2 forceCenterNCoords = normalizeCoords(forceCenter);
+                    cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalFisheyeFactor + forceCenterNCoords;
+                #endif
 
                 vec2 forceCenterNCoords = normalizeCoords(forceCenter);
-                cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalZoomFactor + forceCenterNCoords;
+                cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalFisheyeFactor + forceCenterNCoords;
             }
         #endif
 
@@ -881,8 +884,8 @@ Data update() {
         float bbY = mediaBbox.w - mediaBbox.y;
 
 //        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
-        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalZoomFactor);
-        #if LOCK_MEDIA_ASPECT == 1
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalFisheyeFactor);
+        #if MEDIA_LOCKED_ASPECT == 1
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
             offset *= vec2(bbMax/aspect,bbMax*MEDIA_ASPECT);
@@ -958,9 +961,9 @@ void main() {
     #endif
 
 //    float scaleMod = sqrt(sqrt(data.scaleMod));
-    float inverseScaleMod = 1. - scaleMod;
+    float scaleModComplement = 1. - scaleMod;
 
-//    if (inverseScaleMod > 1.) {
+//    if (scaleModComplement > 1.) {
 //        discard;
 //    }
 
@@ -1012,7 +1015,7 @@ void main() {
     #endif
 
     outputColor = vec4(c, a);
-//    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*inverseScaleMod)), 1.);
+//    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x*scaleModComplement)), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1, edge2, data.minEdgeDists.x)*scaleMod), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1*scaleMod, edge2, data.minEdgeDists.x)), 1.);
 //    outputColor = vec4(vec3(smoothstep(edge1*scaleMod*5., edge2*scaleMod*50., data.minEdgeDists.x)), 1.);

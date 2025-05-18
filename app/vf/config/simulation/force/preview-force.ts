@@ -12,9 +12,7 @@ export const previewForceSimulationStepConfig = {
       type: 'omni',
       enabled: true,
       manageWeights: true,
-      pointer: {
-        // lerpCenterToPrimaryCellOnIdle: false,
-      },
+      smoothPrimaryCell: true,
       requestMediaVersions: {
         enabled: true,
       },

@@ -1,7 +1,7 @@
 export default {
   autoFocusCenter: {
     enabled: true,
-    random: false,
+    random: true,
   },
 
   // pointerRadius: 0.5, // percentage of diagonal
