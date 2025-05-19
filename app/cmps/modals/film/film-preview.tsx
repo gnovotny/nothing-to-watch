@@ -39,39 +39,46 @@ export const FilmPreview = ({ poster = false }) => {
 
   const onCellFocused = useCallback(
     ({ cell }: { cell?: VoroforceCell } = {}) => {
-      if (cell) {
-        primaryCellRef.current = cell
-      }
+      if (isSmallScreen) return
+      if (cell) primaryCellRef.current = cell
+      if (!primaryCellRef.current || !cellsRef.current) return
 
-      if (primaryCellRef.current && cellsRef.current) {
-        const {
-          config: {
-            lattice: { cols },
-          },
-        } = voroforceRef.current
-        const topNeighborCell =
-          cellsRef.current[primaryCellRef.current.index - cols]
-        if (topNeighborCell) {
-          topNeighborCellRef.current = topNeighborCell
-        }
+      const {
+        config: {
+          lattice: { cols },
+        },
+      } = voroforceRef.current
+      topNeighborCellRef.current =
+        cellsRef.current[primaryCellRef.current.index - cols] ??
+        topNeighborCellRef.current
 
-        const bottomNeighborCell =
-          cellsRef.current[primaryCellRef.current.index + cols]
-        if (bottomNeighborCell) {
-          bottomNeighborCellRef.current = bottomNeighborCell
-        }
-      }
+      bottomNeighborCellRef.current =
+        cellsRef.current[primaryCellRef.current.index + cols] ??
+        bottomNeighborCellRef.current
     },
-    [],
+    [isSmallScreen],
   )
+
+  const resetStyles = useCallback(() => {
+    if (!containerRef.current) return
+    if (!innerRef.current) return
+    containerRef.current.style.translate = ''
+    innerRef.current.style.scale = ''
+    innerRef.current.style.opacity = ''
+  }, [])
+
+  const applyStyles = useCallback(() => {
+    if (!containerRef.current) return
+    if (!innerRef.current) return
+    if (!positionRef.current) return
+    containerRef.current.style.translate = `${positionRef.current.x}px ${positionRef.current.y}px`
+    innerRef.current.style.scale = `${scaleRef.current}`
+    innerRef.current.style.opacity = `${scaleRef.current}`
+  }, [])
 
   useEffect(() => {
     if (isSmallScreen) {
-      if (!containerRef.current) return
-      if (!innerRef.current) return
-      containerRef.current.style.translate = ''
-      innerRef.current.style.scale = ''
-      innerRef.current.style.opacity = ''
+      resetStyles()
       return
     }
     const {
@@ -124,7 +131,6 @@ export const FilmPreview = ({ poster = false }) => {
       scaleRef.current = easedMinLerp(
         scaleRef.current,
         customSpeedScale,
-        // customSpeedScale * 0.5 + 0.5 * primaryCell.current.weight,
         0.05,
         MIN_LERP_EASING_TYPES.easeInOutQuad,
       )
@@ -132,11 +138,8 @@ export const FilmPreview = ({ poster = false }) => {
         opacityRef.current,
         customSpeedScale,
         0.05,
-        MIN_LERP_EASING_TYPES.linear,
       )
-      containerRef.current.style.translate = `${positionRef.current.x}px ${positionRef.current.y}px`
-      innerRef.current.style.scale = `${scaleRef.current}`
-      innerRef.current.style.opacity = `${scaleRef.current}`
+      applyStyles()
 
       if (frameRef.current % 60 === 0) {
         if (topNeighborCellRef.current.y - bounds.height < 0) {
@@ -165,17 +168,14 @@ export const FilmPreview = ({ poster = false }) => {
     return () => {
       ticker.removeEventListener('tick', onTick)
     }
-  }, [isSmallScreen, bounds, reverseY, reverseX])
+  }, [isSmallScreen, bounds, reverseY, reverseX, applyStyles, resetStyles])
 
   useEffect(() => {
     if (isSmallScreen) return
     const { controls, cells } = voroforceRef.current
-    if (!cellsRef.current) {
-      cellsRef.current = cells as VoroforceCell[]
-    }
+    if (!cellsRef.current) cellsRef.current = cells as VoroforceCell[]
 
     controls.addEventListener('focused', onCellFocused)
-
     return () => {
       controls.removeEventListener('focused', onCellFocused)
     }
@@ -183,16 +183,17 @@ export const FilmPreview = ({ poster = false }) => {
 
   return (
     <>
-      {isPreviewMode && film && (
+      {/*{isPreviewMode && film && (*/}
+      {film && (
         <div
           ref={(element) => {
             containerRef.current = element
             measureRef(element)
           }}
           className={cn(
-            'pointer-events-none fixed top-0 left-0 z-10 w-full max-w-full p-4 opacity-0 transition-opacity duration-300 md:w-300 md:p-0 md:will-change-transform lg:p-9',
+            'pointer-events-none fixed top-0 left-0 z-10 w-full max-w-full p-4 opacity-0 transition-opacity duration-700 md:w-300 md:p-0 md:will-change-transform lg:p-9',
             {
-              '!opacity-100': active,
+              '!opacity-100': isPreviewMode,
             },
           )}
         >
@@ -211,14 +212,14 @@ export const FilmPreview = ({ poster = false }) => {
                 className={cn(
                   'w-full max-w-[150px] shrink-0 basis-1/4 rounded-2xl lg:max-w-[300px] lg:basis-1/4',
                   {
-                    'pointer-events-auto': active,
+                    'pointer-events-auto': isPreviewMode,
                   },
                 )}
               />
             )}
             <div
               className={cn(
-                'flex basis-full flex-row justify-between gap-3 md:basis-3/4 md:flex-col md:justify-start md:gap-4',
+                'flex basis-full flex-row justify-between gap-3 md:basis-3/4 md:flex-col md:justify-start md:gap-4 lg:gap-6',
                 {
                   'items-end text-right': reverseX,
                   'md:flex-col-reverse': reverseY,

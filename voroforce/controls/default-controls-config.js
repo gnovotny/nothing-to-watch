@@ -7,7 +7,7 @@ export const defaultControlsConfig = {
   maxPointerSpeed: 0.5, // percentage of diagonal per second (px/s)
   pointerRadius: 0.5, // percentage of diagonal,
 
-  noProcessing: false,
+  raw: false,
   // maxSpeed: 200,
   maxSpeed: 10,
   // Minimum speed to maintain when close to target (prevents snapping)

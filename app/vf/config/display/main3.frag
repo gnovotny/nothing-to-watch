@@ -7,25 +7,22 @@ precision highp float;
 #define FLOAT_INF uintBitsToFloat(0x7f800000u)
 #define EPSILON .0001
 
-#define DYNAMIC_MAX_NEIGHBOR_ITERATIONS 0
-#define MAX_NEIGHBOR_ITERATIONS_LEVEL_1 8u
-#define MAX_NEIGHBOR_ITERATIONS_LEVEL_2 24u
-#define MAX_NEIGHBOR_ITERATIONS_LEVEL_3 48u
-#define GLOBAL_MAX_NEIGHBOR_ITERATIONS MAX_NEIGHBOR_ITERATIONS_LEVEL_1
+#define DYNAMIC_MAX_NEIGHBORS 0
+#define MAX_NEIGHBORS_LEVEL_1 8u
+#define MAX_NEIGHBORS_LEVEL_2 24u
+#define MAX_NEIGHBORS_LEVEL_3 48u
+#define DEFAULT_MAX_NEIGHBORS MAX_NEIGHBORS_LEVEL_1
 
 #define MEDIA_ENABLED 1
-#define HIDE_MEDIA 0
+#define HIDE_MEDIA 1
 #define GAMMA_FACTOR 2
 #define GRAYSCALE 0
 #define BICUBIC_MEDIA_FILTER 0
 #define DRAW_EDGES 1
-#define EDGE_SCALING 1
+#define EDGE_SCALING 0
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define FISHEYE_STRENGTH 50
-#define FISHEYE_RADIUS 1.
-#define FISHEYE_SQUARED 1
-#define DEBUG_MEDIA_BBOXES 0
+#define DEBUG_MEDIA_BBOXES 1
 #define Y_SCALE 1.
 #define WEIGHTED_DIST 1
 //#define WEIGHTED_DIST 0
@@ -35,15 +32,15 @@ precision highp float;
 #define WEIGHT_OFFSET_SCALE_MEDIA_MOD 9.25
 #define X_DIST_SCALING 1
 //#define X_DIST_SCALING 0
-#define DEFAULT_BASE_X_DIST_SCALE 1.5
-#define DEFAULT_WEIGHTED_X_DIST_SCALE 1.5
+#define DEFAULT_BASE_X_DIST_SCALE 1.
+#define DEFAULT_WEIGHTED_X_DIST_SCALE 1.
 #define MEDIA_BBOX_SCALE 1. // TODO TMP
 //#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
-#define MEDIA_LOCKED_ASPECT 0
+#define MEDIA_LOCKED_ASPECT 1
 #define MEDIA_ASPECT 1.5
-#define MEDIA_UV_ROTATE_FACTOR 1
-#define MEDIA_FISHEYE 1
+#define MEDIA_ROTATE 0
+#define MEDIA_ROTATE_FACTOR 1.
 #define PIXEL_SEARCH 1
 #define PIXEL_SEARCH_RADIUS 16.
 #define PIXEL_SEARCH_RANDOM_DIR 0
@@ -51,17 +48,17 @@ precision highp float;
 #define TRANSPARENT_BG 0
 //#define ROUNDNESS 0.01
 //#define ROUNDNESS 0.025
-#define ROUNDNESS 0.1
+#define ROUNDNESS 0.
 
 //#define EDGE_1 .005
 //#define EDGE_2 .001
 
-#define EDGE_1 .009
-#define EDGE_2 .0005
+#define EDGE_1 .03
+#define EDGE_2 .02
 
 //#define UNWEIGHTED_MOD_OPACITY 0.5
 #define UNWEIGHTED_MOD_OPACITY 1.
-#define UNWEIGHTED_MOD_GRAYSCALE 1.
+#define UNWEIGHTED_MOD_GRAYSCALE 0.7
 
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
@@ -91,7 +88,7 @@ uniform float fLatticeCellWidth;
 uniform float fLatticeCellHeight;
 uniform int iFocusedIndex;
 uniform float iTime;
-uniform int iForceMaxNeighborLevel;
+uniform int iForcedMaxNeighborLevel;
 uniform float fRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
@@ -108,6 +105,7 @@ uniform bool bPixelSearch;
 uniform float fUnWeightedEffectMod;
 uniform float fBaseXDistScale;
 uniform float fWeightedXDistScale;
+uniform bool bMediaDistortion;
 
 in vec2 vUv;
 
@@ -142,6 +140,15 @@ vec3 linearToGamma( in vec3 value ) {
 
 vec3 gammaToLinear( in vec3 value ) {
     return vec3( pow( value.xyz, vec3( float( GAMMA_FACTOR ) ) ));
+}
+
+vec3 toGrayscale(vec3 c, float factor) {
+    c = linearToGamma(c);
+    vec3 gray = vec3(dot(lumcoeff, c));
+    vec3 duotone = mix(dark.rgb, light.rgb, gray);
+    c = mix(c, duotone, factor);
+    c = gammaToLinear(c);
+    return c;
 }
 
 #if BICUBIC_MEDIA_FILTER == 1
@@ -412,7 +419,7 @@ void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index) {
     vec2 pos = mediaTileUv - centerUv;
 
     // rotate
-    angle *= float(MEDIA_UV_ROTATE_FACTOR);
+    angle *= MEDIA_ROTATE_FACTOR;
     float cosAngle = cos(angle);
     float sinAngle = sin(angle);
     vec2 rotatedUv = vec2(
@@ -431,9 +438,10 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
     vec2 mediaTileUv = (p - mediaBbox.xy) / (mediaBbox.zw - mediaBbox.xy);
     mediaTileUv.y = 1. - mediaTileUv.y;
 
-    #if MEDIA_UV_ROTATE_FACTOR != 0
+    bool rotateMedia = MEDIA_ROTATE != 0 || bMediaDistortion;
+    if (rotateMedia) {
         rotateMediaTileUv(mediaTileUv, index);
-    #endif
+    }
 
     #if DEBUG_MEDIA_BBOXES == 1  // highlight bbox overflow in red
         if (mediaTileUv.x < 0.01 || mediaTileUv.x > 0.99 || mediaTileUv.y < 0.01 || mediaTileUv.y > 0.99) {
@@ -545,9 +553,9 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
         float len = dot( mix(cellDiff,closeCellDiff,distFactor), diffsDiff*(1./sqrt(baseDist)) );
     #else
         // simplified variant without weights and x-component dist scaling
-        vec2 mid = (closeCellCoords+cellCoords)*0.5;
+        vec2 mid = (closeCellCoords + cellCoords)*0.5;
         vec2 direction = normalize(cellCoords - closeCellCoords); // unit direction vector
-        float len = dot(direction,p-mid);
+        float len = dot(direction,p - mid);
     #endif
 
     //  minEdgeDists.x = smin( minEdgeDists.x, len, ROUNDNESS );
@@ -688,47 +696,6 @@ Data update() {
     vec2 forceCenter = vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
 
     float fisheyeFactor = 1.;
-    #if FISHEYE_STRENGTH != 0
-        if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
-
-            vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
-
-            vec2 d = p - forceCenterCoords;
-            # if FISHEYE_SQUARED == 1
-//                float r = sqrt(dot2(d));
-                float r = length(d); // length(v) is more or less equivalent to sqrt(dot2(d)) (might be optimized), or 1.0 / inversesqrt(dot(v, v))
-                float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
-            # else // has straighter borders when not "squared"
-                float r = dot2(d);
-                float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
-            # endif
-
-            // next 2 lines equivalent to: float step = smoothstep(0.0, 1. / percent, percent);
-            float sCPercent = clamp(percent * percent, 0., 1.); // flatten the top by increasing min value: float sCPercent = clamp(percent * percent, 0.5, 1.0), zoom everything in by flatten the top by increasing max value: float sCPercent = clamp(percent * percent, 0., 1.5)
-            float step = sCPercent * sCPercent * (3.0 - 2.0 * sCPercent);
-
-            // just playing
-//        step *= step*step*step;
-//            float step = sCPercent *sCPercent *sCPercent * sCPercent * (3.0 - 2.0  * sCPercent *sCPercent *sCPercent);
-
-//            if (percent > 1.) {
-//                if (step > 0.9999999) {
-//                    debugFlag = true;
-//                }
-//            }
-
-            float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
-            fisheyeFactor = mix(1.0, step, strength);
-
-            p -= forceCenterCoords;
-//            p *= normalize(d) * zoomFactor;
-            p *= fisheyeFactor;
-            p += forceCenterCoords;
-
-            //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-
-        }
-    #endif
 
     float prevMaxWeight = weightTexData(prevIndices.x);
     prevMaxWeight = max(prevMaxWeight, weightTexData(prevIndices.y));
@@ -787,14 +754,14 @@ Data update() {
     #endif
 
     // neighbors search
-    uint maxNeighborIterations = GLOBAL_MAX_NEIGHBOR_ITERATIONS;
-    #if DYNAMIC_MAX_NEIGHBOR_ITERATIONS == 1
-        if (iForceMaxNeighborLevel == 1) {
-            maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_1;
-        } else if (iForceMaxNeighborLevel == 2) {
-            maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_2;
-        } else if (iForceMaxNeighborLevel == 3) {
-            maxNeighborIterations = MAX_NEIGHBOR_ITERATIONS_LEVEL_3;
+    uint maxNeighborIterations = DEFAULT_MAX_NEIGHBORS;
+    #if DYNAMIC_MAX_NEIGHBORS == 1
+        if (iForcedMaxNeighborLevel == 1) {
+            maxNeighborIterations = MAX_NEIGHBORS_LEVEL_1;
+        } else if (iForcedMaxNeighborLevel == 2) {
+            maxNeighborIterations = MAX_NEIGHBORS_LEVEL_2;
+        } else if (iForcedMaxNeighborLevel == 3) {
+            maxNeighborIterations = MAX_NEIGHBORS_LEVEL_3;
         }
     #endif
     uint neighborsPosition = neighborsTexData(indices.x*2u);
@@ -815,47 +782,14 @@ Data update() {
 
     #if MEDIA_ENABLED == 1
 
-
         vec2 midPointsSum = vec2(0.0);
         float mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
-        vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex)/* * (1./zoomFactor)*/;
+        vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex);
 
-        float reciprocalFisheyeFactor = 1.;
-        #if FISHEYE_STRENGTH != 0
-            if (fFishEyeStrength > 0. && fFishEyeRadius > 0.) {
-
-                #if MEDIA_FISHEYE == 1
-                    reciprocalFisheyeFactor = 1./ fisheyeFactor;
-                #else
-                    vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
-
-                    //                vec2 d = cellNCoords - forceCenterNCoords;
-                    vec2 d = cellCoords - forceCenterCoords;
-                    # if FISHEYE_SQUARED == 1
-                        //                    float r = sqrt(dot2(d));
-                        float r = length(d);
-                        float percent = r / (FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
-                    # else
-                        float r = dot2(d);
-                        float percent = r / pow(FISHEYE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
-                    # endif
-
-                    float step = smoothstep(0.0, 1. / percent, percent);
-
-                    float strength = float(FISHEYE_STRENGTH) / 100. * fFishEyeStrength * fForceCenterStrengthMod;
-                    reciprocalFisheyeFactor = 1./ mix(1.0, step, strength);
-
-                    vec2 forceCenterNCoords = normalizeCoords(forceCenter);
-                    cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalFisheyeFactor + forceCenterNCoords;
-                #endif
-
-                vec2 forceCenterNCoords = normalizeCoords(forceCenter);
-                cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalFisheyeFactor + forceCenterNCoords;
-            }
-        #endif
+        float reciprocalMediaFisheyeFactor = 1.;
 
         neighborsPosition = neighborsTexData(closestIndex*2u);
-        neighborsLength = min(neighborsTexData(closestIndex*2u+1u), MAX_NEIGHBOR_ITERATIONS_LEVEL_1);
+        neighborsLength = min(neighborsTexData(closestIndex*2u+1u), MAX_NEIGHBORS_LEVEL_1);
         for (uint i = 0u; i < neighborsLength; i++) {
             uint neighborIndex = neighborsTexData(neighborsPosition+i);
             vec2 neighborNCoords = fetchNormalizedCellCoords(neighborIndex);
@@ -883,15 +817,16 @@ Data update() {
         float bbX = mediaBbox.z - mediaBbox.x;
         float bbY = mediaBbox.w - mediaBbox.y;
 
-//        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE);
-        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalFisheyeFactor);
-        #if MEDIA_LOCKED_ASPECT == 1
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalMediaFisheyeFactor);
+        bool lockedAspect = MEDIA_LOCKED_ASPECT == 1 && !bMediaDistortion;
+        if (lockedAspect) {
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
             float aspect = iResolution.x / iResolution.y;
             offset *= vec2(bbMax/aspect,bbMax*MEDIA_ASPECT);
-        #else
+        } else {
             offset *= vec2(bbX,bbY);
-        #endif
+        }
+
         mediaBbox.xy = avgCenter - offset;
         mediaBbox.zw = avgCenter + offset;
 
@@ -1003,15 +938,11 @@ void main() {
 //            c = mix(c, fBaseColor, 0.7 * fUnWeightedEffectMod);
 //        }
         c = mix(c, fBaseColor, (1.-UNWEIGHTED_MOD_OPACITY) * fUnWeightedEffectMod * (1.-data.weight));
+        c = toGrayscale(c,UNWEIGHTED_MOD_GRAYSCALE* fUnWeightedEffectMod * (1.-data.weight));
     }
 
     #if GRAYSCALE != 0
-        float grayScale = float(GRAYSCALE) / 100.;
-        c = linearToGamma(c);
-        vec3 gray = vec3(dot(lumcoeff, c));
-        vec3 duotone = mix(dark.rgb, light.rgb, gray);
-        c = mix(c, duotone, grayScale);
-        c = gammaToLinear(c);
+        c = toGrayscale(c, float(GRAYSCALE) / 100.);
     #endif
 
     outputColor = vec4(c, a);

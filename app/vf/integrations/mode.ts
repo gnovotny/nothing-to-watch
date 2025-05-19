@@ -45,7 +45,7 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
 
   // when switching modes, need to temporarily up the neighbor searches in the shader to max supported level (voronoi cell propagation speed limits in shader)
   // updateUniforms(mainUniforms, {
-  //   iForceMaxNeighborLevel: 3,
+  //   iForcedMaxNeighborLevel: 3,
   // })
 
   simulation.updateForceStepConfig(forceStepConfig)
@@ -54,7 +54,7 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
   afterModeChangeTimeout = setTimeout(() => {
     // we revert back to default neighbor level as using max is extremely expensive
     // updateUniforms(mainUniforms, {
-    //   iForceMaxNeighborLevel: 0,
+    //   iForcedMaxNeighborLevel: 0,
     // })
 
     // revert to default velocityDecay after the transition (voronoi cell propagation speed limits in shader, see above)
@@ -64,7 +64,7 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
 
     // if (mode === 'preview') {
     //   // updateUniforms(mainUniforms, {
-    //   //   iForceMaxNeighborLevel: 0,
+    //   //   iForcedMaxNeighborLevel: 0,
     //   // })
     // } else {
     //   // renderer.resizeScissor({

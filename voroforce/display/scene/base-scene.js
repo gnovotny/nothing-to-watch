@@ -493,7 +493,7 @@ export default class BaseScene {
       fLatticeCellHeight: { value: cellHeight },
       iLatticeCols: { value: cols },
       iLatticeRows: { value: rows },
-      iForceMaxNeighborLevel: { value: 0 },
+      iForcedMaxNeighborLevel: { value: 0 },
       fRoundnessMod: { value: 1 },
       fEdge1Mod: { value: 1 },
       fEdge0Mod: { value: 1 },
