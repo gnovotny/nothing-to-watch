@@ -149,7 +149,7 @@ layout(location = 2) out vec3 voroEdgeBufferColor;
 struct Plot {
     uvec4 indices;
     uvec4 indices2;
-    vec2 minEdgeDists;
+    vec2 minEdgeLen;
     vec4 mediaBbox;
     float edgeScaleMod;
     float weight;
@@ -337,14 +337,6 @@ float randomColorChannel(uint seed) {
     return fract(sin(float(seed) * 78.233) * 43758.5453123);
 }
 
-// Assigns a random vec3 color based on the primary cell index
-void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
-    float r = randomColorChannel(plot.indices.x);
-    float g = randomColorChannel(plot.indices.x + 1u);
-    float b = randomColorChannel(plot.indices.x + 2u);
-    c = vec3(r, g, b);
-}
-
 float getBaseXDistScale() {
     #if X_DIST_SCALING == 1
         return DEFAULT_BASE_X_DIST_SCALE;
@@ -418,6 +410,10 @@ vec2 coordsTexData(int index) {
     return texelFetch(uCellCoordsTexture, ivec2(index % textureWidth, index / textureWidth), 0).rg ;
 }
 
+vec2 rawCoords(in vec2 screenCoords) {
+    return vec2(screenCoords.x, iResolution.y - screenCoords.y);
+}
+
 vec2 normalizeCoords(in vec2 screenCoords) {
     return (screenCoords / iResolution.xy) * 2.0 - 1.0;
 }
@@ -427,8 +423,7 @@ vec2 aspectCoords(in vec2 screenCoords) {
 }
 
 vec2 fetchRawCellCoords(uint i) {
-    vec2 screenCoords = coordsTexData(int(i));
-    return vec2(screenCoords.x, iResolution.y - screenCoords.y);
+    return rawCoords(coordsTexData(int(i)));
 }
 
 vec2 fetchCellCoords(uint i) {
@@ -506,6 +501,14 @@ void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index) {
     mediaTileUv = rotatedUv + centerUv;
 }
 
+// Assigns a random vec3 color based on the primary cell index
+void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
+    float r = randomColorChannel(plot.indices.x);
+    float g = randomColorChannel(plot.indices.x + 1u);
+    float b = randomColorChannel(plot.indices.x + 2u);
+    c = vec3(r, g, b);
+}
+
 void mediaColor(inout vec3 c, inout float a, in Plot plot) {
 
     uint index = plot.indices.x;
@@ -533,8 +536,12 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
     int numLayers;
     int mediaCols;
     int mediaRows;
-    // msedge warns that dynamic indexing [] of vectors and matrices is emulated and can be slow so we use if/else
-    if (iMediaVersion == 1) {
+    // msedge warns that dynamic indexing [] of vectors and matrices is emulated and can be slow so we unfold
+    if (iMediaVersion == 0) {
+        numLayers = iStdMediaVersionNumLayers.x;
+        mediaCols = iStdMediaVersionNumCols.x;
+        mediaRows = iStdMediaVersionNumRows.x;
+    } else if (iMediaVersion == 1) {
         numLayers = iStdMediaVersionNumLayers.y;
         mediaCols = iStdMediaVersionNumCols.y;
         mediaRows = iStdMediaVersionNumRows.y;
@@ -546,10 +553,6 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
         numLayers = iVirtMediaVersionNumLayers;
         mediaCols = iVirtMediaVersionNumCols;
         mediaRows = iVirtMediaVersionNumRows;
-    } else {
-        numLayers = iStdMediaVersionNumLayers.x;
-        mediaCols = iStdMediaVersionNumCols.x;
-        mediaRows = iStdMediaVersionNumRows.x;
     }
 
     int id = int(cellIdMapTexData(index));
@@ -565,8 +568,15 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
     vec2 tileSize = vec2(tileWidth, tileHeight);
     vec2 mediaTexcoord = tileOffset + mediaTileUv * tileSize;
 
-
-    if (iMediaVersion == 1) {
+    if (iMediaVersion == 0) {
+        #if MEDIA_BICUBIC_FILTER == 1
+            vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
+            vec2 tileTexSize = texSize*tileSize;
+            c = bicubicFilter(uMediaV0Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+        #else
+            c = texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
+        #endif
+    } else if (iMediaVersion == 1) {
         #if MEDIA_BICUBIC_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV1Texture, 0).xy);
             vec2 tileTexSize = texSize*tileSize;
@@ -575,7 +585,6 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
             c = texture(uMediaV1Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
     } else if (iMediaVersion == 2) {
-
         #if MEDIA_BICUBIC_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
             vec2 tileTexSize = texSize*tileSize;
@@ -584,7 +593,6 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
             c = texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
     } else if (iMediaVersion == 3) {
-
         #if MEDIA_BICUBIC_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
             vec2 tileTexSize = texSize*tileSize;
@@ -592,19 +600,11 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
         #else
             c = texture(uMediaV3Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
-    } else {
-        #if MEDIA_BICUBIC_FILTER == 1
-            vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
-            vec2 tileTexSize = texSize*tileSize;
-            c = bicubicFilter(uMediaV0Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
-        #else
-            c = texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
-        #endif
     }
 
 }
 
-void calcMinEdgeDists(in uint neighborIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeDists, in float weight, in float weightOffset, in float weightOffsetScale, in float roundness, in float fisheyeFactor) {
+void processNeighborMinEdgeLen(in uint neighborIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeLen, in float weight, in float weightOffset, in float weightOffsetScale, in float roundness, in float fisheyeFactor) {
     vec2 neighborCellCoords = fetchCellCoords(neighborIndex);
 
     #if WEIGHTED_DIST == 1 || X_DIST_SCALING == 1
@@ -664,8 +664,8 @@ void calcMinEdgeDists(in uint neighborIndex, in vec2 cellCoords, in vec2 p, inou
     #endif
 
     // todo could modify len based on:  * (1./fisheyeFactor)
-    minEdgeDists.x = cSmin(minEdgeDists.x, len, roundness);
-    minEdgeDists.y = min(minEdgeDists.y, len);
+    minEdgeLen.x = cSmin(minEdgeLen.x, len, roundness);
+    minEdgeLen.y = min(minEdgeLen.y, len);
 }
 
 void sortClosest(
@@ -774,7 +774,7 @@ Plot plot() {
 
     bool debugFlag = false;
 
-    vec2 forceCenter = vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
+    vec2 forceCenter = rawCoords(fForceCenter);
 
     float fisheyeFactor = 1.;
     #if FISHEYE == 1
@@ -996,12 +996,12 @@ Plot plot() {
     #endif
 
     #if EDGE_SCALING == 1 && (EDGE_SCALING_MODE == 0 || MEDIA_ENABLED == 0)
-//    vec2 rawCellCoords = fetchRawCellCoords(closestIndex);
-//    float neighborXAvgOffset = (abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
-    float neighborXAvgOffset = (abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
+    //    vec2 rawCellCoords = fetchRawCellCoords(closestIndex);
+    //    float neighborXAvgOffset = (abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
+        float neighborXAvgOffset = (abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
 
-    roundnessScaleMod = neighborXAvgOffset / 2.;
-    edgeScaleMod = neighborXAvgOffset / 2.;
+        roundnessScaleMod = neighborXAvgOffset / 2.;
+        edgeScaleMod = neighborXAvgOffset / 2.;
 
     #endif
 
@@ -1030,22 +1030,22 @@ Plot plot() {
         weightOffset = weightOffsetScale * weight;
     #endif
 
-    vec2 minEdgeDists = vec2(0.1);
+    vec2 minEdgeLen = vec2(0.1);
 
-    calcMinEdgeDists(indices.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-    calcMinEdgeDists(indices.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-    calcMinEdgeDists(indices.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    processNeighborMinEdgeLen(indices.y, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    processNeighborMinEdgeLen(indices.z, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    processNeighborMinEdgeLen(indices.w, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
 
     #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_EDGES == 1
-        calcMinEdgeDists(indices2.x, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-        calcMinEdgeDists(indices2.y, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-        calcMinEdgeDists(indices2.z, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-        calcMinEdgeDists(indices2.w, cellCoords, p, minEdgeDists, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.x, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.y, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.z, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.w, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
     #endif
 
     #if EDGE_SMIN_SCALING == 1 && EDGE_SMIN_SCALING_COMPENSATION == 1
         // Totally empirical compensation for smoothing scaling side-effect.
-        minEdgeDists.x *= .5 + roundness;
+        minEdgeLen.x *= .5 + roundness;
     #endif
 
     // At the end do some smooth abs
@@ -1053,20 +1053,20 @@ Plot plot() {
     // This is really optional, since distance function
     // is already continuous, but we can get extra
     // smoothness from it.
-//    minEdgeDists.x = sabs(minEdgeDists.x, .02);
-//    minEdgeDists.x = sabs(minEdgeDists.x, .0001);
+//    minEdgeLen.x = sabs(minEdgeLen.x, .02);
+//    minEdgeLen.x = sabs(minEdgeLen.x, .0001);
 
-    minEdgeDists = max(vec2(minEdgeDists.x, minEdgeDists.y), 0.);
+    minEdgeLen = max(vec2(minEdgeLen.x, minEdgeLen.y), 0.);
 
 
 
-//    float r = (minEdgeDists.y - minEdgeDists.x);
-//    minEdgeDists.x = r;
+//    float r = (minEdgeLen.y - minEdgeLen.x);
+//    minEdgeLen.x = r;
 
-//    minEdgeDists.x = mix(minEdgeDists.x,  minEdgeDists.y, .5); // A mixture of rounded and straight edge values.
-//    minEdgeDists.x = minEdgeDists.y;
+//    minEdgeLen.x = mix(minEdgeLen.x,  minEdgeLen.y, .5); // A mixture of rounded and straight edge values.
+//    minEdgeLen.x = minEdgeLen.y;
 
-    return Plot(indices, indices2, minEdgeDists, mediaBbox, edgeScaleMod, weight, debugFlag);
+    return Plot(indices, indices2, minEdgeLen, mediaBbox, edgeScaleMod, weight, debugFlag);
 }
 
 void edgesColor(inout vec3 c, inout float a, in Plot plot) {
@@ -1076,7 +1076,7 @@ void edgesColor(inout vec3 c, inout float a, in Plot plot) {
     //        float edge1 = EDGE_1_BASE * fEdge1Mod  + EDGE_1_ADDITION;
 
 
-    float sminDiff = abs(plot.minEdgeDists.y - plot.minEdgeDists.x);
+    float sminDiff = abs(plot.minEdgeLen.y - plot.minEdgeLen.x);
 
     //            float edge0 = .005;
     //            float edge0 = .0001 * plot.edgeScaleMod;
@@ -1111,9 +1111,9 @@ void edgesColor(inout vec3 c, inout float a, in Plot plot) {
     //            edge1 = min(sminDiff, edge1);
     //            float edge1 = clamp(.075 * plot.edgeScaleMod, 0.005, .01);
 
-    float step = smoothstep(edge0, edge1, plot.minEdgeDists.x);
+    float step = smoothstep(edge0, edge1, plot.minEdgeLen.x);
 
-    //                float t = clamp((plot.minEdgeDists.x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    //                float t = clamp((plot.minEdgeLen.x - edge0) / (edge1 - edge0), 0.0, 1.0);
     //                float step = t * t * (3.0 - 2.0 * t);
 
     #if TRANSPARENT_BG == 1
@@ -1142,18 +1142,18 @@ void postColor(inout vec3 c, inout float a, in Plot plot) {
     #endif
 }
 
-void colorOut(in vec3 c, in float a, in Plot plot) {
+void colorOutput(in vec3 c, in float a, in Plot plot) {
     voroIndexBufferColor = uintBitsToFloat(plot.indices + 1u);
     #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
         voroIndexBuffer2Color = uintBitsToFloat(plot.indices2 + 1u);
     #endif
     outputColor = vec4(c, a);
     if (bVoroEdgeBufferOutput) {
-        voroEdgeBufferColor = vec3(plot.minEdgeDists.x, plot.minEdgeDists.y, plot.edgeScaleMod);
+        voroEdgeBufferColor = vec3(plot.minEdgeLen.x, plot.minEdgeLen.y, plot.edgeScaleMod);
     }
 
-    //    float r = (plot.minEdgeDists.y - plot.minEdgeDists.x);
-    //    voroEdgeBufferColor = vec3(r, plot.minEdgeDists.x, plot.edgeScaleMod);
+    //    float r = (plot.minEdgeLen.y - plot.minEdgeLen.x);
+    //    voroEdgeBufferColor = vec3(r, plot.minEdgeLen.x, plot.edgeScaleMod);
 }
 
 void main() {
@@ -1178,5 +1178,5 @@ void main() {
 
     postColor(c, a, plot);
 
-    colorOut(c, a, plot);
+    colorOutput(c, a, plot);
 }
