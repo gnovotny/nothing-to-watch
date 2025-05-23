@@ -22,7 +22,7 @@ export default {
             },
           },
         },
-        fRoundnessMod: {
+        fEdgeRoundnessMod: {
           animatable: true,
           modes: {
             default: {
