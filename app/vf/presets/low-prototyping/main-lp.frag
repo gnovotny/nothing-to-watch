@@ -434,18 +434,18 @@ vec2 fetchNormalizedCellCoords(uint i) {
     return normalizeCoords(fetchRawCellCoords(i));
 }
 
-vec2 fetchFragCoords() {
+vec2 fragCoords() {
     vec2 fragCoord = gl_FragCoord.xy / iResolution.z;
     fragCoord.y *= Y_SCALE;
     return fragCoord;
 }
 
-vec2 fetchPCoords() {
-    return aspectCoords(fetchFragCoords());
+vec2 pCoords() {
+    return aspectCoords(fragCoords());
 }
 
-vec2 fetchNormalizedPCoords() {
-    return normalizeCoords(fetchFragCoords());
+vec2 normalizedPCoords() {
+    return normalizeCoords(fragCoords());
 }
 
 float resolutionScale;
@@ -514,7 +514,7 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
     uint index = plot.indices.x;
     vec4 mediaBbox = plot.mediaBbox;
 
-    vec2 p = fetchNormalizedPCoords();
+    vec2 p = normalizedPCoords();
 
     vec2 mediaTileUv = (p - mediaBbox.xy) / (mediaBbox.zw - mediaBbox.xy);
     mediaTileUv.y = 1. - mediaTileUv.y;
@@ -668,6 +668,44 @@ void processNeighborMinEdgeLen(in uint neighborIndex, in vec2 cellCoords, in vec
     minEdgeLen.y = min(minEdgeLen.y, len);
 }
 
+void processMinEdgeLens(in uvec4 indices, in uvec4 indices2, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeLen, in float weight, in float weightOffset, in float weightOffsetScale, in float roundness, in float fisheyeFactor) {
+
+    processNeighborMinEdgeLen(indices.y, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    processNeighborMinEdgeLen(indices.z, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    processNeighborMinEdgeLen(indices.w, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+
+    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_EDGES == 1
+        processNeighborMinEdgeLen(indices2.x, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.y, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.z, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+        processNeighborMinEdgeLen(indices2.w, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    #endif
+
+    #if EDGE_SMIN_SCALING == 1 && EDGE_SMIN_SCALING_COMPENSATION == 1
+        // Totally empirical compensation for smoothing scaling side-effect.
+        minEdgeLen.x *= .5 + roundness;
+    #endif
+
+    // At the end do some smooth abs
+    // on the distance value.
+    // This is really optional, since distance function
+    // is already continuous, but we can get extra
+    // smoothness from it.
+    //    minEdgeLen.x = sabs(minEdgeLen.x, .02);
+    //    minEdgeLen.x = sabs(minEdgeLen.x, .0001);
+
+    minEdgeLen = max(vec2(minEdgeLen.x, minEdgeLen.y), 0.);
+
+
+
+    //    float r = (minEdgeLen.y - minEdgeLen.x);
+    //    minEdgeLen.x = r;
+
+    //    minEdgeLen.x = mix(minEdgeLen.x,  minEdgeLen.y, .5); // A mixture of rounded and straight edge values.
+    //    minEdgeLen.x = minEdgeLen.y;
+
+}
+
 void sortClosest(
     inout vec4 distances,
     inout vec4 distances2,
@@ -766,7 +804,7 @@ Plot init(vec2 p) {
 
 Plot plot() {
 
-    vec2 p = fetchPCoords();
+    vec2 p = pCoords();
 
     vec2 fragCoord = gl_FragCoord.xy;
     uvec4 prevIndices = fetchIndices(fragCoord);
@@ -896,10 +934,8 @@ Plot plot() {
     vec2 cellCoords = fetchCellCoords(closestIndex);
 
 
-    float edgeScaleMod = 0.1;
-    float roundnessScaleMod = 0.1;
-    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
 
+    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
     #if MEDIA_ENABLED == 1
 
         vec2 midSum = vec2(0.0);
@@ -982,45 +1018,35 @@ Plot plot() {
 //     bbX = mediaBbox.z - mediaBbox.x;
 //     bbY = mediaBbox.w - mediaBbox.y;
 
-        #if EDGE_SCALING == 1 && EDGE_SCALING_MODE == 1
-//            scaleMod = max(bbX, bbY) / 2.;
-//            roundnessScaleMod = min(bbX, bbY) / 2.;
-            roundnessScaleMod = (bbX + bbY) * 0.5 / 2.;
-//            roundnessScaleMod *= resolutionScale;
 
-//            edgeScaleMod = min(bbX, bbY) / 2.;
-            edgeScaleMod = (bbX + bbY) * 0.5 / 2.;
-//            edgeScaleMod *= resolutionScale;
-
-        #endif
     #endif
 
-    #if EDGE_SCALING == 1 && (EDGE_SCALING_MODE == 0 || MEDIA_ENABLED == 0)
-    //    vec2 rawCellCoords = fetchRawCellCoords(closestIndex);
-    //    float neighborXAvgOffset = (abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(rawCellCoords.x-fetchRawCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
-        float neighborXAvgOffset = (abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
+    float edgeScaleMod = 0.1;
+    float roundnessScaleMod = 0.1;
+    #if EDGE_SCALING == 1
+        #if MEDIA_ENABLED == 1 && EDGE_SCALING_MODE == 1
+            //roundnessScaleMod = min(bbX, bbY) / 2.;
+            roundnessScaleMod = (bbX + bbY) * 0.5 / 2.;
 
-        roundnessScaleMod = neighborXAvgOffset / 2.;
-        edgeScaleMod = neighborXAvgOffset / 2.;
-
+            //edgeScaleMod = min(bbX, bbY) / 2.;
+            edgeScaleMod = (bbX + bbY) * 0.5 / 2.;
+        #else
+            // this works well for vertically elongated cells but not a good fit otherwise
+            float neighborXAvgOffset = (abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+3u)).x)+abs(cellCoords.x-fetchCellCoords(neighborsTexData(neighborsPosition+4u)).x)) * 0.5;
+            roundnessScaleMod = neighborXAvgOffset / 2.;
+            edgeScaleMod = neighborXAvgOffset / 2.;
+        #endif
     #endif
 
 
 
 
 //    float roundness = clamp(roundnessScaleMod * fRoundnessMod * ROUNDNESS_BASE + ROUNDNESS_ADDITION * fRoundnessMod, ROUNDNESS_MIN * fRoundnessMod, ROUNDNESS_MAX * fRoundnessMod);
-
-
 //    float roundness = clamp(roundnessScaleMod * 0.1 , 0.0085, 0.03) * resolutionScale;
-    float roundness = 0.055 * 1./inversesqrt(roundnessScaleMod) * resolutionScale;
-
-
-
-
     //    float roundness = clamp(roundnessScaleMod * fRoundnessMod * ROUNDNESS_BASE * getBaseXDistScale() + ROUNDNESS_ADDITION, ROUNDNESS_MIN, ROUNDNESS_MAX);
 //    float roundness = clamp(roundnessScaleMod * resolutionScale * getRoundness(), ROUNDNESS_MIN, ROUNDNESS_MAX);
 
-
+    float roundness = 0.055 * 1./inversesqrt(roundnessScaleMod) * resolutionScale;
 
     float weight;
     float weightOffset;
@@ -1032,39 +1058,8 @@ Plot plot() {
 
     vec2 minEdgeLen = vec2(0.1);
 
-    processNeighborMinEdgeLen(indices.y, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-    processNeighborMinEdgeLen(indices.z, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-    processNeighborMinEdgeLen(indices.w, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
+    processMinEdgeLens(indices, indices2, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
 
-    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_EDGES == 1
-        processNeighborMinEdgeLen(indices2.x, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-        processNeighborMinEdgeLen(indices2.y, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-        processNeighborMinEdgeLen(indices2.z, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-        processNeighborMinEdgeLen(indices2.w, cellCoords, p, minEdgeLen, weight, weightOffset, weightOffsetScale, roundness, fisheyeFactor);
-    #endif
-
-    #if EDGE_SMIN_SCALING == 1 && EDGE_SMIN_SCALING_COMPENSATION == 1
-        // Totally empirical compensation for smoothing scaling side-effect.
-        minEdgeLen.x *= .5 + roundness;
-    #endif
-
-    // At the end do some smooth abs
-    // on the distance value.
-    // This is really optional, since distance function
-    // is already continuous, but we can get extra
-    // smoothness from it.
-//    minEdgeLen.x = sabs(minEdgeLen.x, .02);
-//    minEdgeLen.x = sabs(minEdgeLen.x, .0001);
-
-    minEdgeLen = max(vec2(minEdgeLen.x, minEdgeLen.y), 0.);
-
-
-
-//    float r = (minEdgeLen.y - minEdgeLen.x);
-//    minEdgeLen.x = r;
-
-//    minEdgeLen.x = mix(minEdgeLen.x,  minEdgeLen.y, .5); // A mixture of rounded and straight edge values.
-//    minEdgeLen.x = minEdgeLen.y;
 
     return Plot(indices, indices2, minEdgeLen, mediaBbox, edgeScaleMod, weight, debugFlag);
 }
