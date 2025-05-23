@@ -1,5 +1,5 @@
 import baseConfig from '../../config/config'
-import { uncompressedSingleMediaVersionConfig } from '../../config/media'
+import { uncompressedSingleMediaVersionConfig } from '../../config'
 // import postFrag from './post-mid.frag'
 import postFrag from './post-mid2.frag'
 

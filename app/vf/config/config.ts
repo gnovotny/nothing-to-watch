@@ -19,8 +19,8 @@ export default {
     expanded: false,
   },
   handleVisibilityChange: {
-    // enabled: true,
-    enabled: false, // TODO
+    enabled: true,
+    // enabled: false, // TODO
     hiddenDelay: 5000,
   },
   lattice: baseLatticeConfig,

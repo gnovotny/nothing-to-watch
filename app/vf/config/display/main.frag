@@ -63,7 +63,8 @@ precision highp float;
 
 //#define UNWEIGHTED_MOD_OPACITY 0.5
 #define UNWEIGHTED_MOD_OPACITY 1.
-#define UNWEIGHTED_MOD_GRAYSCALE 0.7
+//#define UNWEIGHTED_MOD_GRAYSCALE 0.7
+#define UNWEIGHTED_MOD_GRAYSCALE 0.
 
 uniform highp sampler2D uCellCoordsTexture;
 uniform highp sampler2D uVoroIndexBufferTexture;
@@ -406,8 +407,20 @@ vec2 fetchNormalizedPCoords() {
 }
 
 float fetchResolutionScale() {
-    return ((iResolution.x * iResolution.y) / (1920.*1080.));
-//    return min(((iResolution.x * iResolution.y) / (1920.*1080.)), 0.1);
+
+    // prev junk method
+        return ((iResolution.x * iResolution.y) / (1920.*1080.));
+
+    // Compute a dynamic scale factor based on resolution
+    // This creates a scale that increases as resolution increases
+//    return length(iResolution.xy) / 1000.0;
+
+    // Alternative scaling approaches:
+    // 1. Based on largest dimension
+    // return max(iResolution.x, iResolution.y) / 800.0;
+
+    // 2. Based on area (gives more weight to resolution changes)
+    // return sqrt(iResolution.x * iResolution.y) / 600.0;
 }
 
 float calculateOrientation(vec2 left, vec2 right) {
@@ -734,7 +747,7 @@ Data update() {
             fisheyeFactor = mix(1.0, step, strength);
 
             p -= forceCenterCoords;
-//            p *= normalize(d) * zoomFactor;
+//            p *= normalize(d) * fisheyeFactor;
             p *= fisheyeFactor;
             p += forceCenterCoords;
 
@@ -841,16 +854,15 @@ Data update() {
                     reciprocalMediaFisheyeFactor = 1./ fisheyeFactor;
                 } else {
                     vec2 forceCenterCoords = (forceCenter*2.0-iResolution.xy) / iResolution.y;
-
-                    //                vec2 d = cellNCoords - forceCenterNCoords;
+                    // vec2 d = cellNCoords - forceCenterNCoords;
                     vec2 d = cellCoords - forceCenterCoords;
                     # if FISHEYE_SQUARED == 1
-                    //                    float r = sqrt(dot2(d));
-                    float r = length(d);
-                    float percent = r / (FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
+                        //  float r = sqrt(dot2(d));
+                        float r = length(d);
+                        float percent = r / (FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
                     # else
-                    float r = dot2(d);
-                    float percent = r / pow(FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
+                        float r = dot2(d);
+                        float percent = r / pow(FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
                     # endif
 
                     float step = smoothstep(0.0, 1. / percent, percent);

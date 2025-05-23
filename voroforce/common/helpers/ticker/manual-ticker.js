@@ -20,8 +20,13 @@ export class ManualTicker extends CustomEventTarget {
     requestAnimationFrame(this.tick)
   }
 
+  stop() {
+    this.running = false
+  }
+
   tick() {
     this.nextRequests = 0
+    this.fpsGraph?.end()
     this.fpsGraph?.begin()
 
     // update metrics
@@ -44,17 +49,15 @@ export class ManualTicker extends CustomEventTarget {
     if (!this.running) return
     this.nextRequests++
     if (this.nextRequests !== 2) return
-    this.fpsGraph?.end()
+    // this.fpsGraph?.end()
     requestAnimationFrame(this.tick)
   }
 
   freeze() {
-    this.running = false
+    this.stop()
   }
 
   unfreeze() {
-    if (this.running) return
-    this.running = true
-    this.ticker.next()
+    this.start()
   }
 }

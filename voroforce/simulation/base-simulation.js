@@ -36,9 +36,7 @@ export default class BaseSimulation {
 
   handleDevToolsChange() {}
 
-  update() {
-    this.onUpdated()
-  }
+  update() {}
 
   resize(dimensions) {}
 

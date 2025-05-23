@@ -1,4 +1,5 @@
-import baseConfig, { uncompressedSingleMediaVersionConfig } from '../config'
+import baseConfig, { uncompressedSingleMediaVersionConfig } from '../../config'
+import displayLp from './display-lp'
 
 export default {
   cells: 10000,
@@ -10,4 +11,5 @@ export default {
         : []),
     ],
   },
+  display: displayLp,
 }

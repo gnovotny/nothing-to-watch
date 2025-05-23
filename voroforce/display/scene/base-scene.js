@@ -362,10 +362,6 @@ export default class BaseScene {
   }
 
   initBaseMediaUniforms() {
-    console.log(
-      'this.virtualMediaGridTextures[0]',
-      this.virtualMediaGridTextures[0],
-    )
     const compressedMediaVersions = this.getCompressedMediaVersions()
     const uncompressedMediaVersions = this.getUnCompressedMediaVersions()
     return {

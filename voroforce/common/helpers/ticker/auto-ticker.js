@@ -2,7 +2,6 @@ import { CustomEventTarget } from '../../../utils/custom-event-target'
 import { TickEvent } from './utils'
 
 export class AutoTicker extends CustomEventTarget {
-  initiated = false
   constructor(fpsGraph, fpsCap = 60) {
     super()
     this.fpsGraph = fpsGraph
@@ -16,7 +15,6 @@ export class AutoTicker extends CustomEventTarget {
   }
 
   init() {
-    this.initiated = true
     this.current =
       this.initialFrameTime =
       this.lastFrameTime =
@@ -80,13 +78,5 @@ export class AutoTicker extends CustomEventTarget {
 
       // this.fpsGraph?.end()
     }
-  }
-
-  freeze() {
-    this.stop()
-  }
-
-  unfreeze() {
-    this.start()
   }
 }

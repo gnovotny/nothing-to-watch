@@ -3,7 +3,7 @@ import {
   initSharedData,
   initSharedLoadedMediaVersionLayersData,
 } from './common/data'
-import { Dimensions, Loader, Store, AutoTicker } from './common/helpers'
+import { Dimensions, Loader, Store } from './common/helpers'
 import { handleLattice } from './common/lattice'
 import { defaultConfig } from './default-config'
 import Controls from './controls'
@@ -11,7 +11,7 @@ import Display from './display'
 import { MultiThreadedSimulation, Simulation } from './simulation'
 import { mergeConfigs } from './utils'
 import { initVisibilityEventHandlers } from './utils/visibility'
-import { ManualTicker } from './common/helpers/ticker'
+import { ManualTicker, AutoTicker } from './common/helpers/ticker'
 import { CustomEventTarget } from './utils/custom-event-target'
 
 export class VisibilityChangeEvent extends Event {
@@ -166,7 +166,7 @@ export class Voroforce extends CustomEventTarget {
           console.log('window visible')
           this.visible = true
           clearTimeout(this.tickerFreezeTimeout)
-          this.ticker.unfreeze()
+          this.ticker.start()
           this.dispatchEvent(
             new VisibilityChangeEvent({
               visible: true,
@@ -185,7 +185,7 @@ export class Voroforce extends CustomEventTarget {
           this.tickerFreezeTimeout = setTimeout(() => {
             if (this.visible) return
             console.log('window hidden freeze')
-            this.ticker.freeze()
+            this.ticker.stop()
           }, this.config.handleVisibilityChange.hiddenDelay)
         },
       )
@@ -204,12 +204,12 @@ export class Voroforce extends CustomEventTarget {
         if (this.ticker.running) {
           // System probably suspended or throttled
           console.log('Throttling or sleep detected')
-          this.ticker.freeze()
+          this.ticker.stop()
         }
       } else {
         if (!this.ticker.running) {
           console.log('Resuming from sleep or throttling')
-          this.ticker.unfreeze()
+          this.ticker.start()
         }
       }
     }, 1000)
@@ -229,7 +229,7 @@ export class Voroforce extends CustomEventTarget {
 
   // multithreaded simulation step workers must complete before triggering resize
   deferredResize() {
-    if (this.tickerMode === 'auto') this.ticker.stop()
+    this.ticker.stop()
     this.handleLattice()
     const dimensions = this.store.get('dimensions').get()
     this.simulation.resize(dimensions, () => {

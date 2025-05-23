@@ -1,12 +1,10 @@
 import { THEME } from '../../../consts'
 import { VOROFORCE_MODE } from '../../consts'
-import mainFrag from './main.frag'
+import mainFrag from './main-lp.frag'
+// import mainFrag from './main-lp2.frag'
 
 export default {
   scene: {
-    dev: {
-      enabled: false,
-    },
     main: {
       fragmentShader: mainFrag,
       uniforms: {
@@ -67,10 +65,12 @@ export default {
               value: 0,
             },
             [VOROFORCE_MODE.preview]: {
-              // value: 1.25,
-              value: 0,
+              // value: 0.75,
+              value: 1.25,
+              // value: 0,
             },
             [VOROFORCE_MODE.select]: {
+              // value: 1,
               value: 1.5,
             },
           },
@@ -97,6 +97,7 @@ export default {
           animatable: true,
           modes: {
             default: {
+              // value: 1,
               // value: 0.5,
               value: 0,
             },
@@ -119,11 +120,6 @@ export default {
           value: 1.5, // 0 = undefined, will use fallback
         },
       },
-    },
-    post: {
-      enabled: false,
-      fragmentShader: undefined,
-      uniforms: {},
     },
   },
 }
