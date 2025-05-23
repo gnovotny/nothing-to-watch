@@ -337,12 +337,12 @@ float randomColorChannel(uint seed) {
     return fract(sin(float(seed) * 78.233) * 43758.5453123);
 }
 
-// Generates a random vec3 color based on an integer
-vec3 randomColor(uint seed) {
-    float r = randomColorChannel(seed);
-    float g = randomColorChannel(seed + 1u);
-    float b = randomColorChannel(seed + 2u);
-    return vec3(r, g, b);
+// Assigns a random vec3 color based on the primary cell index
+void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
+    float r = randomColorChannel(plot.indices.x);
+    float g = randomColorChannel(plot.indices.x + 1u);
+    float b = randomColorChannel(plot.indices.x + 2u);
+    c = vec3(r, g, b);
 }
 
 float getBaseXDistScale() {
@@ -506,7 +506,10 @@ void rotateMediaTileUv(inout vec2 mediaTileUv, in uint index) {
     mediaTileUv = rotatedUv + centerUv;
 }
 
-vec3 mediaColor(uint index, vec4 mediaBbox) {
+void mediaColor(inout vec3 c, inout float a, in Plot plot) {
+
+    uint index = plot.indices.x;
+    vec4 mediaBbox = plot.mediaBbox;
 
     vec2 p = fetchNormalizedPCoords();
 
@@ -520,7 +523,7 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
 
     #if MEDIA_DEBUG_BBOXES == 1  // highlight bbox overflow
         if (mediaTileUv.x < 0.01 || mediaTileUv.x > 0.99 || mediaTileUv.y < 0.01 || mediaTileUv.y > 0.99) {
-            return vec3(1.,0.,0.);
+            c = vec3(1.,0.,0.);
         }
     # else  // obscure bbox inaccuracies and prevent tile bleeding
         mediaTileUv = vec2(clamp(mediaTileUv.x, 0.01, 0.99), clamp(mediaTileUv.y, 0.01, 0.99));
@@ -567,36 +570,38 @@ vec3 mediaColor(uint index, vec4 mediaBbox) {
         #if MEDIA_BICUBIC_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV1Texture, 0).xy);
             vec2 tileTexSize = texSize*tileSize;
-            return bicubicFilter(uMediaV1Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+            c = bicubicFilter(uMediaV1Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
         #else
-            return texture(uMediaV1Texture, vec3(mediaTexcoord, float(layer))).rgb;
+            c = texture(uMediaV1Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
     } else if (iMediaVersion == 2) {
 
         #if MEDIA_BICUBIC_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
             vec2 tileTexSize = texSize*tileSize;
-            return bicubicFilter(uMediaV2Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+            c = bicubicFilter(uMediaV2Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
         #else
-            return texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
+            c = texture(uMediaV2Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
     } else if (iMediaVersion == 3) {
 
         #if MEDIA_BICUBIC_FILTER == 1
             vec2 texSize = vec2(textureSize(uMediaV2Texture, 0).xy);
             vec2 tileTexSize = texSize*tileSize;
-            return bicubicFilter(uMediaV3Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+            c = bicubicFilter(uMediaV3Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
         #else
-            return texture(uMediaV3Texture, vec3(mediaTexcoord, float(layer))).rgb;
+            c = texture(uMediaV3Texture, vec3(mediaTexcoord, float(layer))).rgb;
+        #endif
+    } else {
+        #if MEDIA_BICUBIC_FILTER == 1
+            vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
+            vec2 tileTexSize = texSize*tileSize;
+            c = bicubicFilter(uMediaV0Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
+        #else
+            c = texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
         #endif
     }
-    #if MEDIA_BICUBIC_FILTER == 1
-        vec2 texSize = vec2(textureSize(uMediaV0Texture, 0).xy);
-        vec2 tileTexSize = texSize*tileSize;
-        return bicubicFilter(uMediaV0Texture, vec3(mediaTexcoord, float(layer)), texSize).rgb;
-    #else
-        return texture(uMediaV0Texture, vec3(mediaTexcoord, float(layer))).rgb;
-    #endif
+
 }
 
 void calcMinEdgeDists(in uint neighborIndex, in vec2 cellCoords, in vec2 p, inout vec2 minEdgeDists, in float weight, in float weightOffset, in float weightOffsetScale, in float roundness, in float fisheyeFactor) {
@@ -766,8 +771,6 @@ Plot plot() {
     vec2 fragCoord = gl_FragCoord.xy;
     uvec4 prevIndices = fetchIndices(fragCoord);
     if (indexIsUndefined(prevIndices.x)) return init(p);
-
-    initGlobals();
 
     bool debugFlag = false;
 
@@ -1139,15 +1142,33 @@ void postColor(inout vec3 c, inout float a, in Plot plot) {
     #endif
 }
 
+void colorOut(in vec3 c, in float a, in Plot plot) {
+    voroIndexBufferColor = uintBitsToFloat(plot.indices + 1u);
+    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
+        voroIndexBuffer2Color = uintBitsToFloat(plot.indices2 + 1u);
+    #endif
+    outputColor = vec4(c, a);
+    if (bVoroEdgeBufferOutput) {
+        voroEdgeBufferColor = vec3(plot.minEdgeDists.x, plot.minEdgeDists.y, plot.edgeScaleMod);
+    }
+
+    //    float r = (plot.minEdgeDists.y - plot.minEdgeDists.x);
+    //    voroEdgeBufferColor = vec3(r, plot.minEdgeDists.x, plot.edgeScaleMod);
+}
+
 void main() {
+    initGlobals();
 
     Plot plot = plot();
-    #if MEDIA_ENABLED == 1 && MEDIA_HIDE == 0
-        vec3 c = mediaColor(plot.indices.x, plot.mediaBbox);
-    #else
-        vec3 c = randomColor(plot.indices.x);
-    #endif
+
+    vec3 c;
     float a = 1.;
+
+    #if MEDIA_ENABLED == 1 && MEDIA_HIDE == 0
+        mediaColor(c, a, plot);
+    #else
+        randomCellColor(c, a, plot);
+    #endif
 
     #if DRAW_EDGES == 1
         if (bDrawEdges) {
@@ -1157,17 +1178,5 @@ void main() {
 
     postColor(c, a, plot);
 
-    // output
-    voroIndexBufferColor = uintBitsToFloat(plot.indices + 1u);
-    #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_BUFFER == 1
-        voroIndexBuffer2Color = uintBitsToFloat(indices2 + 1u);
-    #endif
-    outputColor = vec4(c, a);
-    if (bVoroEdgeBufferOutput) {
-        voroEdgeBufferColor = vec3(plot.minEdgeDists.x, plot.minEdgeDists.y, plot.edgeScaleMod);
-    }
-
-//    float r = (plot.minEdgeDists.y - plot.minEdgeDists.x);
-//    voroEdgeBufferColor = vec3(r, plot.minEdgeDists.x, plot.edgeScaleMod);
-
+    colorOut(c, a, plot);
 }
