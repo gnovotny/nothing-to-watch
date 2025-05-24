@@ -1,3 +1,3 @@
 export { originForce as origin } from './origin-force'
 // export { omniForce as omni } from './omni-force'
-export { omniForce as omni } from './omni-force4'
+export { omniForce as omni } from './omni-force5'

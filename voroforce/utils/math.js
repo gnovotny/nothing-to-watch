@@ -19,6 +19,12 @@ export const lerp = (v0, v1, t) => {
   return v0 * (1 - t) + v1 * t
 }
 
+export const minLerp = (start, end, factor, min = 0.001) => {
+  const diff = end - start
+  if (Math.abs(diff) < min) return end
+  return start + diff * factor
+}
+
 export const MIN_LERP_EASING_TYPES = {
   linear: 'linear',
   easeInQuad: 'easeInQuad',

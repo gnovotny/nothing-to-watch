@@ -95,7 +95,7 @@ uniform float fLatticeCellHeight;
 uniform int iFocusedIndex;
 uniform float iTime;
 uniform int iForcedMaxNeighborLevel;
-uniform float fEdgeRoundnessMod;
+uniform float fBorderRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
 uniform float fFishEyeStrength;
@@ -337,7 +337,7 @@ float weightedDist(vec2 p1, vec2 p2, float weight, float weightOffset) {
 }
 
 float getRoundness() {
-    return fEdgeRoundnessMod * ROUNDNESS  * getBaseXDistScale(); // adjust roundness to match x dist scale;
+    return fBorderRoundnessMod * ROUNDNESS  * getBaseXDistScale(); // adjust roundness to match x dist scale;
 }
 
 bool indexIsUndefined(uint id) {
@@ -577,11 +577,11 @@ void calcMinEdgeDists(in uint closeIndex, in vec2 cellCoords, in vec2 p, inout v
     #endif
 
     //  minEdgeDists.x = smin( minEdgeDists.x, len, ROUNDNESS );
-//    minEdgeDists.x = cSmin(minEdgeDists.x, len, (len*.5 + .5)*fEdgeRoundnessMod*ROUNDNESS*min(scaleMod*5., 1.));
-//    minEdgeDists.x = cSmin(minEdgeDists.x, len, (len*.5 + .5)*fEdgeRoundnessMod*ROUNDNESS);
-//    minEdgeDists.x = cSmin(minEdgeDists.x, len, fEdgeRoundnessMod*ROUNDNESS*min(scaleMod, 1.));
-//    minEdgeDists.x = cSmin(minEdgeDists.x, len, fEdgeRoundnessMod*ROUNDNESS*scaleMod*scaleMod*10.);
-//    minEdgeDists.x = cSmin(minEdgeDists.x, len, fEdgeRoundnessMod*ROUNDNESS*sqrt(scaleMod));
+//    minEdgeDists.x = cSmin(minEdgeDists.x, len, (len*.5 + .5)*fBorderRoundnessMod*ROUNDNESS*min(scaleMod*5., 1.));
+//    minEdgeDists.x = cSmin(minEdgeDists.x, len, (len*.5 + .5)*fBorderRoundnessMod*ROUNDNESS);
+//    minEdgeDists.x = cSmin(minEdgeDists.x, len, fBorderRoundnessMod*ROUNDNESS*min(scaleMod, 1.));
+//    minEdgeDists.x = cSmin(minEdgeDists.x, len, fBorderRoundnessMod*ROUNDNESS*scaleMod*scaleMod*10.);
+//    minEdgeDists.x = cSmin(minEdgeDists.x, len, fBorderRoundnessMod*ROUNDNESS*sqrt(scaleMod));
 
 
 

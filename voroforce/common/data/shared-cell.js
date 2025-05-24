@@ -54,6 +54,13 @@ export class SharedCell {
 
     this.vx = 0
     this.vy = 0
+    this.localX = 0
+    this.localY = 0
+    this.localIx = 0
+    this.localIy = 0
+    this.localWeight = 0
+    this.localCol = 0
+    this.localRow = 0
   }
 
   set x(v) {

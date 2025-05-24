@@ -11,7 +11,7 @@ export default {
   simulation,
   cells: 10000,
   multiThreading: {
-    enabled: true,
+    enabled: false,
     renderInParallel: true,
   },
   devTools: {

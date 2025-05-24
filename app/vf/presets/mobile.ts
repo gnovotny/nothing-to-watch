@@ -9,7 +9,7 @@ export default {
       main: {
         uniforms: {
           bPixelSearch: { value: false },
-          fEdgeRoundnessMod: {
+          fBorderRoundnessMod: {
             value: 8,
             animatable: true,
             modes: {

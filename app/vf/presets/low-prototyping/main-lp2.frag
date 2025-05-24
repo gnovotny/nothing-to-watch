@@ -51,6 +51,7 @@ precision highp float;
 #define MEDIA_BBOX_SCALE 1.
 //#define MEDIA_BBOX_ADJUSTMENT_SCALE 3.
 #define MEDIA_BBOX_ADJUSTMENT_SCALE 1.
+#define MEDIA_BBOX_BORDER_COMPENSATION 1
 #define MEDIA_LOCKED_ASPECT 1
 #define MEDIA_ASPECT 1.5
 #define MEDIA_ROTATE 0
@@ -640,9 +641,13 @@ void applyMediaBboxFisheye(inout vec2 cellNCoords, inout float reciprocalMediaFi
     cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalMediaFisheyeFactor + forceCenterNCoords;
 }
 
-void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in float fisheyeFactor) {
+void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in float fisheyeFactor, in float borderThickness, in float borderSmoothness) {
     vec2 midSum = vec2(0.0);
     vec2 cellNCoords = fetchNormalizedCellCoords(index);
+    float border;
+    #if MEDIA_BBOX_BORDER_COMPENSATION == 1
+        border = borderSmoothness*2.;
+    #endif
 
     float reciprocalMediaFisheyeFactor = 1.;
     #if FISHEYE == 1
@@ -670,14 +675,14 @@ void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in f
     }
 
     vec2 avgCenter = midSum / float(neighborsLength);
-    //        vec2 avgCenterDiff = avgCenter - cellNdcCoords;
-    vec2 avgCenterDiff = (avgCenter - cellNCoords) * 0.;
+//    vec2 avgCenterDiff = (avgCenter - cellNCoords);
+    vec2 avgCenterDiff = vec2(0.);
 
     mediaBbox.xy = min(mediaBbox.xy, mediaBbox.xy + avgCenterDiff);
     mediaBbox.zw = max(mediaBbox.zw, mediaBbox.zw + avgCenterDiff);
 
-    float bbX = mediaBbox.z - mediaBbox.x;
-    float bbY = mediaBbox.w - mediaBbox.y;
+    float bbX = mediaBbox.z - mediaBbox.x - border;
+    float bbY = mediaBbox.w - mediaBbox.y - border;
 
     vec2 offset = vec2(0.5 * MEDIA_BBOX_SCALE * reciprocalMediaFisheyeFactor);
     bool lockedAspect = MEDIA_LOCKED_ASPECT == 1 && !bMediaDistortion;
@@ -1008,48 +1013,36 @@ Plot plot() {
     index = indices.x;
     vec2 cellCoords = fetchCellCoords(index);
 
-    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
-    #if MEDIA_ENABLED == 1
-        calcMediaBbox(index, mediaBbox, cellCoords, fisheyeFactor);
-    #endif
 
     float cellScale = 0.1;
     float borderThicknessScale = 0.1;
     float borderSmoothnessScale = 0.1;
     float borderRoundnessScale = 0.1;
     #if CELL_SCALING == 1
-        #if MEDIA_ENABLED == 1 && CELL_SCALING_MODE == 1
-            float bbX = mediaBbox.z - mediaBbox.x;
-            float bbY = mediaBbox.w - mediaBbox.y;
-
-            //cellScale = min(bbX, bbY) / 2.;
-            cellScale = (bbX + bbY) * 0.5 / 2.;
-        #else
-            // this only works well for vertically elongated cells
-            float neighborXAvgOffset = (abs(cellCoords.x - fetchCellCoords(neighborsTexData(neighborsPosition + 3u)).x) + abs(cellCoords.x - fetchCellCoords(neighborsTexData(neighborsPosition + 4u)).x)) * 0.5;
-            cellScale = neighborXAvgOffset / 2.;
-        #endif
+        // this only works well for vertically elongated cells
+        float neighborXAvgOffset = (abs(cellCoords.x - fetchCellCoords(neighborsTexData(neighborsPosition + 3u)).x) + abs(cellCoords.x - fetchCellCoords(neighborsTexData(neighborsPosition + 4u)).x)) * 0.5;
+        cellScale = neighborXAvgOffset / 2.;
         #if BORDER_THICKNESS_SCALING == 1
-            borderThicknessScale = cellScale;
+        borderThicknessScale = cellScale;
         #endif
         #if BORDER_SMOOTHNESS_SCALING == 1
-            borderSmoothnessScale = cellScale;
+        borderSmoothnessScale = cellScale;
         #endif
         #if BORDER_ROUNDNESS_SCALING == 1
-            borderRoundnessScale = cellScale;
+        borderRoundnessScale = cellScale;
         #endif
     #endif
 
-//    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * numCellsScale;
-//    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * 2.;
-    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale;
+    //    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * numCellsScale;
+        float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * 2.;
+//    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale;
     #if defined(BORDER_THICKNESS_MIN) && defined(BORDER_THICKNESS_MAX)
         borderThickness = clamp(borderThickness, BORDER_THICKNESS_MIN * resolutionScale * numCellsScale, BORDER_THICKNESS_MAX * resolutionScale * numCellsScale);
     #endif
 
-//    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale * numCellsScale;
-//    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale * 20.1;
-    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale;
+    //    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale * numCellsScale;
+        float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale * 20.1;
+//    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale;
     #if defined(BORDER_SMOOTHNESS_MIN) && defined(BORDER_SMOOTHNESS_MAX)
         borderSmoothness = clamp(borderSmoothness, BORDER_SMOOTHNESS_MIN * resolutionScale * numCellsScale, BORDER_SMOOTHNESS_MAX * resolutionScale * numCellsScale);
     #endif
@@ -1058,6 +1051,57 @@ Plot plot() {
     #if defined(BORDER_ROUNDNESS_MIN) && defined(BORDER_ROUNDNESS_MAX)
         borderRoundness = clamp(borderRoundness, BORDER_ROUNDNESS_MIN * fBorderRoundnessMod * resolutionScale, BORDER_ROUNDNESS_MAX * fBorderRoundnessMod * resolutionScale);
     #endif
+
+    vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
+    #if MEDIA_ENABLED == 1
+        calcMediaBbox(index, mediaBbox, cellCoords, fisheyeFactor, borderThickness, borderSmoothness);
+    #endif
+
+//    float cellScale = 0.1;
+//    float borderThicknessScale = 0.1;
+//    float borderSmoothnessScale = 0.1;
+//    float borderRoundnessScale = 0.1;
+//    #if CELL_SCALING == 1
+//        #if MEDIA_ENABLED == 1 && CELL_SCALING_MODE == 1
+//            float bbX = mediaBbox.z - mediaBbox.x;
+//            float bbY = mediaBbox.w - mediaBbox.y;
+//
+//            //cellScale = min(bbX, bbY) / 2.;
+//            cellScale = (bbX + bbY) * 0.5 / 2.;
+//        #else
+//            // this only works well for vertically elongated cells
+//            float neighborXAvgOffset = (abs(cellCoords.x - fetchCellCoords(neighborsTexData(neighborsPosition + 3u)).x) + abs(cellCoords.x - fetchCellCoords(neighborsTexData(neighborsPosition + 4u)).x)) * 0.5;
+//            cellScale = neighborXAvgOffset / 2.;
+//        #endif
+//        #if BORDER_THICKNESS_SCALING == 1
+//            borderThicknessScale = cellScale;
+//        #endif
+//        #if BORDER_SMOOTHNESS_SCALING == 1
+//            borderSmoothnessScale = cellScale;
+//        #endif
+//        #if BORDER_ROUNDNESS_SCALING == 1
+//            borderRoundnessScale = cellScale;
+//        #endif
+//    #endif
+//
+////    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * numCellsScale;
+////    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * 2.;
+//    float borderThickness = BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale;
+//    #if defined(BORDER_THICKNESS_MIN) && defined(BORDER_THICKNESS_MAX)
+//        borderThickness = clamp(borderThickness, BORDER_THICKNESS_MIN * resolutionScale * numCellsScale, BORDER_THICKNESS_MAX * resolutionScale * numCellsScale);
+//    #endif
+//
+////    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale * numCellsScale;
+////    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale * 20.1;
+//    float borderSmoothness = BORDER_SMOOTHNESS_BASE * borderSmoothnessScale * resolutionScale;
+//    #if defined(BORDER_SMOOTHNESS_MIN) && defined(BORDER_SMOOTHNESS_MAX)
+//        borderSmoothness = clamp(borderSmoothness, BORDER_SMOOTHNESS_MIN * resolutionScale * numCellsScale, BORDER_SMOOTHNESS_MAX * resolutionScale * numCellsScale);
+//    #endif
+//
+//    float borderRoundness = BORDER_ROUNDNESS_BASE * 1./inversesqrt(borderRoundnessScale) * fBorderRoundnessMod * resolutionScale;
+//    #if defined(BORDER_ROUNDNESS_MIN) && defined(BORDER_ROUNDNESS_MAX)
+//        borderRoundness = clamp(borderRoundness, BORDER_ROUNDNESS_MIN * fBorderRoundnessMod * resolutionScale, BORDER_ROUNDNESS_MAX * fBorderRoundnessMod * resolutionScale);
+//    #endif
 
     float weight;
     float weightOffset;

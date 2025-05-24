@@ -249,6 +249,8 @@ export class Voroforce extends CustomEventTarget {
     this.updateSimulation()
 
     if (this.parallelDisplay) this.updateDisplay()
+
+    // this.benchmarkSimulation()
   }
 
   updateSimulation() {
@@ -279,6 +281,27 @@ export class Voroforce extends CustomEventTarget {
 
   updateControls() {
     if (this.displayWarmedUp) this.controls.update()
+  }
+
+  iterations = 0
+  benchmarkSimulation() {
+    this.iterations++
+    if (!this.displayWarmedUp || this.iterations < 10) {
+      return
+    }
+    this.ticker.stop()
+    this.simulation.onUpdated = () => {}
+
+    let sTotal = 0
+
+    for (let i = 0; i < 10000; i++) {
+      const s = Date.now()
+      this.simulation.update()
+      sTotal += Date.now() - s
+    }
+
+    // alert(sTotal)
+    console.log('sTotal', sTotal)
   }
 
   removeEventListeners() {

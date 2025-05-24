@@ -490,7 +490,7 @@ export default class BaseScene {
       iLatticeCols: { value: cols },
       iLatticeRows: { value: rows },
       iForcedMaxNeighborLevel: { value: 0 },
-      fEdgeRoundnessMod: { value: 1 },
+      fBorderRoundnessMod: { value: 1 },
       fEdge1Mod: { value: 1 },
       fEdge0Mod: { value: 1 },
       fBaseColor: { value: [0, 0, 0] },
