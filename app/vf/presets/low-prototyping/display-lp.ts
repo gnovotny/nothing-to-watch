@@ -2,7 +2,7 @@ import { THEME } from '../../../consts'
 import { VOROFORCE_MODE } from '../../consts'
 // import mainFrag from './main-lp.frag'
 // import mainFrag from './main-lp2.frag'
-import mainFrag from './main-lp3.frag'
+import mainFrag from './main-lp4.frag'
 
 export default {
   scene: {

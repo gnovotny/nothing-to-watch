@@ -11,7 +11,7 @@ export default {
   simulation,
   cells: 10000,
   multiThreading: {
-    enabled: false,
+    enabled: true,
     renderInParallel: true,
   },
   devTools: {
@@ -20,7 +20,6 @@ export default {
   },
   handleVisibilityChange: {
     enabled: true,
-    // enabled: false, // TODO
     hiddenDelay: 5000,
   },
   lattice: baseLatticeConfig,

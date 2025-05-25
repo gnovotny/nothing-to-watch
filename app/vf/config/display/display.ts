@@ -1,6 +1,7 @@
 import { THEME } from '../../../consts'
 import { VOROFORCE_MODE } from '../../consts'
-import mainFrag from './main.frag'
+// import mainFrag from './main.frag'
+import mainFrag from './../../presets/low-prototyping/main-lp4.frag'
 
 export default {
   scene: {
@@ -31,7 +32,8 @@ export default {
               value: 1,
             },
             [VOROFORCE_MODE.select]: {
-              value: 3,
+              // value: 3,
+              value: 1,
             },
           },
         },

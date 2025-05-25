@@ -215,7 +215,7 @@ export const omniForce = ({
       originY: originLatticeY = globalConfig.lattice.latticeHeight / 2,
     } = {},
   } = {},
-  handleEnd,
+  handleEnd = () => {},
 }) => {
   const selectPrimary = (cells) => cells[primarySelector]
 
@@ -290,13 +290,8 @@ export const omniForce = ({
 
   for (i = 0; i < cellsLen; ++i) {
     cell = cells[i]
-    cell.localWeight = cell.weight
-    cell.localCol = cell.col
-    cell.localRow = cell.row
-    cell.localX = cell.x
-    cell.localY = cell.y
-    cell.localIx = cell.ix
-    cell.localIy = cell.iy
+    initLocalCellProperties(cell)
+    resetPrimaryCellDependentTransientCellProperties(cell)
   }
 
   function force(alpha) {
@@ -349,7 +344,26 @@ export const omniForce = ({
     }
   }
 
-  function updatePrimaryCellBasedTransientCellProperties(cell) {
+  function initLocalCellProperties(cell) {
+    cell.localWeight = cell.weight
+    cell.localCol = cell.col
+    cell.localRow = cell.row
+    cell.localX = cell.x
+    cell.localY = cell.y
+    cell.localIx = cell.ix
+    cell.localIy = cell.iy
+  }
+
+  function resetPrimaryCellDependentTransientCellProperties(cell) {
+    cell.primaryCellIndex = undefined
+    cell.colLevelAdjacency = undefined
+    cell.rowLevelAdjacency = undefined
+    cell.latticeStrengthMod = undefined
+    cell.centerXStretchMod = undefined
+    cell.alignmentPushYMod = undefined
+  }
+
+  function updatePrimaryCellDependentTransientCellProperties(cell) {
     cell.primaryCellIndex = primaryCellIndex
 
     cell.colLevelAdjacency = abs(cell.localCol - primaryCellCol)
@@ -363,7 +377,7 @@ export const omniForce = ({
         latticeMaxLevelsFromPrimary)
 
     if (
-      !isPrimaryCell &&
+      // !isPrimaryCell &&
       pushCenterXStretchMod > 0 &&
       cell.rowLevelAdjacency < pushCenterXStretchMaxLevelsY &&
       cell.colLevelAdjacency > 0 &&
@@ -373,7 +387,6 @@ export const omniForce = ({
         pushCenterXStretchMod *
         ((cell.colLevelAdjacency / pushCenterXStretchMaxLevelsX) *
           (1 - cell.rowLevelAdjacency / pushCenterXStretchMaxLevelsY))
-      // * abs(x)
     } else {
       cell.centerXStretchMod = undefined
     }
@@ -616,7 +629,7 @@ export const omniForce = ({
           y *= l
 
           if (cell.primaryCellIndex !== primaryCellIndex) {
-            updatePrimaryCellBasedTransientCellProperties(cell)
+            updatePrimaryCellDependentTransientCellProperties(cell)
           }
 
           // media loading logic, might move it at some point
@@ -650,7 +663,7 @@ export const omniForce = ({
           }
           if (isPrimaryCell) {
             vx *= primaryCellPushFactorX
-            vy *= primaryCellPushFactorX
+            vy *= primaryCellPushFactorY
           }
 
           cell.vx += vx
@@ -666,7 +679,7 @@ export const omniForce = ({
         )
       }
 
-      handleEnd?.(cell)
+      handleEnd(cell)
     }
   }
 
@@ -685,8 +698,8 @@ export const omniForce = ({
           cell = cells[i]
 
           if (cell.primaryCellIndex !== primaryCellIndex) {
-            isPrimaryCell = i === primaryCellIndex
-            updatePrimaryCellBasedTransientCellProperties(cell)
+            // isPrimaryCell = i === primaryCellIndex
+            updatePrimaryCellDependentTransientCellProperties(cell)
           }
 
           // left
