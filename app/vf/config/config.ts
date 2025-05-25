@@ -19,7 +19,7 @@ export default {
     expanded: false,
   },
   handleVisibilityChange: {
-    enabled: true,
+    enabled: false,
     hiddenDelay: 5000,
   },
   lattice: baseLatticeConfig,

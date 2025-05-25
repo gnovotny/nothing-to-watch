@@ -22,6 +22,7 @@ export class AutoTicker extends CustomEventTarget {
   }
 
   start() {
+    if (this.killed) return
     if (this.running) return
     this.running = true
     this.init()
@@ -30,6 +31,10 @@ export class AutoTicker extends CustomEventTarget {
 
   stop() {
     this.running = false
+  }
+
+  kill() {
+    this.killed = true
   }
 
   tick() {

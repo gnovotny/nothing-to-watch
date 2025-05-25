@@ -540,15 +540,23 @@ export default class Controls extends CustomEventTarget {
     this.container.removeEventListener('pointerup', this.onPointerUp)
   }
 
-  resize(dimensions) {
+  startResize(dimensions) {
     if (!this.cells.focused) return
-
     this.freezePointer()
+  }
+
+  endResize(dimensions) {
+    if (!this.cells.focused) return
     this.assignPointer({
       x: this.cells.focused.x,
       y: this.cells.focused.y,
     })
     this.dispatchEvent(new CellFocusedEvent(this.cells.focused, this.cells))
+  }
+
+  resize(dimensions) {
+    this.startResize()
+    this.endResize()
   }
 
   dispose() {

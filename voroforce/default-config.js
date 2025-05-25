@@ -43,4 +43,15 @@ export const defaultConfig = {
   ticker: {
     mode: 'manual', // 'auto' or 'manual'
   },
+  benchmark: {
+    enabled: false,
+    simulation: {
+      enabled: false,
+      iterations: 10000,
+    },
+    display: {
+      enabled: false,
+      iterations: 1000,
+    },
+  },
 }

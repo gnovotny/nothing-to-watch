@@ -15,6 +15,7 @@ export class ManualTicker extends CustomEventTarget {
   }
 
   start() {
+    if (this.killed) return
     if (this.running) return
     this.running = true
     requestAnimationFrame(this.tick)
@@ -22,6 +23,10 @@ export class ManualTicker extends CustomEventTarget {
 
   stop() {
     this.running = false
+  }
+
+  kill() {
+    this.killed = true
   }
 
   tick() {

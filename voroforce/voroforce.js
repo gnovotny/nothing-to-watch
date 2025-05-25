@@ -50,6 +50,7 @@ export class Voroforce extends CustomEventTarget {
     this.handleMultiThreadingConfig()
     this.handleMediaConfig()
     this.handleTickerConfig()
+    this.handleBenchmarkConfig()
   }
 
   handleMultiThreadingConfig() {
@@ -76,6 +77,22 @@ export class Voroforce extends CustomEventTarget {
 
   handleTickerConfig() {
     this.tickerMode = this.config.ticker?.mode
+  }
+
+  handleBenchmarkConfig() {
+    this.benchmarkEnabled = this.config.benchmark?.enabled
+    if (this.benchmarkEnabled) {
+      const originalUpdate = this.update.bind(this)
+      this.update = function update() {
+        originalUpdate()
+        this.benchmark()
+      }.bind(this)
+
+      if (this.config.benchmark?.simulation?.enabled) {
+        this.multiThreading = false
+        this.parallelDisplay = false
+      }
+    }
   }
 
   initComponents() {
@@ -232,12 +249,13 @@ export class Voroforce extends CustomEventTarget {
     this.ticker.stop()
     this.handleLattice()
     const dimensions = this.store.get('dimensions').get()
+    this.controls.startResize()
     this.simulation.resize(dimensions, () => {
       this.pendingResize = false
       this.display.resize(dimensions)
+      this.controls.endResize(dimensions)
       this.start()
     })
-    this.controls.resize(dimensions)
   }
 
   resize() {
@@ -247,10 +265,7 @@ export class Voroforce extends CustomEventTarget {
   update() {
     this.updateControls()
     this.updateSimulation()
-
     if (this.parallelDisplay) this.updateDisplay()
-
-    // this.benchmarkSimulation()
   }
 
   updateSimulation() {
@@ -283,25 +298,51 @@ export class Voroforce extends CustomEventTarget {
     if (this.displayWarmedUp) this.controls.update()
   }
 
-  iterations = 0
-  benchmarkSimulation() {
-    this.iterations++
-    if (!this.displayWarmedUp || this.iterations < 10) {
+  updates = 0
+  benchmark() {
+    this.updates++
+    if (!this.displayWarmedUp || this.updates < 10) {
       return
     }
-    this.ticker.stop()
+    this.ticker.kill()
     this.simulation.onUpdated = () => {}
 
-    let sTotal = 0
+    if (this.config.benchmark?.simulation?.enabled) {
+      this.benchmarkSimulation()
+    }
+    if (this.config.benchmark?.display?.enabled) {
+      this.benchmarkDisplay()
+    }
+  }
 
-    for (let i = 0; i < 10000; i++) {
+  benchmarkSimulation() {
+    let sTotal = 0
+    for (
+      let i = 0;
+      i < (this.config.benchmark?.simulation?.iterations || 100);
+      i++
+    ) {
       const s = Date.now()
       this.simulation.update()
       sTotal += Date.now() - s
     }
 
-    // alert(sTotal)
-    console.log('sTotal', sTotal)
+    console.log('Simulation total: ', sTotal)
+  }
+
+  benchmarkDisplay() {
+    let sTotal = 0
+    for (
+      let i = 0;
+      i < (this.config.benchmark?.display?.iterations || 100);
+      i++
+    ) {
+      const s = Date.now()
+      this.display.update()
+      sTotal += Date.now() - s
+    }
+
+    console.log('Display total: ', sTotal)
   }
 
   removeEventListeners() {
