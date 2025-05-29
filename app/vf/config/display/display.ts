@@ -70,7 +70,8 @@ export default {
             },
             [VOROFORCE_MODE.preview]: {
               // value: 1.25,
-              value: 0,
+              value: 1,
+              // value: 0,
             },
             [VOROFORCE_MODE.select]: {
               value: 1.5,

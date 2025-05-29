@@ -1,7 +1,8 @@
 import baseConfig from '../../config/config'
 import { uncompressedSingleMediaVersionConfig } from '../../config'
 // import postFrag from './post-mid.frag'
-import postFrag from './post-mid2.frag'
+// import postFrag from './post-mid2.frag'
+import postFrag from './post-mid3.frag'
 
 export default {
   cells: 25000,
@@ -24,6 +25,7 @@ export default {
             themes: {
               default: {
                 // value: [0.005, 0.005, 0.005],
+                // value: [0.01, 0.01, 0.01],
                 value: [0.02, 0.02, 0.02],
               },
               light: {

@@ -407,27 +407,36 @@ export default class BaseScene {
   // }
 
   getForceCenter() {
-    return [this.sharedData.forceCenterX, this.sharedData.forceCenterY]
-
-    this.targetForceCenter = [
+    return [
       !Number.isNaN(this.sharedData?.forceCenterX) &&
       this.sharedData?.forceCenterX
-        ? this.sharedData.forceCenterX
-        : this.dimensions.width / 2,
+          ? this.sharedData.forceCenterX
+          : this.dimensions.width / 2,
       !Number.isNaN(this.sharedData?.forceCenterY) &&
       this.sharedData?.forceCenterY
-        ? this.sharedData.forceCenterY
-        : this.dimensions.height / 2,
+          ? this.sharedData.forceCenterY
+          : this.dimensions.height / 2,
     ]
 
-    this.forceCenter = this.forceCenter
-      ? [
-          easedMinLerp(this.forceCenter[0], this.targetForceCenter[0], 0.05),
-          easedMinLerp(this.forceCenter[1], this.targetForceCenter[1], 0.05),
-        ]
-      : this.targetForceCenter
-
-    return this.forceCenter
+    // this.targetForceCenter = [
+    //   !Number.isNaN(this.sharedData?.forceCenterX) &&
+    //   this.sharedData?.forceCenterX
+    //     ? this.sharedData.forceCenterX
+    //     : this.dimensions.width / 2,
+    //   !Number.isNaN(this.sharedData?.forceCenterY) &&
+    //   this.sharedData?.forceCenterY
+    //     ? this.sharedData.forceCenterY
+    //     : this.dimensions.height / 2,
+    // ]
+    //
+    // this.forceCenter = this.forceCenter
+    //   ? [
+    //       easedMinLerp(this.forceCenter[0], this.targetForceCenter[0], 0.05),
+    //       easedMinLerp(this.forceCenter[1], this.targetForceCenter[1], 0.05),
+    //     ]
+    //   : this.targetForceCenter
+    //
+    // return this.forceCenter
   }
 
   initBaseUniforms() {

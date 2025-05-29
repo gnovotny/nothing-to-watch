@@ -25,7 +25,7 @@ precision highp float;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 
-#define FISHEYE 0
+#define FISHEYE 1
 #define FISHEYE_BASE_STRENGTH .5
 #define FISHEYE_BASE_RADIUS 1.
 #define FISHEYE_SQUARED 1
