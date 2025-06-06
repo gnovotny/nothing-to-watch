@@ -56,7 +56,7 @@ export default {
             },
           },
         },
-        fFishEyeStrength: {
+        fCenterForceFishEyeStrength: {
           animatable: true,
           initial: {
             value: 0,
@@ -76,7 +76,7 @@ export default {
             },
           },
         },
-        fFishEyeRadius: {
+        fCenterForceFishEyeRadius: {
           animatable: true,
           initial: {
             value: 0,

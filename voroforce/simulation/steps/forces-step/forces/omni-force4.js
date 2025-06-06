@@ -293,10 +293,10 @@ export const omniForce = ({
     latticeForcePass(alpha) // lattice pass must run in isolation (for reasons)
     mainForcePass(alpha)
 
-    sharedData.forceCenterX = centerX
-    sharedData.forceCenterY = centerY
-    sharedData.forceCenterStrengthMod = lerp(
-      sharedData.forceCenterStrengthMod,
+    sharedData.centerForceX = centerX
+    sharedData.centerForceY = centerY
+    sharedData.centerForceStrengthMod = lerp(
+      sharedData.centerForceStrengthMod,
       min(basePushDistMod / 1.125, 1),
       // centerLerp,
       defaultLerpFactor,

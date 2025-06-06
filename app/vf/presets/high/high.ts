@@ -1,7 +1,12 @@
 import midConfig from '../mid/mid'
 // import postFrag from './post-high2.frag'
-import postFrag from './post-high22.frag'
+// import postFrag from './post-high22.frag'
 // import postFrag from './post-high222.frag'
+// import postFrag from './post-high2222.frag'
+// import postFrag from './post-high2222-proto.frag'
+// import postFrag from './post-high2222-proto2.frag'
+// import postFrag from './post-high2222-proto4.frag'
+import postFrag from './post-high2222-proto5.frag'
 // import postFrag from './post-high3.frag'
 import { mergeConfigs } from '√'
 

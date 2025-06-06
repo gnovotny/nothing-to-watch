@@ -14,8 +14,8 @@ uniform float iTime;
 uniform float fAlphaStrength;
 uniform float fEdgeStrength;
 uniform vec3 fBaseColor;
-uniform vec2 fForceCenter;
-uniform float fForceCenterStrengthMod;
+uniform vec2 fCenterForce;
+uniform float fCenterForceStrengthMod;
 
 
 //in vec2 u;
@@ -270,10 +270,8 @@ vec2 gVID;
 //    return v;
 //}
 
-float heightMap(vec2 uv, vec3 p){
+float heightMap(vec2 uv){
 
-//    vec2 pp = p.xy;
-//    //    pp *= 0.25;
 
     vec3 v3 = texture(uVoroEdgeBufferTexture, uv).rgb;
 
@@ -301,14 +299,14 @@ float heightMap(vec2 uv, vec3 p){
 }
 
 // Back plane height map.
-float m(vec3 p, vec3 pp){
+float m(vec3 p){
 
     //    vec2 uv = p.xy * 0.5 + 0.5;
     float aspect = iResolution.x / iResolution.y;
-    vec2 uv = vec2(pp.x * 0.5 + 0.5, pp.y * aspect * 0.5 + 0.5);
+    vec2 uv = vec2(p.x * 0.5 + 0.5, p.y * aspect * 0.5 + 0.5);
 
     // Voronoi heightmap.
-    float h = heightMap(uv, p);
+    float h = heightMap(uv);
 
     //    // A sprinkling of noise.
     //    //    vec3 tx = texture(iChannel1, p.xy*2.).xyz; //tx *= tx;
@@ -328,7 +326,7 @@ float m(vec3 p, vec3 pp){
 
 // Standard normal function. It's not as fast as the tetrahedral calculation,
 // but more symmetrical.
-vec3 nr(in vec3 p, in vec3 pp) {
+vec3 nr(in vec3 p) {
 
     //const vec2 e = vec2(.001, 0);
     //return normalize(vec3(map(p + e.xyy) - map(p - e.xyy),
@@ -341,7 +339,7 @@ vec3 nr(in vec3 p, in vec3 pp) {
     vec3 e = vec3(.0025, 0, 0), mp = e.zzz; // Spalmer's clever zeroing.
     //    for(int i = min(iFrame, 0); i<6; i++){
     for(int i = 0; i<6; i++){
-        mp.x += m(p + sgn*e, pp + sgn*e)*sgn;
+        mp.x += m(p + sgn*e)*sgn;
         sgn = -sgn;
         if((i&1)==1){ mp = mp.yzx; e = e.zxy; }
     }
@@ -497,14 +495,14 @@ void main(){
 //    vec2 u = (fragCoord - iResolution.xy*.5)/iResolution.y;
         vec2 u = (fragCoord*2.0-iResolution.xy) / (iResolution.y > iResolution.x ? iResolution.y : iResolution.x);
 
-    vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
-//    vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
-    vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / (iResolution.y > iResolution.x ? iResolution.y : iResolution.x);
+    vec2 centerForcePixel =vec2(fCenterForce.x, iResolution.y - fCenterForce.y);
+//    vec2 centerForce = (centerForcePixel*2.0-iResolution.xy) / iResolution.y;
+    vec2 centerForce = (centerForcePixel*2.0-iResolution.xy) / (iResolution.y > iResolution.x ? iResolution.y : iResolution.x);
 
-    vec2 relativeForceCenter = fForceCenterStrengthMod * forceCenter;
-//    vec2 relativeForceCenter = vec2(0.);
+    vec2 relativeCenterForce = fCenterForceStrengthMod * centerForce;
+//    vec2 relativeCenterForce = vec2(0.);
 
-//    u -= forceCenter;
+//    u -= centerForce;
 
     //u *= rot2(TAU/24.);
 
@@ -512,13 +510,13 @@ void main(){
     //    u *= 1.14;
 
     // Screen bulge.
-    //u *= 1. + dot(u, u)*.08;
+//    u *= 1. + dot(u, u)*.08;
     //    u *= 1. + dot(u, u)*5.58;
 
     //    vec3 o = vec3(iTime/8., iTime/16., -1);
 //    vec3 o = vec3(0., 0., -1);
-        vec3 o = vec3(relativeForceCenter, -1);
-        vec3 oo = vec3(relativeForceCenter, -1);
+        vec3 o = vec3(relativeCenterForce, -1);
+        vec3 oo = vec3(relativeCenterForce, -1);
     vec3 l = vec3(.5, 0, 0);
 
 
@@ -526,9 +524,9 @@ void main(){
 
 
     // Unit direction ray.
-        vec3 r = normalize(vec3(u-relativeForceCenter, 1));
-//    vec3 r = vec3(u-relativeForceCenter, 1);
-//    r.xy -= relativeForceCenter;
+        vec3 r = normalize(vec3(u-relativeCenterForce, 1));
+//    vec3 r = vec3(u-relativeCenterForce, 1);
+//    r.xy -= relativeCenterForce;
 
 
 
@@ -550,7 +548,7 @@ void main(){
         for(int i=0; i<40;i++){
 //    for(int i=0; i<80;i++){
 
-        d = m(o + r*t, oo + r*t);
+        d = m(o + r*t);
         // There isn't really a far plane to go beyond, but it's there anyway.
         if(abs(d)<.001 || t>FAR) break;
         //        t += d*.7;
@@ -578,13 +576,12 @@ void main(){
 
         // Position and normal.
 //        vec3 p = oo + r;
-        vec3 pp = oo + r*t;
         vec3 p = o + r*t;
 //        vec3 p = o + r;
 //        vec3 p = vec3(u, 1.);
         //        vec3 p = o + r;
         //        vec3 p = vec3(u, 0.);
-        vec3 n = nr(p, pp);
+        vec3 n = nr(p);
 
         l -= p; // Light to surface vector. Ie: Light direction vector.
         float lDist = max(length(l), .001); // Light to surface distance.
@@ -607,12 +604,12 @@ void main(){
         //        float hm = heightMap(p);
 
         float aspect = iResolution.x / iResolution.y;
-        vec2 uv = vec2(pp.x * 0.5 + 0.5, pp.y * aspect * 0.5 + 0.5);
+        vec2 uv = vec2(p.x * 0.5 + 0.5, p.y * aspect * 0.5 + 0.5);
 
         //        indices = fetchIndices(uv);
         indices = fetchIndices(uv*iResolution.xy);
 
-        float hm = heightMap(uv, p);
+        float hm = heightMap(uv);
 
         int svObjID = objID; // Object ID. Unused.
         // Surface object coloring.

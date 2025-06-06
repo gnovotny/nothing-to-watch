@@ -260,8 +260,8 @@ export const omniForce = ({
     latticeForcePass(alpha) // lattice pass must run in isolation
     mainForcePass(alpha)
 
-    sharedData.forceCenterX = centerX
-    sharedData.forceCenterY = centerY
+    sharedData.centerForceX = centerX
+    sharedData.centerForceY = centerY
   }
 
   function forceSetup(alpha) {

@@ -79,9 +79,9 @@ export default class BaseScene {
 
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
       this.baseUniforms.fPointer.value = this.getPointer()
-      this.baseUniforms.fForceCenter.value = this.getForceCenter()
-      this.baseUniforms.fForceCenterStrengthMod.value =
-        this.sharedData?.forceCenterStrengthMod ?? 0
+      this.baseUniforms.fCenterForce.value = this.getCenterForce()
+      this.baseUniforms.fCenterForceStrengthMod.value =
+        this.sharedData?.centerForceStrengthMod ?? 0
     }
 
     this.beforeUpdateCustom()
@@ -400,43 +400,43 @@ export default class BaseScene {
     ]
   }
 
-  // getForceCenter() {
-  //   const centerX = this.sharedData?.forceCenterX ?? 0
-  //   const centerY = this.sharedData?.forceCenterY ?? 0
+  // getCenterForce() {
+  //   const centerX = this.sharedData?.centerForceX ?? 0
+  //   const centerY = this.sharedData?.centerForceY ?? 0
   //   return [centerX, centerY]
   // }
 
-  getForceCenter() {
+  getCenterForce() {
     return [
-      !Number.isNaN(this.sharedData?.forceCenterX) &&
-      this.sharedData?.forceCenterX
-          ? this.sharedData.forceCenterX
+      !Number.isNaN(this.sharedData?.centerForceX) &&
+      this.sharedData?.centerForceX
+          ? this.sharedData.centerForceX
           : this.dimensions.width / 2,
-      !Number.isNaN(this.sharedData?.forceCenterY) &&
-      this.sharedData?.forceCenterY
-          ? this.sharedData.forceCenterY
+      !Number.isNaN(this.sharedData?.centerForceY) &&
+      this.sharedData?.centerForceY
+          ? this.sharedData.centerForceY
           : this.dimensions.height / 2,
     ]
 
-    // this.targetForceCenter = [
-    //   !Number.isNaN(this.sharedData?.forceCenterX) &&
-    //   this.sharedData?.forceCenterX
-    //     ? this.sharedData.forceCenterX
+    // this.targetCenterForce = [
+    //   !Number.isNaN(this.sharedData?.centerForceX) &&
+    //   this.sharedData?.centerForceX
+    //     ? this.sharedData.centerForceX
     //     : this.dimensions.width / 2,
-    //   !Number.isNaN(this.sharedData?.forceCenterY) &&
-    //   this.sharedData?.forceCenterY
-    //     ? this.sharedData.forceCenterY
+    //   !Number.isNaN(this.sharedData?.centerForceY) &&
+    //   this.sharedData?.centerForceY
+    //     ? this.sharedData.centerForceY
     //     : this.dimensions.height / 2,
     // ]
     //
-    // this.forceCenter = this.forceCenter
+    // this.centerForce = this.centerForce
     //   ? [
-    //       easedMinLerp(this.forceCenter[0], this.targetForceCenter[0], 0.05),
-    //       easedMinLerp(this.forceCenter[1], this.targetForceCenter[1], 0.05),
+    //       easedMinLerp(this.centerForce[0], this.targetCenterForce[0], 0.05),
+    //       easedMinLerp(this.centerForce[1], this.targetCenterForce[1], 0.05),
     //     ]
-    //   : this.targetForceCenter
+    //   : this.targetCenterForce
     //
-    // return this.forceCenter
+    // return this.centerForce
   }
 
   initBaseUniforms() {
@@ -452,9 +452,9 @@ export default class BaseScene {
         },
         iTime: { value: 0 },
         fPointer: { value: this.getPointer() },
-        fForceCenter: { value: this.getForceCenter() },
-        fForceCenterStrengthMod: {
-          value: this.sharedData?.forceCenterStrengthMod ?? 0,
+        fCenterForce: { value: this.getCenterForce() },
+        fCenterForceStrengthMod: {
+          value: this.sharedData?.centerForceStrengthMod ?? 0,
         },
       }
     }

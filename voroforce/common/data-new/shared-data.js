@@ -3,27 +3,27 @@ export class SharedData {
     this.data = data
   }
 
-  get forceCenterX() {
+  get centerForceX() {
     return this.data[0]
   }
 
-  set forceCenterX(value) {
+  set centerForceX(value) {
     this.data[0] = value
   }
 
-  get forceCenterY() {
+  get centerForceY() {
     return this.data[1]
   }
 
-  set forceCenterY(value) {
+  set centerForceY(value) {
     this.data[1] = value
   }
 
-  get forceCenterStrengthMod() {
+  get centerForceStrengthMod() {
     return this.data[2]
   }
 
-  set forceCenterStrengthMod(value) {
+  set centerForceStrengthMod(value) {
     this.data[2] = value
   }
 }

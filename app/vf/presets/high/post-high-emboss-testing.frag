@@ -14,7 +14,7 @@ uniform float iTime;
 uniform float fAlphaStrength;
 uniform float fEdgeStrength;
 uniform vec3 fBaseColor;
-uniform vec2 fForceCenter;
+uniform vec2 fCenterForce;
 
 //in vec2 u;
 in vec2 vUv;
@@ -494,8 +494,8 @@ void main(){
     vec2 u = (fragCoord - iResolution.xy*.5)/iResolution.y;
     //    vec2 u = (fragCoord*2.0-iResolution.xy) / iResolution.y;
 
-    vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
-    vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
+    vec2 centerForcePixel =vec2(fCenterForce.x, iResolution.y - fCenterForce.y);
+    vec2 centerForce = (centerForcePixel*2.0-iResolution.xy) / iResolution.y;
 
 
     //u *= rot2(TAU/24.);
@@ -509,7 +509,7 @@ void main(){
 
     //    vec3 o = vec3(iTime/8., iTime/16., -1);
     vec3 o = vec3(0., 0., -1);
-    //    vec3 o = vec3(forceCenter, -1);
+    //    vec3 o = vec3(centerForce, -1);
     vec3 l = vec3(.5, 0, 0);
 
 
@@ -523,10 +523,10 @@ void main(){
     #if FISHEYE_TEST == 1
 
     vec2 fragCoord2 = gl_FragCoord.xy;
-    float forceCenterDist = sqrt(dot2(fragCoord2 - forceCenterPixel));
+    float centerForceDist = sqrt(dot2(fragCoord2 - centerForcePixel));
     float aspect = iResolution.x / iResolution.y;
     vec2 screenCenter = vec2(0.5, 0.5 / aspect);
-    vec2 dd = u - forceCenter;
+    vec2 dd = u - centerForce;
     float rrr = sqrt(dot(dd, dd));
     //    if (r > 1.5) {
     //        discard;
@@ -542,14 +542,14 @@ void main(){
     //    float bind = screenCenter.x;
     float bind = 0.5;
 
-    //    p = forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power);
-    //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
-    //    p = mix(forceCenter + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
-    //    p = mix(forceCenter, p, r);
-    //    p = forceCenter + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
+    //    p = centerForce + normalize(d) * tan(r * power) * bind / tan( bind * power);
+    //    p = mix(centerForce + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
+    //    p = mix(centerForce + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
+    //    p = mix(centerForce, p, r);
+    //    p = centerForce + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
 
-    u -= forceCenter;
-    //        o.xy -= forceCenter;
+    u -= centerForce;
+    //        o.xy -= centerForce;
     float radius = 1.;
     float percent = rrr / radius;
     //        float strength = 0.75;
@@ -559,8 +559,8 @@ void main(){
     //        o *= factor;
     //        o.xy *= factor;
     //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-    u += forceCenter;
-    //         o.xy += forceCenter;
+    u += centerForce;
+    //         o.xy += centerForce;
     #endif
 
 

@@ -114,13 +114,13 @@ uniform int iForcedMaxNeighborLevel;
 uniform float fBorderRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
-uniform float fFishEyeStrength;
-uniform float fFishEyeRadius;
+uniform float fCenterForceFishEyeStrength;
+uniform float fCenterForceFishEyeRadius;
 uniform float fWeightOffsetScaleMod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
-uniform vec2 fForceCenter;
-uniform float fForceCenterStrengthMod;
+uniform vec2 fCenterForce;
+uniform float fCenterForceStrengthMod;
 uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
@@ -471,17 +471,17 @@ void initNumCellsScale() {
     numCellsScale = 1./inversesqrt(NUM_CELLS_SCALE_BASELINE / float(iNumCells));
 }
 
-vec2 forceCenter;
-vec2 forceCenterCoords;
-void initForceCenter() {
-    forceCenter = rawCoords(fForceCenter);
-    forceCenterCoords = aspectCoords(forceCenter);
+vec2 centerForce;
+vec2 centerForceCoords;
+void initCenterForce() {
+    centerForce = rawCoords(fCenterForce);
+    centerForceCoords = aspectCoords(centerForce);
 }
 
 void initGlobals() {
     initResolutionScale();
     initNumCellsScale();
-    initForceCenter();
+    initCenterForce();
 }
 /* GLOBALS END */
 
@@ -615,30 +615,30 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
 }
 
 void applyMediaBboxFisheye(inout vec2 cellNCoords, inout float reciprocalMediaFisheyeFactor, in vec2 cellCoords, in float fisheyeFactor) {
-    if (fFishEyeStrength == 0. || fFishEyeRadius == 0.) return;
+    if (fCenterForceFishEyeStrength == 0. || fCenterForceFishEyeRadius == 0.) return;
 
     bool mediaFisheye = MEDIA_FISHEYE == 1 || bMediaDistortion;
     if (mediaFisheye) {
         reciprocalMediaFisheyeFactor = 1./ fisheyeFactor;
     } else {
-        // vec2 d = cellNCoords - forceCenterNCoords;
-        vec2 d = cellCoords - forceCenterCoords;
+        // vec2 d = cellNCoords - centerForceNCoords;
+        vec2 d = cellCoords - centerForceCoords;
         # if FISHEYE_SQUARED == 1
             float r = length(d);
-            float percent = r / (FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
+            float percent = r / (FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod);
         # else
             float r = dot2(d);
-            float percent = r / pow(FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
+            float percent = r / pow(FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod, 2.0);
         # endif
 
         float step = smoothstep(0.0, 1. / percent, percent);
 
-        float strength = FISHEYE_BASE_STRENGTH * fFishEyeStrength * fForceCenterStrengthMod;
+        float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
         reciprocalMediaFisheyeFactor = 1./ mix(1.0, step, strength);
     }
 
-    vec2 forceCenterNCoords = normalizeCoords(forceCenter);
-    cellNCoords = (cellNCoords - forceCenterNCoords) * reciprocalMediaFisheyeFactor + forceCenterNCoords;
+    vec2 centerForceNCoords = normalizeCoords(centerForce);
+    cellNCoords = (cellNCoords - centerForceNCoords) * reciprocalMediaFisheyeFactor + centerForceNCoords;
 }
 
 void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in float fisheyeFactor, in float borderThickness, in float borderSmoothness) {
@@ -890,16 +890,16 @@ Plot init(vec2 p) {
 }
 
 void applyFisheye(inout vec2 p, inout float fisheyeFactor) {
-    if (fFishEyeStrength == 0. || fFishEyeRadius == 0.) return;
+    if (fCenterForceFishEyeStrength == 0. || fCenterForceFishEyeRadius == 0.) return;
 
-    vec2 d = p - forceCenterCoords;
+    vec2 d = p - centerForceCoords;
     # if FISHEYE_SQUARED == 1
         // float r = sqrt(dot2(d));
         float r = length(d); // length(v) is more or less equivalent to sqrt(dot2(d)) (might be optimized), or 1.0 / inversesqrt(dot(v, v))
-        float percent = r / (FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod);
+        float percent = r / (FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod);
     # else // has straighter borders when not "squared"
         float r = dot2(d);
-        float percent = r / pow(FISHEYE_BASE_RADIUS * fFishEyeRadius * fForceCenterStrengthMod, 2.0);
+        float percent = r / pow(FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod, 2.0);
     # endif
 
     // next 2 lines equivalent to: float step = smoothstep(0.0, 1. / percent, percent);
@@ -916,13 +916,13 @@ void applyFisheye(inout vec2 p, inout float fisheyeFactor) {
     //                }
     //            }
 
-    float strength = FISHEYE_BASE_STRENGTH * fFishEyeStrength * fForceCenterStrengthMod;
+    float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
     fisheyeFactor = mix(1.0, step, strength);
 
-    p -= forceCenterCoords;
+    p -= centerForceCoords;
     //            p *= normalize(d) * fisheyeFactor;
     p *= fisheyeFactor;
-    p += forceCenterCoords;
+    p += centerForceCoords;
 
     //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
 }

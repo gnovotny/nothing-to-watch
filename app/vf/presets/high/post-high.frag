@@ -14,7 +14,7 @@ uniform float iTime;
 uniform float fAlphaStrength;
 uniform float fEdgeStrength;
 uniform vec3 fBaseColor;
-uniform vec2 fForceCenter;
+uniform vec2 fCenterForce;
 
 //in vec2 u;
 in vec2 vUv;
@@ -493,8 +493,8 @@ void main(){
     vec2 u = (fragCoord - iResolution.xy*.5)/iResolution.y;
     //    vec2 u = (fragCoord*2.0-iResolution.xy) / iResolution.y;
 
-    vec2 forceCenterPixel =vec2(fForceCenter.x, iResolution.y - fForceCenter.y);
-    vec2 forceCenter = (forceCenterPixel*2.0-iResolution.xy) / iResolution.y;
+    vec2 centerForcePixel =vec2(fCenterForce.x, iResolution.y - fCenterForce.y);
+    vec2 centerForce = (centerForcePixel*2.0-iResolution.xy) / iResolution.y;
 
 
     //u *= rot2(TAU/24.);
@@ -508,7 +508,7 @@ void main(){
 
     //    vec3 o = vec3(iTime/8., iTime/16., -1);
     vec3 o = vec3(0., 0., -1);
-    //    vec3 o = vec3(forceCenter, -1);
+    //    vec3 o = vec3(centerForce, -1);
     vec3 l = vec3(.5, 0, 0);
 
 

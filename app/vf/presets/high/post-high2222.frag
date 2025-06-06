@@ -15,6 +15,8 @@ uniform float fAlphaStrength;
 uniform float fEdgeStrength;
 uniform vec3 fBaseColor;
 uniform vec2 fCenterForce;
+uniform float fCenterForceStrengthMod;
+
 
 //in vec2 u;
 in vec2 vUv;
@@ -152,10 +154,6 @@ float n3D(vec3 p){
 
 
 
-
-#define STATIC
-
-
 // Scene object ID, and individual cell IDs. Used for coloring.
 vec2 cellID; // Individual Voronoi cell IDs.
 
@@ -268,10 +266,8 @@ vec2 gVID;
 //    return v;
 //}
 
-float heightMap(vec2 uv, vec3 p){
+float heightMap(vec2 uv){
 
-    vec2 pp = p.xy;
-    //    pp *= 0.25;
 
     vec3 v3 = texture(uVoroEdgeBufferTexture, uv).rgb;
 
@@ -299,14 +295,12 @@ float heightMap(vec2 uv, vec3 p){
 }
 
 // Back plane height map.
-float m(vec3 p){
+float m(vec3 p, float percent){
 
-    //    vec2 uv = p.xy * 0.5 + 0.5;
-    float aspect = iResolution.x / iResolution.y;
-    vec2 uv = vec2(p.x * 0.5 + 0.5, p.y * aspect * 0.5 + 0.5);
+    vec2 uv = p.xy * 0.5 + 0.5;
 
     // Voronoi heightmap.
-    float h = heightMap(uv, p);
+    float h = heightMap(uv);
 
     //    // A sprinkling of noise.
     //    //    vec3 tx = texture(iChannel1, p.xy*2.).xyz; //tx *= tx;
@@ -319,14 +313,14 @@ float m(vec3 p){
 
     // Adding the height map to the back plane.
     //    return -p.z - (h - .5)*.05;
-    return -p.z - (h - .5)*.25;
+    return -p.z - (h - .5)*.25*percent;
     //    return -p.z - (h - .5)*.5;
 
 }
 
 // Standard normal function. It's not as fast as the tetrahedral calculation,
 // but more symmetrical.
-vec3 nr(in vec3 p) {
+vec3 nr(in vec3 p, float percent) {
 
     //const vec2 e = vec2(.001, 0);
     //return normalize(vec3(map(p + e.xyy) - map(p - e.xyy),
@@ -339,7 +333,7 @@ vec3 nr(in vec3 p) {
     vec3 e = vec3(.0025, 0, 0), mp = e.zzz; // Spalmer's clever zeroing.
     //    for(int i = min(iFrame, 0); i<6; i++){
     for(int i = 0; i<6; i++){
-        mp.x += m(p + sgn*e)*sgn;
+        mp.x += m(p + sgn*e, percent)*sgn;
         sgn = -sgn;
         if((i&1)==1){ mp = mp.yzx; e = e.zxy; }
     }
@@ -347,55 +341,54 @@ vec3 nr(in vec3 p) {
     return normalize(mp);
 }
 
-/*
 // Cheap shadows are hard. In fact, I'd almost say, shadowing particular scenes with
 // limited iterations is impossible... However, I'd be very grateful if someone could
 // prove me wrong. :)
-float softShadow(vec3 ro, vec3 rd, float lDist, float k){
-
-    // More would be nicer. More is always nicer, but not always affordable. :)
-    const int iters = 48;
-
-    float shade = 1.;
-    float t = 0.;
-
-
-    // Max shadow iterations - More iterations make nicer shadows, but slow things down.
-    // Obviously, the lowest number to give a decent shadow is the best one to choose.
-    for (int i = min(iFrame, 0); i<iters; i++){
-
-        float d = m(ro + rd*t);
-
-        shade = min(shade, k*d/t);
-        //shade = min(shade, smoothstep(0., 1., k*h/dist)); // Thanks to IQ for this tidbit.
-        // So many options here, and none are perfect: dist += min(h, .2),
-        // dist += clamp(h, .01, stepDist), etc.
-        t += clamp(d*.8, .01, .25);
-
-
-        // Early exits from accumulative distance function calls tend to be a good thing.
-        if (d<0. || t>lDist) break;
-    }
-
-    // Shadow.
-    return max(shade, 0.);
-}
-*/
+//float softShadow(vec3 ro, vec3 rd, float lDist, float k){
+//
+//    // More would be nicer. More is always nicer, but not always affordable. :)
+//    const int iters = 48;
+//
+//    float shade = 1.;
+//    float t = 0.;
+//
+//
+//    // Max shadow iterations - More iterations make nicer shadows, but slow things down.
+//    // Obviously, the lowest number to give a decent shadow is the best one to choose.
+////    for (int i = min(iFrame, 0); i<iters; i++){
+//    for (int i = 0; i<iters; i++){
+//
+//        float d = m(ro + rd*t, percent);
+//
+//        shade = min(shade, k*d/t);
+//        //shade = min(shade, smoothstep(0., 1., k*h/dist)); // Thanks to IQ for this tidbit.
+//        // So many options here, and none are perfect: dist += min(h, .2),
+//        // dist += clamp(h, .01, stepDist), etc.
+//        t += clamp(d*.8, .01, .25);
+//
+//
+//        // Early exits from accumulative distance function calls tend to be a good thing.
+//        if (d<0. || t>lDist) break;
+//    }
+//
+//    // Shadow.
+//    return max(shade, 0.);
+//}
 
 // I keep a collection of occlusion routines... OK, that sounded really nerdy. :)
 // Anyway, I like this one. I'm assuming it's based on IQ's original.
-float cAO(in vec3 p, in vec3 n)
-{
-    float sca = 3., occ = 0.;
-    for(int i = 0; i<5; i++){
-
-        float hr = .01 + float(i)*.25/4.;
-        float dd = m(n * hr + p);
-        occ += (hr - dd)*sca;
-        sca *= .75;
-    }
-    return clamp(1. - occ, 0., 1.);
-}
+//float cAO(in vec3 p, in vec3 n)
+//{
+//    float sca = 3., occ = 0.;
+//    for(int i = 0; i<5; i++){
+//
+//        float hr = .01 + float(i)*.25/4.;
+//        float dd = m(n * hr + p);
+//        occ += (hr - dd)*sca;
+//        sca *= .75;
+//    }
+//    return clamp(1. - occ, 0., 1.);
+//}
 
 
 /*
@@ -425,38 +418,38 @@ vec3 rotHue(vec3 p, float a){
 // Other usage: Xyptonjtroz: https://www.shadertoy.com/view/4ts3z2
 //
 // spr: sample spread, amp: amplitude, offs: offset.
-float curve(in vec3 p, in float spr, in float amp, in float offs){
-
-    float d = m(p);
-
-    spr /= 450.;
-
-    #if 0
-    // Tetrahedral.
-    vec2 e = vec2(-spr, spr); // Example: ef = .25;
-    float d1 = m(p + e.yxx), d2 = m(p + e.xxy);
-    float d3 = m(p + e.xyx), d4 = m(p + e.yyy);
-    return clamp((d1 + d2 + d3 + d4 - d*4.)/e.y/2.*amp + offs + .5, 0., 1.);
-    #else
-    // Cubic.
-    vec2 e = vec2(spr, 0); // Example: ef = .5;
-    float d1 = m(p + e.xyy), d2 = m(p - e.xyy);
-    float d3 = m(p + e.yxy), d4 = m(p - e.yxy);
-    float d5 = m(p + e.yyx), d6 = m(p - e.yyx);
-
-    #if 1
-    //return clamp((d1 + d2 + d3 + d4 + d5 + d6 - d*6.)/e.x*amp + offs + .05, -.1, .1)/.1;
-    return smoothstep(-.05, .05, (d1 + d2 + d3 + d4 + d5 + d6 - d*6.)/e.x/2.*amp + offs);
-
-    #else
-    d *= 2.;
-    return 1. - smoothstep(-.05, .05, (abs(d1 + d2 - d) + abs(d3 + d4 - d) +
-    abs(d5 + d6 - d))/e.x/2.*amp + offs + .0);
-    #endif
-
-    #endif
-
-}
+//float curve(in vec3 p, in float spr, in float amp, in float offs){
+//
+//    float d = m(p);
+//
+//    spr /= 450.;
+//
+//    #if 0
+//    // Tetrahedral.
+//    vec2 e = vec2(-spr, spr); // Example: ef = .25;
+//    float d1 = m(p + e.yxx), d2 = m(p + e.xxy);
+//    float d3 = m(p + e.xyx), d4 = m(p + e.yyy);
+//    return clamp((d1 + d2 + d3 + d4 - d*4.)/e.y/2.*amp + offs + .5, 0., 1.);
+//    #else
+//    // Cubic.
+//    vec2 e = vec2(spr, 0); // Example: ef = .5;
+//    float d1 = m(p + e.xyy), d2 = m(p - e.xyy);
+//    float d3 = m(p + e.yxy), d4 = m(p - e.yxy);
+//    float d5 = m(p + e.yyx), d6 = m(p - e.yyx);
+//
+//    #if 1
+//    //return clamp((d1 + d2 + d3 + d4 + d5 + d6 - d*6.)/e.x*amp + offs + .05, -.1, .1)/.1;
+//    return smoothstep(-.05, .05, (d1 + d2 + d3 + d4 + d5 + d6 - d*6.)/e.x/2.*amp + offs);
+//
+//    #else
+//    d *= 2.;
+//    return 1. - smoothstep(-.05, .05, (abs(d1 + d2 - d) + abs(d3 + d4 - d) +
+//    abs(d5 + d6 - d))/e.x/2.*amp + offs + .0);
+//    #endif
+//
+//    #endif
+//
+//}
 
 // Simple environment mapping. Pass the reflected vector in and create some
 // colored noise with it. The normal is redundant here, but it can be used
@@ -488,122 +481,75 @@ vec3 eMap(vec3 rd, vec3 sn){
 
 }
 
+vec2 rawCoords(in vec2 screenCoords) {
+    return vec2(screenCoords.x, iResolution.y - screenCoords.y);
+}
+
+vec2 normalizeCoords(in vec2 screenCoords) {
+    return (screenCoords / iResolution.xy) * 2.0 - 1.0;
+}
+
+vec2 fragCoords() {
+    vec2 fragCoord = gl_FragCoord.xy / iResolution.z;
+    return fragCoord;
+}
+
+vec2 normalizedPCoords() {
+    return normalizeCoords(fragCoords());
+}
+
+float heightMod = 1.;
+
 void main(){
 
-    // Coordinates.
-    vec2 fragCoord = gl_FragCoord.xy / iResolution.z;
-//    vec2 u = (fragCoord - iResolution.xy*.5)/iResolution.y;
-        vec2 u = (fragCoord*2.0-iResolution.xy) / (iResolution.y > iResolution.x ? iResolution.y : iResolution.x);
+    vec2 u = normalizedPCoords();
+    vec2 centerForce = normalizeCoords(rawCoords(fCenterForce.xy));
+    vec2 relativeCenterForce = fCenterForceStrengthMod * centerForce;
 
-    vec2 centerForcePixel =vec2(fCenterForce.x, iResolution.y - fCenterForce.y);
-    vec2 centerForce = (centerForcePixel*2.0-iResolution.xy) / iResolution.y;
+    float rad = length(u - relativeCenterForce);
+//    float percent = 1. - rad / 2.;
+    float percent = 1.;
+
+    u *= 0.5;
+//    u -= relativeCenterForce;
 
 
-    //u *= rot2(TAU/24.);
 
-    // TODO
-    //    u *= 1.14;
-
-    // Screen bulge.
-    //u *= 1. + dot(u, u)*.08;
-    //    u *= 1. + dot(u, u)*5.58;
-
-    //    vec3 o = vec3(iTime/8., iTime/16., -1);
-    vec3 o = vec3(0., 0., -1);
-    //    vec3 o = vec3(centerForce, -1);
+    vec3 o = vec3(u, -1);
     vec3 l = vec3(.5, 0, 0);
-
-
-
-
-
-
-
-
-
-    #if FISHEYE_TEST == 1
-
-    vec2 fragCoord2 = gl_FragCoord.xy;
-    float centerForceDist = sqrt(dot2(fragCoord2 - centerForcePixel));
-    float aspect = iResolution.x / iResolution.y;
-    vec2 screenCenter = vec2(0.5, 0.5 / aspect);
-    vec2 dd = u - centerForce;
-    float rrr = sqrt(dot(dd, dd));
-    //    if (r > 1.5) {
-    //        discard;
-    //    }
-    float iR = 1. / rrr;
-    //    float iR = abs(r - 1.*aspect)/1.*aspect;
-    float power = ( TAU ) * .25;
-    //    power = clamp(power*iR, 0.0001, ( PI2 ) * .25);
-    //    float power = ( PI2 ) * .5;
-    //    float power = PI;
-    //    float power = ( PI2 ) * .25 * iR;
-    float rr = rrr * 10.15;
-    //    float bind = screenCenter.x;
-    float bind = 0.5;
-
-    //    p = centerForce + normalize(d) * tan(r * power) * bind / tan( bind * power);
-    //    p = mix(centerForce + normalize(d) * tan(r * power) * bind / tan( bind * power), p, clamp(r, 0.,0.75));
-    //    p = mix(centerForce + normalize(d) * tan(r * power) * bind / tan( bind * power), p, smoothstep(0., 1., r));
-    //    p = mix(centerForce, p, r);
-    //    p = centerForce + normalize(d) * atan(r * -power * 1.0) * bind / atan(-power * bind * 1.0);
-
-    u -= centerForce;
-    //        o.xy -= centerForce;
-    float radius = 1.;
-    float percent = rrr / radius;
-    //        float strength = 0.75;
-    float strength = 0.25;
-    float factor = mix(1.0, smoothstep(0.0, radius / rrr, percent), strength);
-    u *= factor;
-    //        o *= factor;
-    //        o.xy *= factor;
-    //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
-    u += centerForce;
-    //         o.xy += centerForce;
-    #endif
-
-
-    // Unit direction ray.
-    vec3 r = normalize(vec3(u, 1));
-
-
-    // Rotate the unit direction ray, and light to match.
-    //    r.yz *= rot2(.2);
-    //    r.xz *= rot2(-.2);
-    //    l.yz *= rot2(.2);
-    //    l.xz *= rot2(-.2);
     l += o; // Moving the light with the camera.
 
+    // Unit direction ray.
+    vec3 r = normalize(vec3(u, 2));
+//    vec3 r = vec3(u, 1);
 
-    // Standard raymarching routine. Raymarching a slightly perturbed back plane front-on
-    // doesn't usually require many iterations. Unless you rely on your GPU for warmth,
-    // this is a good thing. :)
+    // Standard raymarching routine. Raymarching a slightly perturbed back plane front-on doesn't usually require many iterations.
     float d, t = 0.;
+    // position
+    vec3 p;
 
     //    for(int i=0; i<1;i++){
-    //    for(int i=0; i<40;i++){
-    for(int i=0; i<80;i++){
+//        for(int i=0; i<20;i++){
+    for(int i=0; i<40;i++) {
+//    for(int i=0; i<80;i++){
 
-        d = m(o + r*t);
+        p = o + r*t;
+        d = m(p, percent);
         // There isn't really a far plane to go beyond, but it's there anyway.
         if(abs(d)<.001 || t>FAR) break;
-        //        t += d*.7;
-        //        t += d*.56;
-        t += d*.07;
-        //        t += d*.14;
-        //        t += d*.3;
+//      t += d*.07*percent;
+//      t += d*.07*(1./percent);
+        t += d*.14;
+//      t += d*.28;
 
     }
 
     t = min(t, FAR);
 
-    int svObjID = objID; // Object ID. Unused.
     // Voronoi cell ID.
     vec2 vID = gVID;
 
-    // Set the initial scene color to black.
+    // initial scene color
     vec4 c = vec4(0);
 
     //    uvec4 indices = uvec4(uint(-1));
@@ -612,11 +558,8 @@ void main(){
     // If the ray hits something in the scene, light it up.
     if(t<FAR){
 
-        // Position and normal.
-        vec3 p = o + r*t;
-        //        vec3 p = o + r;
-        //        vec3 p = vec3(u, 0.);
-        vec3 n = nr(p);
+        // normal.
+        vec3 n = nr(p, percent);
 
         l -= p; // Light to surface vector. Ie: Light direction vector.
         float lDist = max(length(l), .001); // Light to surface distance.
@@ -625,28 +568,25 @@ void main(){
 
         // The shadows barely make an impact here, so we may as well
         // save some cycles.
-        float sh = 1.;//softShadow(p + n*.0015, l, lDist, 16.);
+        float sh = 1.;
+//        float sh = softShadow(p + n*.0015, l, lDist, 16.);
 
         // Scene curvature.
-        //float spr = 2., amp = 1., offs = .0;
-        float spr = 2., amp = 1., offs = .0;
-        float crv = curve(p, spr, amp, offs);
+//        float spr = 2., amp = 1., offs = .0;
+//        float crv = curve(p, spr, amp, offs);
 
+
+        vec2 uv = p.xy * 0.5 + 0.5;
 
 
         // Obtain the height map (destorted Voronoi) value, and use it to slightly
         // shade the surface. Gives a more shadowy appearance.
-        //        float hm = heightMap(p);
-
-        float aspect = iResolution.x / iResolution.y;
-        vec2 uv = vec2(p.x * 0.5 + 0.5, p.y * aspect * 0.5 + 0.5);
+        float hm = heightMap(uv);
 
         //        indices = fetchIndices(uv);
         indices = fetchIndices(uv*iResolution.xy);
 
-        float hm = heightMap(uv, p);
-
-
+        int svObjID = objID; // Object ID. Unused.
         // Surface object coloring.
 
         // Voronoi cell coloring. Subtle for this example, but it's there.
@@ -662,7 +602,8 @@ void main(){
         if (svObjID == 1) {
             tx = tex3D(iChannel0, vec3(uv, p.z), n);
         } else {
-            tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
+//            tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
+            tx = texture(uMainOutputTexture, uv).rgb;
         }
 
         vec3 oCol = tx;
@@ -673,7 +614,7 @@ void main(){
 
 
 
-            oCol = mix(oCol, mix(oCol, oCol*cCol*2., .5), step(0., hm - .55));
+//            oCol = mix(oCol, mix(oCol, oCol*cCol*2., .5), step(0., hm - .55));
 
             //oCol = vec3(1)*dot(oCol, vec3(.299, .587, .114));
 
@@ -748,16 +689,18 @@ void main(){
             c.xyz = oCol*(df*vec3(1, .97, .92)*2.*sh + vec3(1, .6, .2)*sp*sh + .1);
             #endif
 
+            c = vec4(pow(c.xyz, vec3(1./1.7)), 1);
+
         } else {
             c.xyz = oCol;
         }
 
         // Apply the curvature based lines.
         //c.xyz *= crv*1. + .35;
-        c.xyz *= 1. - abs(crv - .5)*2.*.8;
+//        c.xyz *= 1. - abs(crv - .5)*2.*.8;
 
         // AO effect
-        c.xyz *= cAO(p, n);
+//        c.xyz *= cAO(p, n);
 
     }
 
@@ -767,7 +710,7 @@ void main(){
 
 
     //    fragColor = vec4(pow(c.xyz, vec3(1./2.2)), 1);
-    outputColor = vec4(pow(c.xyz, vec3(1./1.7)), 1);
+    outputColor = c;
 
 //        outputColor = mix(outputColor, texture(uMainOutputTexture, vUv), 0.5);
 
