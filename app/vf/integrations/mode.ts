@@ -1,8 +1,8 @@
-import { baseLatticeConfig, forceSimulationStepConfigs } from '../config'
+import { baseLatticeConfig } from '../config'
 import { store } from '@/store'
 import { type VoroforceCell, updateUniformsByMode } from '../utils'
 
-import {VOROFORCE_MODE} from "../consts";
+import { VOROFORCE_MODE } from '../consts'
 
 export const revealVoroforceContainer = () => {
   store.getState().container.classList.remove('opacity-0')
@@ -19,26 +19,29 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
       post: postUniforms,
       animating: animatingUniforms,
     },
+    config: {
+      simulation: { forceStepModeConfigs },
+    },
   } = store.getState()
 
   setMode(mode)
-  const forceStepConfig = forceSimulationStepConfigs[mode]
+  const forceStepConfig = forceStepModeConfigs[mode]
   // when switching from select to preview mode, need to up velocityDecay during the transition (voronoi cell propagation speed limits in shader)
   forceStepConfig.parameters.velocityDecay =
     forceStepConfig.parameters.velocityDecayTransitionEnterMode
 
-  if (mode === VOROFORCE_MODE.select) {
-    // renderer.resizeScissor({
-    //   offset: {
-    //     left: 0,
-    //     top: 0,
-    //   },
-    // })
-    // controls.disableFocus()
-    // controls.freezePointerUntilBlurAndRefocus()
-  } else if (mode === VOROFORCE_MODE.preview) {
-    // controls.enableFocus()
-  }
+  // if (mode === VOROFORCE_MODE.select) {
+  //   // renderer.resizeScissor({
+  //   //   offset: {
+  //   //     left: 0,
+  //   //     top: 0,
+  //   //   },
+  //   // })
+  //   // controls.disableFocus()
+  //   // controls.freezePointerUntilBlurAndRefocus()
+  // } else if (mode === VOROFORCE_MODE.preview) {
+  //   // controls.enableFocus()
+  // }
 
   updateUniformsByMode(mainUniforms, mode, animatingUniforms)
   updateUniformsByMode(postUniforms, mode, animatingUniforms)
@@ -60,7 +63,7 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
     // revert to default velocityDecay after the transition (voronoi cell propagation speed limits in shader, see above)
     forceStepConfig.parameters.velocityDecay =
       forceStepConfig.parameters.velocityDecayBase
-    simulation.updateForceStepConfig(forceSimulationStepConfigs[mode])
+    simulation.updateForceStepConfig(forceStepModeConfigs[mode])
 
     // if (mode === 'preview') {
     //   // updateUniforms(mainUniforms, {

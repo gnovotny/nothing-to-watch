@@ -56,7 +56,7 @@ precision highp float;
 #define MEDIA_ROTATE 0
 #define MEDIA_ROTATE_FACTOR 1.
 #define MEDIA_FISHEYE 0
-#define MEDIA_DEBUG_BBOXES 0
+#define MEDIA_BBOX_OVERFLOW_MODE 3 // 0 = debug (red), 1 = clamp edges, 2 = tiles, 3 = flipped tiles
 
 #define EDGES_VISIBLE 1
 #define EDGE_SMIN_SCALING 1
@@ -525,6 +525,21 @@ void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
     c = vec3(r, g, b);
 }
 
+vec2 getMirroredTileUV(vec2 uv, float shrinkAmount) {
+    vec2 tiled = fract(uv);
+
+    // Shrink the tile by the specified amount
+    float halfShrink = shrinkAmount * 0.5;
+    vec2 shrunk = tiled * (1.0 - shrinkAmount) + halfShrink;
+
+    vec2 flipped = 1.0 - shrunk;
+
+    // Determine which tiles should be flipped
+    vec2 shouldFlip = mod(floor(uv), 2.0);
+
+    return mix(shrunk, flipped, shouldFlip);
+}
+
 void mediaColor(inout vec3 c, inout float a, in Plot plot) {
 
     uint index = plot.indices.x;
@@ -540,12 +555,18 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
         rotateMediaTileUv(mediaTileUv, index);
     }
 
-    #if MEDIA_DEBUG_BBOXES == 1  // highlight bbox overflow
+    #if MEDIA_BBOX_OVERFLOW_MODE == 0  // highlight bbox overflow (debug)
         if (mediaTileUv.x < 0.01 || mediaTileUv.x > 0.99 || mediaTileUv.y < 0.01 || mediaTileUv.y > 0.99) {
             c = vec3(1.,0.,0.);
+            return;
         }
-    # else  // obscure bbox inaccuracies and prevent tile bleeding
+    // obscure bbox inaccuracies and prevent tile bleeding
+    #elif MEDIA_BBOX_OVERFLOW_MODE == 1
         mediaTileUv = vec2(clamp(mediaTileUv.x, 0.01, 0.99), clamp(mediaTileUv.y, 0.01, 0.99));
+    #elif MEDIA_BBOX_OVERFLOW_MODE == 2
+        mediaTileUv = fract(mediaTileUv);
+    #elif MEDIA_BBOX_OVERFLOW_MODE == 3
+        mediaTileUv = getMirroredTileUV(mediaTileUv, 0.01);
     #endif
 
     int iMediaVersion = int(mediaVersionTexData(index).x);
@@ -918,15 +939,21 @@ void applyFisheye(inout vec2 p, inout float fisheyeFactor) {
     float sCPercent = clamp(percent * percent, 0., 1.); // flatten the top by increasing min value: float sCPercent = clamp(percent * percent, 0.5, 1.0), zoom everything in by flatten the top by increasing max value: float sCPercent = clamp(percent * percent, 0., 1.5)
     float step = sCPercent * sCPercent * (3.0 - 2.0 * sCPercent);
 
-    // just playing
-    //        step *= step*step*step;
-    //            float step = sCPercent *sCPercent *sCPercent * sCPercent * (3.0 - 2.0  * sCPercent *sCPercent *sCPercent);
+    // Use higher power for more gradual falloff
+//    float step = sCPercent * sCPercent * sCPercent * (6.0 - 5.0 * sCPercent);
+//    float step = sCPercent * sCPercent * (6.0 - 4.0 * sCPercent);
 
-    //            if (percent > 1.) {
-    //                if (step > 0.9999999) {
-    //                    debugFlag = true;
-    //                }
-    //            }
+    // Custom easing with more gradual falloff
+//    float step = pow(sCPercent, 1.5) * (2.0 - sCPercent);
+//    float step = pow(sCPercent, 1.1) * (2.0 - sCPercent);
+
+    // Exponential falloff for very gradual transition
+//    float step = 1.0 - exp(-3.0 * (1.0 - sCPercent));
+
+    // Adjustable falloff curve - increase falloffPower for more gradual transition
+//    float falloffPower = 2.5; // Experiment with values between 1.5 and 4.0
+//    float step = pow(sCPercent, falloffPower);
+
 
     float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
     fisheyeFactor = mix(1.0, step, strength);

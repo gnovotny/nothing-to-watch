@@ -108,7 +108,7 @@ export default {
             },
           },
         },
-        fUnWeightedEffectMod: {
+        fUnweightedEffectMod: {
           animatable: true,
           value: 1,
         },

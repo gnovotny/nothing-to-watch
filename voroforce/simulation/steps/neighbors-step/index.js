@@ -20,7 +20,7 @@ export default class NeighborsSimulationStep extends BaseSimulationStep {
 
   refresh() {
     super.refresh()
-    this.neighborLevels = this.config.latticeNeighborLevels ?? 1
+    this.neighborLevels = this.config.levels ?? 1
     this.neighborsNeedUpdate = true
   }
 

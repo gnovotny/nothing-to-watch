@@ -9,6 +9,19 @@ import midConfig from '../mid/mid'
 import postFrag from './post-high2222-proto5.frag'
 // import postFrag from './post-high3.frag'
 import { mergeConfigs } from '√'
+import { DEFAULT_VOROFORCE_MODE, VOROFORCE_MODE } from '../../consts'
+
+const forceSimulationStepConfigs = {
+  [VOROFORCE_MODE.preview]: {
+    forces: {
+      push: {
+        centerXStretchMod: 0.8,
+      },
+    },
+  },
+  [VOROFORCE_MODE.select]: {},
+  [VOROFORCE_MODE.intro]: {},
+}
 
 export default mergeConfigs(midConfig, {
   cells: 50000,
@@ -19,5 +32,11 @@ export default mergeConfigs(midConfig, {
         voroIndexBuffer: true,
       },
     },
+  },
+  simulation: {
+    steps: {
+      force: forceSimulationStepConfigs[DEFAULT_VOROFORCE_MODE],
+    },
+    forceStepModeConfigs: forceSimulationStepConfigs,
   },
 })

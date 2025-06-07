@@ -1,5 +1,5 @@
 export const defaultNeighborsSimulationStepConfig = {
-  latticeNeighborLevels: 1,
+  levels: 1,
 }
 export const defaultForceSimulationStepConfig = {
   parameters: {

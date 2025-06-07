@@ -108,7 +108,7 @@ uniform float fCenterForceStrengthMod;
 uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
-uniform float fUnWeightedEffectMod;
+uniform float fUnweightedEffectMod;
 uniform float fBaseXDistScale;
 uniform float fWeightedXDistScale;
 uniform bool bMediaDistortion;
@@ -1021,12 +1021,12 @@ void main() {
 //    if (focusCenterDist > 725.) {
 //        c = fBaseColor;
 //    }
-    if (fUnWeightedEffectMod > 0.) {
+    if (fUnweightedEffectMod > 0.) {
 //        if (indices.x != uint(iFocusedIndex)) {
-//            c = mix(c, fBaseColor, 0.7 * fUnWeightedEffectMod);
+//            c = mix(c, fBaseColor, 0.7 * fUnweightedEffectMod);
 //        }
-        c = mix(c, fBaseColor, (1.-UNWEIGHTED_MOD_OPACITY) * fUnWeightedEffectMod * (1.-data.weight));
-        c = toGrayscale(c,UNWEIGHTED_MOD_GRAYSCALE* fUnWeightedEffectMod * (1.-data.weight));
+        c = mix(c, fBaseColor, (1.-UNWEIGHTED_MOD_OPACITY) * fUnweightedEffectMod * (1.-data.weight));
+        c = toGrayscale(c,UNWEIGHTED_MOD_GRAYSCALE* fUnweightedEffectMod * (1.-data.weight));
     }
 
     #if GRAYSCALE != 0

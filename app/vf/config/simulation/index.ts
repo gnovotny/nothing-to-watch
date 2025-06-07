@@ -6,7 +6,8 @@ export default {
   steps: {
     force: forceSimulationStepConfigs[DEFAULT_VOROFORCE_MODE],
     neighbors: {
-      latticeNeighborLevels: 3,
+      levels: 1,
     },
   },
+  forceStepModeConfigs: forceSimulationStepConfigs,
 }

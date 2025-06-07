@@ -37,21 +37,27 @@ export default class ForcesSimulationStep extends BaseSimulationStep {
 
   handleForcesConfig() {
     this.forces = []
-    let force
-    this.config.forces?.forEach(({ type, enabled, ...config }, index) => {
-      if (!enabled || !type) return
-      force = forceFunctions[type]?.({
+    const forcesConfig = this.config.forces
+      ? Array.isArray(this.config.forces)
+        ? this.config.forces
+        : [this.config.forces]
+      : []
+
+    forcesConfig.forEach((forceConfig, index) => {
+      if ('enabled' in forceConfig && !forceConfig.enabled) return
+
+      const force = forceFunctions[forceConfig.type ?? 'omni']?.({
         cells: this.cells,
         links: this.links,
         dimensions: this.dimensions,
         pointer: this.pointer,
         sharedData: this.sharedData,
-        config: config,
+        config: forceConfig,
         simulationStepConfig: this.config,
         simulationConfig: this.simulationConfig,
         globalConfig: this.globalConfig,
         handleEnd:
-          index === this.config.forces.length - 1
+          index === forcesConfig.length - 1
             ? this.handleEnd.bind(this)
             : undefined,
       })
