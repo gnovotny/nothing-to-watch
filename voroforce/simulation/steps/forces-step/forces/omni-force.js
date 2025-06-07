@@ -246,6 +246,7 @@ export const omniForce = ({
     nextPrimaryCellIndex,
     prevPrimaryCell,
     slowIdlePrimaryCellMod = 1,
+    easedSlowIdlePrimaryCellModComplement = 0,
     idlePrimaryCellMod = 1,
     primaryCellX,
     primaryCellY,
@@ -306,7 +307,7 @@ export const omniForce = ({
       sharedData.centerForceStrengthMod,
       min(basePushDistMod / 1.125, 1),
       // centerLerp,
-      defaultLerpFactor,
+      defaultLerpFactor * 4,
     )
   }
 
@@ -341,6 +342,8 @@ export const omniForce = ({
 
       slowIdlePrimaryCellMod = 0
       idlePrimaryCellMod = 0
+      // verySlowPointerMod = 0
+      // slowPointerMod = 0
     }
   }
 
@@ -424,13 +427,21 @@ export const omniForce = ({
         complementPointerSpeedScale,
     )
 
+    easedSlowIdlePrimaryCellModComplement = minLerp(
+      easedSlowIdlePrimaryCellModComplement,
+      1 - slowIdlePrimaryCellMod,
+      defaultLerpFactor,
+    )
+
     idlePrimaryCellMod = minLerp(idlePrimaryCellMod, 1, defaultLerpFactor * 4)
+    // idlePrimaryCellMod = minLerp(idlePrimaryCellMod, 1, defaultLerpFactor)
 
     primaryCellX = primaryCell.localX + primaryCell.vx
     primaryCellY = primaryCell.localY + primaryCell.vy
 
     // todo tmp?
     if (smoothPrimaryCell && idlePrimaryCellMod < 1) {
+      // console.log('idlePrimaryCellMod', idlePrimaryCellMod)
       primaryCellX = lerp(prevPrimaryCellX, primaryCellX, idlePrimaryCellMod)
       primaryCellY = lerp(prevPrimaryCellY, primaryCellY, idlePrimaryCellMod)
     }
@@ -513,7 +524,8 @@ export const omniForce = ({
     primaryCellPushFactorX =
       primaryCellPushFactorY =
       primaryCellPushFactor =
-        min(centerDistRatio, 1) * (1 - slowIdlePrimaryCellMod)
+        // min(centerDistRatio, 1) * (1 - slowIdlePrimaryCellMod)
+        min(centerDistRatio, 1) * easedSlowIdlePrimaryCellModComplement
 
     if (breathing) {
       breathingTimestamp = performance.now()
