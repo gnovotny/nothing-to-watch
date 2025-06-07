@@ -536,7 +536,8 @@ void main(){
 
 //    vec3 o = vec3(u, -1);
     vec3 o = vec3(mix(u, relativeCenterForce, percent), -1);
-    vec3 l = vec3(.5, 0, 0);
+//    vec3 l = vec3(.5, 0, 0);
+    vec3 l = vec3(0, 0, 4.5);
     l += o; // Moving the light with the camera.
 
 //    u -= mix(vec2(0.), relativeCenterForce, percent);
@@ -553,7 +554,7 @@ void main(){
     // position
     vec3 p;
 
-    float iterations = 40. * percent;
+    float iterations = 80. * percent;
     float flooredIterations = floor(iterations);
 
     float tAddition = 0.;
@@ -651,7 +652,8 @@ void main(){
         //                tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
 
         if (svObjID == 1) {
-            tx = tex3D(iChannel0, vec3(uv, p.z), n);
+//            tx = tex3D(iChannel0, vec3(uv, p.z), n);
+            tx = vec3(0.05);
         } else {
 //            tx = tex3D(uMainOutputTexture, vec3(uv, p.z), n);
             tx = texture(uMainOutputTexture, uv).rgb;
