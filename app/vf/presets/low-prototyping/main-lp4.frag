@@ -26,9 +26,10 @@ precision highp float;
 #define PIXEL_SEARCH_FULL_RANDOM 0
 
 #define FISHEYE 1
+#define FISHEYE_MULTIPLE 1
+#define FISHEYE_BLEND_MODE 1
 #define FISHEYE_BASE_STRENGTH .5
 #define FISHEYE_BASE_RADIUS 1.
-#define FISHEYE_SQUARED 1
 
 //#define WEIGHTED_DIST 1
 #define WEIGHTED_DIST 0
@@ -122,6 +123,10 @@ uniform vec3 fBaseColor;
 uniform vec2 fPointer;
 uniform vec2 fCenterForce;
 uniform float fCenterForceStrengthMod;
+uniform vec2 fCenterForce2;
+uniform float fCenterForceStrengthMod2;
+uniform vec2 fCenterForce3;
+uniform float fCenterForceStrengthMod3;
 uniform bool bDrawEdges;
 uniform bool bVoroEdgeBufferOutput;
 uniform bool bPixelSearch;
@@ -147,6 +152,7 @@ struct Plot {
     vec4 mediaBbox;
     float cellScale;
     float weight;
+    float fisheyeFactor;
     bool debugFlag;
 };
 
@@ -479,15 +485,48 @@ void initNumCellsScale() {
 
 vec2 centerForce;
 vec2 centerForceCoords;
+vec2 centerForce2;
+vec2 centerForceCoords2;
+vec2 centerForce3;
+vec2 centerForceCoords3;
 void initCenterForce() {
     centerForce = rawCoords(fCenterForce);
     centerForceCoords = aspectCoords(centerForce);
+    centerForce2 = rawCoords(fCenterForce2);
+    centerForceCoords2 = aspectCoords(centerForce2);
+    centerForce3 = rawCoords(fCenterForce3);
+    centerForceCoords3 = aspectCoords(centerForce3);
 }
+
+#if FISHEYE == 1
+float fisheyeRadius;
+float fisheyeStrength;
+#if FISHEYE_MULTIPLE == 1
+float fisheyeRadius2;
+float fisheyeStrength2;
+float fisheyeRadius3;
+float fisheyeStrength3;
+#endif
+void initFisheye() {
+    fisheyeRadius = FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod;
+    fisheyeStrength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
+
+    #if FISHEYE_MULTIPLE == 1
+        fisheyeRadius2 = FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod2;
+        fisheyeStrength2 = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod2;
+        fisheyeRadius3 = FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod3;
+        fisheyeStrength3 = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod3;
+    #endif
+}
+#endif
 
 void initGlobals() {
     initResolutionScale();
     initNumCellsScale();
     initCenterForce();
+    #if FISHEYE == 1
+        initFisheye();
+    #endif
 }
 /* GLOBALS END */
 
@@ -641,32 +680,78 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
 
 }
 
-void applyMediaBboxFisheye(inout vec2 cellNCoords, inout float reciprocalMediaFisheyeFactor, in vec2 cellCoords, in float fisheyeFactor) {
-    if (fCenterForceFishEyeStrength == 0. || fCenterForceFishEyeRadius == 0.) return;
+#if FISHEYE == 1
+float fisheyeSmoothstep(float a) {
+    float x = clamp(a * a, 0., 1.);
 
-    bool mediaFisheye = MEDIA_FISHEYE == 1 || bMediaDistortion;
-    if (mediaFisheye) {
-        reciprocalMediaFisheyeFactor = 1./ fisheyeFactor;
+    if (x > .5) {
+        return x * x * x/(3.0*x*x-3.0*x+1.0);
     } else {
-        // vec2 d = cellNCoords - centerForceNCoords;
-        vec2 d = cellCoords - centerForceCoords;
-        # if FISHEYE_SQUARED == 1
-            float r = length(d);
-            float percent = r / (FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod);
-        # else
-            float r = dot2(d);
-            float percent = r / pow(FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod, 2.0);
-        # endif
+        return x * x * x * (x * (6. * x - 15.) + 10.);
+    }
 
-        float step = smoothstep(0.0, 1. / percent, percent);
+//    return x * x * (3.0 - 2.0 * x); // equivalent to: return smoothstep(0.0, 1. / percent, percent);
+    return x * x * x * (x * (6. * x - 15.) + 10.); // smootherstep (wiki), also (IQ: Quintic Polynomial)
+//    return x * x * x/(3.0*x*x-3.0*x+1.0); // IQ: cubic rational
 
-        float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
-        reciprocalMediaFisheyeFactor = 1./ mix(1.0, step, strength);
+//    return pow(x, 1.5) * (2.0 - x); // Custom easing with more gradual falloff
+//    return 1.0 - exp(-3.0 * (1.0 - x)); // Exponential falloff for very gradual transition
+//    return pow(x, 2.5); // Adjustable falloff curve - increase falloffPower for more gradual transition
+}
+
+#if FISHEYE_MULTIPLE == 1
+// Different blend modes for combining bulges
+float blendBulges(float a, float b) {
+    #if FISHEYE_BLEND_MODE == 1
+//        return min(a, b); // Min
+        return smin(a, b, 0.1); // Min
+    #elif FISHEYE_BLEND_MODE == 2
+        return a * b; // Multiply
+    #elif FISHEYE_BLEND_MODE == 3
+        return a + b - a * b; // Screen
+    #else
+        return a + b; // Additive
+    #endif
+}
+#endif
+
+void applyFisheye(inout vec2 p, inout float fisheyeFactor) {
+    if (fisheyeRadius == 0.) return;
+
+    float edge = length(p - centerForceCoords) / fisheyeRadius;
+    fisheyeFactor = mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength);
+
+    #if FISHEYE_MULTIPLE == 1
+        edge = length(p - centerForceCoords2) / fisheyeRadius2;
+        fisheyeFactor = blendBulges(fisheyeFactor, mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength2));
+        edge = length(p - centerForceCoords3) / fisheyeRadius3;
+        fisheyeFactor = blendBulges(fisheyeFactor, mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength3));
+    #endif
+
+    p = (p - centerForceCoords) * fisheyeFactor + centerForceCoords;
+}
+
+void applyMediaBboxFisheye(inout vec2 cellNCoords, inout float reciprocalMediaFisheyeFactor, in vec2 cellCoords, in float fisheyeFactor) {
+    if (fisheyeRadius == 0.) return;
+
+    if (MEDIA_FISHEYE == 1 || bMediaDistortion) {
+        reciprocalMediaFisheyeFactor = 1. / fisheyeFactor;
+    } else {
+        float edge = length(cellCoords - centerForceCoords) / fisheyeRadius;
+        reciprocalMediaFisheyeFactor = 1. / mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength);
+
+        #if FISHEYE_MULTIPLE == 1
+            edge = length(cellCoords - centerForceCoords2) / fisheyeRadius2;
+            reciprocalMediaFisheyeFactor = blendBulges(reciprocalMediaFisheyeFactor,  1. / mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength2));
+            edge = length(cellCoords - centerForceCoords3) / fisheyeRadius3;
+            reciprocalMediaFisheyeFactor = blendBulges(reciprocalMediaFisheyeFactor,  1. / mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength3));
+        #endif
     }
 
     vec2 centerForceNCoords = normalizeCoords(centerForce);
     cellNCoords = (cellNCoords - centerForceNCoords) * reciprocalMediaFisheyeFactor + centerForceNCoords;
 }
+#endif
 
 void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in float fisheyeFactor, in float edgeBorder) {
     vec2 midSum = vec2(0.0);
@@ -919,51 +1004,7 @@ Plot init(vec2 p) {
         indices.x = (row-1u) * uint(iLatticeCols) + col;
     }
 
-    return Plot(indices, uvec4(uint(-1)), vec2(0.), 0., vec4(0.), 0., 0., false);
-}
-
-void applyFisheye(inout vec2 p, inout float fisheyeFactor) {
-    if (fCenterForceFishEyeStrength == 0. || fCenterForceFishEyeRadius == 0.) return;
-
-    vec2 d = p - centerForceCoords;
-    # if FISHEYE_SQUARED == 1
-        // float r = sqrt(dot2(d));
-        float r = length(d); // length(v) is more or less equivalent to sqrt(dot2(d)) (might be optimized), or 1.0 / inversesqrt(dot(v, v))
-        float percent = r / (FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod);
-    # else // has straighter borders when not "squared"
-        float r = dot2(d);
-        float percent = r / pow(FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod, 2.0);
-    # endif
-
-    // next 2 lines equivalent to: float step = smoothstep(0.0, 1. / percent, percent);
-    float sCPercent = clamp(percent * percent, 0., 1.); // flatten the top by increasing min value: float sCPercent = clamp(percent * percent, 0.5, 1.0), zoom everything in by flatten the top by increasing max value: float sCPercent = clamp(percent * percent, 0., 1.5)
-    float step = sCPercent * sCPercent * (3.0 - 2.0 * sCPercent);
-
-    // Use higher power for more gradual falloff
-//    float step = sCPercent * sCPercent * sCPercent * (6.0 - 5.0 * sCPercent);
-//    float step = sCPercent * sCPercent * (6.0 - 4.0 * sCPercent);
-
-    // Custom easing with more gradual falloff
-//    float step = pow(sCPercent, 1.5) * (2.0 - sCPercent);
-//    float step = pow(sCPercent, 1.1) * (2.0 - sCPercent);
-
-    // Exponential falloff for very gradual transition
-//    float step = 1.0 - exp(-3.0 * (1.0 - sCPercent));
-
-    // Adjustable falloff curve - increase falloffPower for more gradual transition
-//    float falloffPower = 2.5; // Experiment with values between 1.5 and 4.0
-//    float step = pow(sCPercent, falloffPower);
-
-
-    float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
-    fisheyeFactor = mix(1.0, step, strength);
-
-    p -= centerForceCoords;
-    //            p *= normalize(d) * fisheyeFactor;
-    p *= fisheyeFactor;
-    p += centerForceCoords;
-
-    //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
+    return Plot(indices, uvec4(uint(-1)), vec2(0.), 0., vec4(0.), 0., 0., 1., false);
 }
 
 void calcIndices(inout uvec4 indices, inout uvec4 indices2, inout uint neighborsPosition, in vec2 p, in uint index, in float weightOffsetScale, in float prevMaxWeight) {
@@ -1104,7 +1145,7 @@ Plot plot() {
 //    float edgeStep = smoothstep(borderSmoothness, borderThickness, edge.x);
     float edgeStep = smoothstep(edgeStepStart, edgeStepEnd, edge.x);
 
-    return Plot(indices, indices2, edge, edgeStep, mediaBbox, cellScale, weight, debugFlag);
+    return Plot(indices, indices2, edge, edgeStep, mediaBbox, cellScale, weight, fisheyeFactor, debugFlag);
 }
 
 #if EDGES_VISIBLE == 1
@@ -1152,6 +1193,7 @@ void colorOutput(in vec3 c, in float a, in Plot plot) {
         voroIndexBuffer2Color = uintBitsToFloat(plot.indices2 + 1u);
     #endif
     outputColor = vec4(c, a);
+//    outputColor = vec4(vec3(plot.fisheyeFactor), a);
     if (bVoroEdgeBufferOutput) {
         voroEdgeBufferColor = vec3(plot.edge, plot.cellScale);
     }

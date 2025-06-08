@@ -6,7 +6,7 @@ import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
 import { NoDepthMultiRenderTarget } from './utils/no-depth-multi-render-target'
 import { VirtualMediaGridArrayTexture } from './utils/virtual-media-grid-array-texture'
 import { readPixelsAsync } from './utils/read-pixels-async'
-import { easedMinLerp } from '../../utils'
+import { lerp } from '../../utils'
 
 export default class BaseScene {
   mainRenderTargets = null
@@ -79,9 +79,7 @@ export default class BaseScene {
 
       this.baseUniforms.iTime.value = this.ticker.elapsed / 1000
       this.baseUniforms.fPointer.value = this.getPointer()
-      this.baseUniforms.fCenterForce.value = this.getCenterForce()
-      this.baseUniforms.fCenterForceStrengthMod.value =
-        this.sharedData?.centerForceStrengthMod ?? 0
+      this.updateCenterForceUniforms()
     }
 
     this.beforeUpdateCustom()
@@ -174,6 +172,11 @@ export default class BaseScene {
     if (!this.config.main?.enabled) return
 
     this.mainProgram.uniforms.iResolution.value = this.resolutionUniform
+
+    if (this.baseUniforms) {
+      this.resetCenterForceUniforms()
+    }
+
     this.mainRenderTargets?.forEach((target) =>
       target.setSize(this.app.canvas.width, this.app.canvas.height),
     )
@@ -400,43 +403,81 @@ export default class BaseScene {
     ]
   }
 
-  // getCenterForce() {
-  //   const centerX = this.sharedData?.centerForceX ?? 0
-  //   const centerY = this.sharedData?.centerForceY ?? 0
-  //   return [centerX, centerY]
-  // }
-
   getCenterForce() {
     return [
       !Number.isNaN(this.sharedData?.centerForceX) &&
       this.sharedData?.centerForceX
-          ? this.sharedData.centerForceX
-          : this.dimensions.width / 2,
+        ? this.sharedData.centerForceX
+        : this.dimensions.width / 2,
       !Number.isNaN(this.sharedData?.centerForceY) &&
       this.sharedData?.centerForceY
-          ? this.sharedData.centerForceY
-          : this.dimensions.height / 2,
+        ? this.sharedData.centerForceY
+        : this.dimensions.height / 2,
     ]
+  }
 
-    // this.targetCenterForce = [
-    //   !Number.isNaN(this.sharedData?.centerForceX) &&
-    //   this.sharedData?.centerForceX
-    //     ? this.sharedData.centerForceX
-    //     : this.dimensions.width / 2,
-    //   !Number.isNaN(this.sharedData?.centerForceY) &&
-    //   this.sharedData?.centerForceY
-    //     ? this.sharedData.centerForceY
-    //     : this.dimensions.height / 2,
-    // ]
-    //
-    // this.centerForce = this.centerForce
-    //   ? [
-    //       easedMinLerp(this.centerForce[0], this.targetCenterForce[0], 0.05),
-    //       easedMinLerp(this.centerForce[1], this.targetCenterForce[1], 0.05),
-    //     ]
-    //   : this.targetCenterForce
-    //
-    // return this.centerForce
+  getCenterForceStrengthMod() {
+    return this.sharedData?.centerForceStrengthMod ?? 0
+  }
+
+  initCenterForceUniforms() {
+    const centerForce = this.getCenterForce()
+    const centerForceStrengthMod = this.getCenterForceStrengthMod()
+    return {
+      fCenterForce: { value: centerForce },
+      fCenterForceStrengthMod: {
+        value: centerForceStrengthMod,
+      },
+      fCenterForce2: { value: centerForce },
+      fCenterForceStrengthMod2: {
+        value: centerForceStrengthMod,
+      },
+      fCenterForce3: { value: centerForce },
+      fCenterForceStrengthMod3: {
+        value: centerForceStrengthMod,
+      },
+    }
+  }
+
+  updateCenterForceUniforms() {
+    const centerForce = this.getCenterForce()
+    const centerForceStrengthMod = this.getCenterForceStrengthMod()
+
+    this.baseUniforms.fCenterForce.value = centerForce
+    this.baseUniforms.fCenterForceStrengthMod.value = centerForceStrengthMod
+
+    this.baseUniforms.fCenterForce2.value = [
+      lerp(this.baseUniforms.fCenterForce2.value[0], centerForce[0], 0.25),
+      lerp(this.baseUniforms.fCenterForce2.value[1], centerForce[1], 0.25),
+    ]
+    this.baseUniforms.fCenterForceStrengthMod2.value = lerp(
+      this.baseUniforms.fCenterForceStrengthMod2.value,
+      centerForceStrengthMod,
+      0.25,
+    )
+
+    this.baseUniforms.fCenterForce3.value = [
+      lerp(this.baseUniforms.fCenterForce3.value[0], centerForce[0], 0.125),
+      lerp(this.baseUniforms.fCenterForce3.value[1], centerForce[1], 0.125),
+    ]
+    this.baseUniforms.fCenterForceStrengthMod3.value = lerp(
+      this.baseUniforms.fCenterForceStrengthMod3.value,
+      centerForceStrengthMod,
+      0.025,
+    )
+  }
+
+  // todo resetting too early?
+  resetCenterForceUniforms() {
+    const centerForce = this.getCenterForce()
+    const centerForceStrengthMod = this.getCenterForceStrengthMod()
+
+    this.baseUniforms.fCenterForce.value = centerForce
+    this.baseUniforms.fCenterForceStrengthMod.value = centerForceStrengthMod
+    this.baseUniforms.fCenterForce2.value = centerForce
+    this.baseUniforms.fCenterForceStrengthMod2.value = centerForceStrengthMod
+    this.baseUniforms.fCenterForce3.value = centerForce
+    this.baseUniforms.fCenterForceStrengthMod3.value = centerForceStrengthMod
   }
 
   initBaseUniforms() {
@@ -452,10 +493,7 @@ export default class BaseScene {
         },
         iTime: { value: 0 },
         fPointer: { value: this.getPointer() },
-        fCenterForce: { value: this.getCenterForce() },
-        fCenterForceStrengthMod: {
-          value: this.sharedData?.centerForceStrengthMod ?? 0,
-        },
+        ...this.initCenterForceUniforms(),
       }
     }
 
