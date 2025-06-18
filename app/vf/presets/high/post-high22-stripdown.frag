@@ -24,7 +24,7 @@ layout(location = 1) out vec4 voroIndexBufferColor;
 
 #define TAU 6.2831853
 
-#define FISHEYE_TEST 0
+#define BULGE_TEST 0
 
 ////////////////
 

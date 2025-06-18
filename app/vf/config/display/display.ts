@@ -1,7 +1,7 @@
 import { THEME } from '../../../consts'
 import { VOROFORCE_MODE } from '../../consts'
 // import mainFrag from './main.frag'
-import mainFrag from './../../presets/low-prototyping/main-lp4.frag'
+import mainFrag from './../../presets/low-prototyping/main-lp5.frag'
 
 export default {
   scene: {
@@ -59,7 +59,7 @@ export default {
             },
           },
         },
-        fCenterForceFishEyeStrength: {
+        fCenterForceBulgeStrength: {
           animatable: true,
           initial: {
             value: 0,
@@ -78,7 +78,7 @@ export default {
             },
           },
         },
-        fCenterForceFishEyeRadius: {
+        fCenterForceBulgeRadius: {
           animatable: true,
           initial: {
             value: 0,

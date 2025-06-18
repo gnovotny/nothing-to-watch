@@ -24,7 +24,7 @@ layout(location = 1) out vec4 voroIndexBufferColor;
 
 #define TAU 6.2831853
 
-#define FISHEYE_TEST 0
+#define BULGE_TEST 0
 
 ////////////////
 
@@ -520,7 +520,7 @@ void main(){
 
 
 
-    #if FISHEYE_TEST == 1
+    #if BULGE_TEST == 1
 
     vec2 fragCoord2 = gl_FragCoord.xy;
     float centerForceDist = sqrt(dot2(fragCoord2 - centerForcePixel));

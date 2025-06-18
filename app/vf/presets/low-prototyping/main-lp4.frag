@@ -25,11 +25,13 @@ precision highp float;
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
 
-#define FISHEYE 1
-#define FISHEYE_MULTIPLE 1
-#define FISHEYE_BLEND_MODE 1
-#define FISHEYE_BASE_STRENGTH .5
-#define FISHEYE_BASE_RADIUS 1.
+#define BULGE 1
+#define BULGE_BLENDING 1
+#define BULGE_BLEND_MODE 1
+#define BULGE_BASE_STRENGTH .5
+#define BULGE_BASE_RADIUS 1.
+
+#define NOISE 1
 
 //#define WEIGHTED_DIST 1
 #define WEIGHTED_DIST 0
@@ -56,7 +58,7 @@ precision highp float;
 #define MEDIA_ASPECT 1.5
 #define MEDIA_ROTATE 0
 #define MEDIA_ROTATE_FACTOR 1.
-#define MEDIA_FISHEYE 0
+#define MEDIA_BULGE 0
 #define MEDIA_BBOX_OVERFLOW_MODE 3 // 0 = debug (red), 1 = clamp edges, 2 = tiles, 3 = flipped tiles
 
 #define EDGES_VISIBLE 1
@@ -116,8 +118,8 @@ uniform int iForcedMaxNeighborLevel;
 uniform float fBorderRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
-uniform float fCenterForceFishEyeStrength;
-uniform float fCenterForceFishEyeRadius;
+uniform float fCenterForceBulgeStrength;
+uniform float fCenterForceBulgeRadius;
 uniform float fWeightOffsetScaleMod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
@@ -152,7 +154,7 @@ struct Plot {
     vec4 mediaBbox;
     float cellScale;
     float weight;
-    float fisheyeFactor;
+    float bulgeFactor;
     bool debugFlag;
 };
 
@@ -485,37 +487,42 @@ void initNumCellsScale() {
 
 vec2 centerForce;
 vec2 centerForceCoords;
+#if BULGE_BLENDING == 1
 vec2 centerForce2;
 vec2 centerForceCoords2;
 vec2 centerForce3;
 vec2 centerForceCoords3;
+#endif
 void initCenterForce() {
     centerForce = rawCoords(fCenterForce);
     centerForceCoords = aspectCoords(centerForce);
-    centerForce2 = rawCoords(fCenterForce2);
-    centerForceCoords2 = aspectCoords(centerForce2);
-    centerForce3 = rawCoords(fCenterForce3);
-    centerForceCoords3 = aspectCoords(centerForce3);
+
+    #if BULGE_BLENDING == 1
+        centerForce2 = rawCoords(fCenterForce2);
+        centerForceCoords2 = aspectCoords(centerForce2);
+        centerForce3 = rawCoords(fCenterForce3);
+        centerForceCoords3 = aspectCoords(centerForce3);
+    #endif
 }
 
-#if FISHEYE == 1
-float fisheyeRadius;
-float fisheyeStrength;
-#if FISHEYE_MULTIPLE == 1
-float fisheyeRadius2;
-float fisheyeStrength2;
-float fisheyeRadius3;
-float fisheyeStrength3;
+#if BULGE == 1
+float bulgeRadius;
+float bulgeStrength;
+#if BULGE_BLENDING == 1
+float bulgeRadius2;
+float bulgeStrength2;
+float bulgeRadius3;
+float bulgeStrength3;
 #endif
-void initFisheye() {
-    fisheyeRadius = FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod;
-    fisheyeStrength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
+void initBulge() {
+    bulgeRadius = BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod;
+    bulgeStrength = BULGE_BASE_STRENGTH * fCenterForceBulgeStrength * fCenterForceStrengthMod;
 
-    #if FISHEYE_MULTIPLE == 1
-        fisheyeRadius2 = FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod2;
-        fisheyeStrength2 = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod2;
-        fisheyeRadius3 = FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod3;
-        fisheyeStrength3 = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod3;
+    #if BULGE_BLENDING == 1
+        bulgeRadius2 = BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod2;
+        bulgeStrength2 = BULGE_BASE_STRENGTH * fCenterForceBulgeStrength * fCenterForceStrengthMod2;
+        bulgeRadius3 = BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod3;
+        bulgeStrength3 = BULGE_BASE_STRENGTH * fCenterForceBulgeStrength * fCenterForceStrengthMod3;
     #endif
 }
 #endif
@@ -524,8 +531,8 @@ void initGlobals() {
     initResolutionScale();
     initNumCellsScale();
     initCenterForce();
-    #if FISHEYE == 1
-        initFisheye();
+    #if BULGE == 1
+        initBulge();
     #endif
 }
 /* GLOBALS END */
@@ -680,8 +687,84 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
 
 }
 
-#if FISHEYE == 1
-float fisheyeSmoothstep(float a) {
+#if NOISE == 1
+
+const float u_noiseScale1 = 1.;
+const float u_noiseScale2 = 1.;
+const float u_noiseScale3 = 1.;
+//const float u_flowIntensity = 1.;
+const float u_flowIntensity = 0.;
+
+// Improved noise function (simplified Perlin-like noise)
+vec3 permute(vec3 x) {
+    return mod(((x * 34.0) + 1.0) * x, 289.0);
+}
+
+float snoise(vec2 v) {
+    const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+    vec2 i = floor(v + dot(v, C.yy));
+    vec2 x0 = v - i + dot(i, C.xx);
+    vec2 i1;
+    i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+
+    i = mod(i, 289.0);
+    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+
+    vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+    m = m * m;
+    m = m * m;
+
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 ox = floor(x + 0.5);
+    vec3 a0 = x - ox;
+
+    m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+
+    vec3 g;
+    g.x = a0.x * x0.x + h.x * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+}
+
+// Multi-octave noise for more organic patterns
+float fbm(vec2 p, float time) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    float frequency = 1.0;
+
+    // First octave - large scale features
+    value += amplitude * snoise(p * frequency * u_noiseScale1 + vec2(time * 0.3, time * 0.2));
+    amplitude *= 0.5;
+    frequency *= 2.0;
+
+    //    // Second octave - medium scale details
+    //    value += amplitude * snoise(p * frequency * u_noiseScale2 + vec2(time * 0.5, -time * 0.3));
+    //    amplitude *= 0.5;
+    //    frequency *= 2.0;
+    //
+    //    // Third octave - fine details
+    //    value += amplitude * snoise(p * frequency * u_noiseScale3 + vec2(-time * 0.7, time * 0.6));
+
+    return value;
+}
+
+// Generate flow field from noise
+vec2 getFlowField(vec2 p, float time) {
+    // Use different noise samples for x and y components
+    float noiseX = snoise(p * u_noiseScale2 + vec2(time * 0.4, 100.0));
+    float noiseY = snoise(p * u_noiseScale2 + vec2(200.0, time * 0.3));
+
+    return vec2(noiseX, noiseY) * u_flowIntensity;
+}
+
+#endif
+
+#if BULGE == 1
+
+float bulgeSmoothstep(float a) {
     float x = clamp(a * a, 0., 1.);
 
     if (x > .5) {
@@ -699,15 +782,15 @@ float fisheyeSmoothstep(float a) {
 //    return pow(x, 2.5); // Adjustable falloff curve - increase falloffPower for more gradual transition
 }
 
-#if FISHEYE_MULTIPLE == 1
+#if BULGE_BLENDING == 1
 // Different blend modes for combining bulges
 float blendBulges(float a, float b) {
-    #if FISHEYE_BLEND_MODE == 1
+    #if BULGE_BLEND_MODE == 1
 //        return min(a, b); // Min
         return smin(a, b, 0.1); // Min
-    #elif FISHEYE_BLEND_MODE == 2
+    #elif BULGE_BLEND_MODE == 2
         return a * b; // Multiply
-    #elif FISHEYE_BLEND_MODE == 3
+    #elif BULGE_BLEND_MODE == 3
         return a + b - a * b; // Screen
     #else
         return a + b; // Additive
@@ -715,51 +798,72 @@ float blendBulges(float a, float b) {
 }
 #endif
 
-void applyFisheye(inout vec2 p, inout float fisheyeFactor) {
-    if (fisheyeRadius == 0.) return;
+void applyBulge(inout vec2 p, inout float bulgeFactor) {
+    if (bulgeRadius == 0.) return;
 
-    float edge = length(p - centerForceCoords) / fisheyeRadius;
-    fisheyeFactor = mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength);
+    float edge = length(p - centerForceCoords) / bulgeRadius;
+    bulgeFactor = mix(1.0, bulgeSmoothstep(edge), bulgeStrength);
 
-    #if FISHEYE_MULTIPLE == 1
-        edge = length(p - centerForceCoords2) / fisheyeRadius2;
-        fisheyeFactor = blendBulges(fisheyeFactor, mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength2));
-        edge = length(p - centerForceCoords3) / fisheyeRadius3;
-        fisheyeFactor = blendBulges(fisheyeFactor, mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength3));
+    #if BULGE_BLENDING == 1
+        edge = length(p - centerForceCoords2) / bulgeRadius2;
+        bulgeFactor = blendBulges(bulgeFactor, mix(1.0, bulgeSmoothstep(edge), bulgeStrength2));
+        edge = length(p - centerForceCoords3) / bulgeRadius3;
+        bulgeFactor = blendBulges(bulgeFactor, mix(1.0, bulgeSmoothstep(edge), bulgeStrength3));
     #endif
 
-    p = (p - centerForceCoords) * fisheyeFactor + centerForceCoords;
+    #if NOISE == 1
+            // Generate multi-octave noise for strength modulation
+        float noise = fbm(p, iTime);
+
+        // Generate flow field for directional variation
+        //    vec2 flowField = getFlowField(uv, time);
+
+        // Modulate bulge strength with noise
+        //    float modulatedStrength = u_bulgeStrength * (1.0 + strengthNoise * u_noiseStrength);
+        //    float modulatedStrength = bulgeFactor * (1.0 + strengthNoise * 0.47);
+        bulgeFactor *= (1.0 + noise * 0.47);
+    #endif
+
+//    vec2 uvCoords = p * 0.5 + 0.5;
+//    vec2 flowField = getFlowField(uvCoords, iTime);
+//    vec2 baseDirection = normalize(centerForceCoords - p);
+//    vec2 flowDirection = normalize(flowField);
+//    vec2 finalDirection = normalize(baseDirection + flowDirection * u_flowIntensity);
+//    p += finalDirection * bulgeFactor;
+
+    p = (p - centerForceCoords) * bulgeFactor + centerForceCoords;
+
 }
 
-void applyMediaBboxFisheye(inout vec2 cellNCoords, inout float reciprocalMediaFisheyeFactor, in vec2 cellCoords, in float fisheyeFactor) {
-    if (fisheyeRadius == 0.) return;
+void applyMediaBboxBulge(inout vec2 cellNCoords, inout float reciprocalMediaBulgeFactor, in vec2 cellCoords, in float bulgeFactor) {
+    if (bulgeRadius == 0.) return;
 
-    if (MEDIA_FISHEYE == 1 || bMediaDistortion) {
-        reciprocalMediaFisheyeFactor = 1. / fisheyeFactor;
+    if (MEDIA_BULGE == 1 || bMediaDistortion) {
+        reciprocalMediaBulgeFactor = 1. / bulgeFactor;
     } else {
-        float edge = length(cellCoords - centerForceCoords) / fisheyeRadius;
-        reciprocalMediaFisheyeFactor = 1. / mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength);
+        float edge = length(cellCoords - centerForceCoords) / bulgeRadius;
+        reciprocalMediaBulgeFactor = 1. / mix(1.0, bulgeSmoothstep(edge), bulgeStrength);
 
-        #if FISHEYE_MULTIPLE == 1
-            edge = length(cellCoords - centerForceCoords2) / fisheyeRadius2;
-            reciprocalMediaFisheyeFactor = blendBulges(reciprocalMediaFisheyeFactor,  1. / mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength2));
-            edge = length(cellCoords - centerForceCoords3) / fisheyeRadius3;
-            reciprocalMediaFisheyeFactor = blendBulges(reciprocalMediaFisheyeFactor,  1. / mix(1.0, fisheyeSmoothstep(edge), fisheyeStrength3));
+        #if BULGE_BLENDING == 1
+            edge = length(cellCoords - centerForceCoords2) / bulgeRadius2;
+            reciprocalMediaBulgeFactor = blendBulges(reciprocalMediaBulgeFactor,  1. / mix(1.0, bulgeSmoothstep(edge), bulgeStrength2));
+            edge = length(cellCoords - centerForceCoords3) / bulgeRadius3;
+            reciprocalMediaBulgeFactor = blendBulges(reciprocalMediaBulgeFactor,  1. / mix(1.0, bulgeSmoothstep(edge), bulgeStrength3));
         #endif
     }
 
     vec2 centerForceNCoords = normalizeCoords(centerForce);
-    cellNCoords = (cellNCoords - centerForceNCoords) * reciprocalMediaFisheyeFactor + centerForceNCoords;
+    cellNCoords = (cellNCoords - centerForceNCoords) * reciprocalMediaBulgeFactor + centerForceNCoords;
 }
 #endif
 
-void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in float fisheyeFactor, in float edgeBorder) {
+void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in float bulgeFactor, in float edgeBorder) {
     vec2 midSum = vec2(0.0);
     vec2 cellNCoords = fetchNormalizedCellCoords(index);
 
-    float reciprocalMediaFisheyeFactor = 1.;
-    #if FISHEYE == 1
-        applyMediaBboxFisheye(cellNCoords, reciprocalMediaFisheyeFactor, cellCoords, fisheyeFactor);
+    float reciprocalMediaBulgeFactor = 1.;
+    #if BULGE == 1
+        applyMediaBboxBulge(cellNCoords, reciprocalMediaBulgeFactor, cellCoords, bulgeFactor);
     #endif
 
     uint neighborsPosition = neighborsTexData(index*2u);
@@ -806,7 +910,7 @@ void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in f
         bbY -= edgeBorder;
     #endif
 
-    vec2 offset = vec2(0.5 * MEDIA_BBOX_SCALE * reciprocalMediaFisheyeFactor);
+    vec2 offset = vec2(0.5 * MEDIA_BBOX_SCALE * reciprocalMediaBulgeFactor);
     bool lockedAspect = MEDIA_LOCKED_ASPECT == 1 && !bMediaDistortion;
     if (lockedAspect) {
         float bbMax = max(bbX, bbY / MEDIA_ASPECT);
@@ -820,7 +924,7 @@ void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in f
     mediaBbox.zw = avgCenter + offset;
 }
 
-void processNeighborEdge(in uint neighborIndex, in vec2 cellCoords, in vec2 p, inout vec2 edge, in float weight, in float weightOffset, in float weightOffsetScale, in float borderRoundness, in float fisheyeFactor) {
+void processNeighborEdge(in uint neighborIndex, in vec2 cellCoords, in vec2 p, inout vec2 edge, in float weight, in float weightOffset, in float weightOffsetScale, in float borderRoundness, in float bulgeFactor) {
     vec2 neighborCellCoords = fetchCellCoords(neighborIndex);
 
     #if WEIGHTED_DIST == 1 || X_DIST_SCALING == 1
@@ -879,22 +983,22 @@ void processNeighborEdge(in uint neighborIndex, in vec2 cellCoords, in vec2 p, i
         borderRoundness *= len *.5 + .5;
     #endif
 
-    // todo could modify len based on:  * (1./fisheyeFactor)
+    // todo could modify len based on:  * (1./bulgeFactor)
     edge.x = cSmin(edge.x, len, borderRoundness);
     edge.y = min(edge.y, len);
 }
 
-void calcEdge(in uvec4 indices, in uvec4 indices2, in vec2 cellCoords, in vec2 p, inout vec2 edge, in float weight, in float weightOffset, in float weightOffsetScale, in float borderRoundness, in float fisheyeFactor) {
+void calcEdge(in uvec4 indices, in uvec4 indices2, in vec2 cellCoords, in vec2 p, inout vec2 edge, in float weight, in float weightOffset, in float weightOffsetScale, in float borderRoundness, in float bulgeFactor) {
 
-    processNeighborEdge(indices.y, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
-    processNeighborEdge(indices.z, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
-    processNeighborEdge(indices.w, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
+    processNeighborEdge(indices.y, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
+    processNeighborEdge(indices.z, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
+    processNeighborEdge(indices.w, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
 
     #if DOUBLE_INDEX_POOL == 1 && DOUBLE_INDEX_POOL_EDGES == 1
-        processNeighborEdge(indices2.x, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
-        processNeighborEdge(indices2.y, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
-        processNeighborEdge(indices2.z, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
-        processNeighborEdge(indices2.w, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
+        processNeighborEdge(indices2.x, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
+        processNeighborEdge(indices2.y, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
+        processNeighborEdge(indices2.z, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
+        processNeighborEdge(indices2.w, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
     #endif
 
     #if EDGE_SMIN_SCALING == 1 && EDGE_SMIN_SCALING_COMPENSATION == 1
@@ -1064,9 +1168,9 @@ Plot plot() {
 
     bool debugFlag = false;
 
-    float fisheyeFactor = 1.;
-    #if FISHEYE == 1
-        applyFisheye(p, fisheyeFactor);
+    float bulgeFactor = 1.;
+    #if BULGE == 1
+        applyBulge(p, bulgeFactor);
     #endif
 
     float prevMaxWeight;
@@ -1129,7 +1233,7 @@ Plot plot() {
 
     vec4 mediaBbox = vec4(vec2(1.), vec2(-1.));
     #if MEDIA_ENABLED == 1
-        calcMediaBbox(index, mediaBbox, cellCoords, fisheyeFactor, edgeStepStart*2.);
+        calcMediaBbox(index, mediaBbox, cellCoords, bulgeFactor, edgeStepStart*2.);
     #endif
 
     float weight;
@@ -1140,12 +1244,12 @@ Plot plot() {
     #endif
 
     vec2 edge = vec2(0.1);
-    calcEdge(indices, indices2, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, fisheyeFactor);
+    calcEdge(indices, indices2, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
 
 //    float edgeStep = smoothstep(borderSmoothness, borderThickness, edge.x);
     float edgeStep = smoothstep(edgeStepStart, edgeStepEnd, edge.x);
 
-    return Plot(indices, indices2, edge, edgeStep, mediaBbox, cellScale, weight, fisheyeFactor, debugFlag);
+    return Plot(indices, indices2, edge, edgeStep, mediaBbox, cellScale, weight, bulgeFactor, debugFlag);
 }
 
 #if EDGES_VISIBLE == 1
@@ -1193,7 +1297,7 @@ void colorOutput(in vec3 c, in float a, in Plot plot) {
         voroIndexBuffer2Color = uintBitsToFloat(plot.indices2 + 1u);
     #endif
     outputColor = vec4(c, a);
-//    outputColor = vec4(vec3(plot.fisheyeFactor), a);
+//    outputColor = vec4(vec3(plot.bulgeFactor), a);
     if (bVoroEdgeBufferOutput) {
         voroEdgeBufferColor = vec3(plot.edge, plot.cellScale);
     }

@@ -22,10 +22,10 @@ precision highp float;
 #define EDGE_SCALING 1
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define FISHEYE 1
-#define FISHEYE_BASE_STRENGTH .5
-#define FISHEYE_BASE_RADIUS 1.
-#define FISHEYE_SQUARED 1
+#define BULGE 1
+#define BULGE_BASE_STRENGTH .5
+#define BULGE_BASE_RADIUS 1.
+#define BULGE_SQUARED 1
 #define DEBUG_MEDIA_BBOXES 0
 #define Y_SCALE 1.
 #define WEIGHTED_DIST 1
@@ -45,7 +45,7 @@ precision highp float;
 #define MEDIA_ASPECT 1.5
 #define MEDIA_ROTATE 0
 #define MEDIA_ROTATE_FACTOR 1.
-#define MEDIA_FISHEYE 0
+#define MEDIA_BULGE 0
 #define PIXEL_SEARCH 1
 #define PIXEL_SEARCH_RADIUS 16.
 #define PIXEL_SEARCH_RANDOM_DIR 0
@@ -98,8 +98,8 @@ uniform int iForcedMaxNeighborLevel;
 uniform float fBorderRoundnessMod;
 uniform float fEdge1Mod;
 uniform float fEdge0Mod;
-uniform float fCenterForceFishEyeStrength;
-uniform float fCenterForceFishEyeRadius;
+uniform float fCenterForceBulgeStrength;
+uniform float fCenterForceBulgeRadius;
 uniform float fWeightOffsetScaleMod;
 uniform vec3 fBaseColor;
 uniform vec2 fPointer;
@@ -713,20 +713,20 @@ Data update() {
 
     vec2 centerForce = vec2(fCenterForce.x, iResolution.y - fCenterForce.y);
 
-    float fisheyeFactor = 1.;
-    #if FISHEYE == 1
-        if (fCenterForceFishEyeStrength > 0. && fCenterForceFishEyeRadius > 0.) {
+    float bulgeFactor = 1.;
+    #if BULGE == 1
+        if (fCenterForceBulgeStrength > 0. && fCenterForceBulgeRadius > 0.) {
 
             vec2 centerForceCoords = (centerForce*2.0-iResolution.xy) / iResolution.y;
 
             vec2 d = p - centerForceCoords;
-            # if FISHEYE_SQUARED == 1
+            # if BULGE_SQUARED == 1
 //                float r = sqrt(dot2(d));
                 float r = length(d); // length(v) is more or less equivalent to sqrt(dot2(d)) (might be optimized), or 1.0 / inversesqrt(dot(v, v))
-                float percent = r / (FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod);
+                float percent = r / (BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod);
             # else // has straighter borders when not "squared"
                 float r = dot2(d);
-                float percent = r / pow(FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod, 2.0);
+                float percent = r / pow(BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod, 2.0);
             # endif
 
             // next 2 lines equivalent to: float step = smoothstep(0.0, 1. / percent, percent);
@@ -743,12 +743,12 @@ Data update() {
 //                }
 //            }
 
-            float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
-            fisheyeFactor = mix(1.0, step, strength);
+            float strength = BULGE_BASE_STRENGTH * fCenterForceBulgeStrength * fCenterForceStrengthMod;
+            bulgeFactor = mix(1.0, step, strength);
 
             p -= centerForceCoords;
-//            p *= normalize(d) * fisheyeFactor;
-            p *= fisheyeFactor;
+//            p *= normalize(d) * bulgeFactor;
+            p *= bulgeFactor;
             p += centerForceCoords;
 
             //    p *= normalize(d) * mix(1.0, smoothstep(0.0, radius / r, percent), strength * 0.75);
@@ -845,34 +845,34 @@ Data update() {
         float mediaWeight = mediaWeightOffsetScale * weightTexData(closestIndex);
         vec2 cellNCoords = fetchNormalizedCellCoords(closestIndex);
 
-        float reciprocalMediaFisheyeFactor = 1.;
-        #if FISHEYE == 1
-            if (fCenterForceFishEyeStrength > 0. && fCenterForceFishEyeRadius > 0.) {
+        float reciprocalMediaBulgeFactor = 1.;
+        #if BULGE == 1
+            if (fCenterForceBulgeStrength > 0. && fCenterForceBulgeRadius > 0.) {
 
-                bool mediaFisheye = MEDIA_FISHEYE == 1 || bMediaDistortion;
-                if (mediaFisheye) {
-                    reciprocalMediaFisheyeFactor = 1./ fisheyeFactor;
+                bool mediaBulge = MEDIA_BULGE == 1 || bMediaDistortion;
+                if (mediaBulge) {
+                    reciprocalMediaBulgeFactor = 1./ bulgeFactor;
                 } else {
                     vec2 centerForceCoords = (centerForce*2.0-iResolution.xy) / iResolution.y;
                     // vec2 d = cellNCoords - centerForceNCoords;
                     vec2 d = cellCoords - centerForceCoords;
-                    # if FISHEYE_SQUARED == 1
+                    # if BULGE_SQUARED == 1
                         //  float r = sqrt(dot2(d));
                         float r = length(d);
-                        float percent = r / (FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod);
+                        float percent = r / (BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod);
                     # else
                         float r = dot2(d);
-                        float percent = r / pow(FISHEYE_BASE_RADIUS * fCenterForceFishEyeRadius * fCenterForceStrengthMod, 2.0);
+                        float percent = r / pow(BULGE_BASE_RADIUS * fCenterForceBulgeRadius * fCenterForceStrengthMod, 2.0);
                     # endif
 
                     float step = smoothstep(0.0, 1. / percent, percent);
 
-                    float strength = FISHEYE_BASE_STRENGTH * fCenterForceFishEyeStrength * fCenterForceStrengthMod;
-                    reciprocalMediaFisheyeFactor = 1./ mix(1.0, step, strength);
+                    float strength = BULGE_BASE_STRENGTH * fCenterForceBulgeStrength * fCenterForceStrengthMod;
+                    reciprocalMediaBulgeFactor = 1./ mix(1.0, step, strength);
                 }
 
                 vec2 centerForceNCoords = normalizeCoords(centerForce);
-                cellNCoords = (cellNCoords - centerForceNCoords) * reciprocalMediaFisheyeFactor + centerForceNCoords;
+                cellNCoords = (cellNCoords - centerForceNCoords) * reciprocalMediaBulgeFactor + centerForceNCoords;
             }
         #endif
 
@@ -905,7 +905,7 @@ Data update() {
         float bbX = mediaBbox.z - mediaBbox.x;
         float bbY = mediaBbox.w - mediaBbox.y;
 
-        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalMediaFisheyeFactor);
+        vec2 offset = vec2(0.5*MEDIA_BBOX_SCALE*reciprocalMediaBulgeFactor);
         bool lockedAspect = MEDIA_LOCKED_ASPECT == 1 && !bMediaDistortion;
         if (lockedAspect) {
             float bbMax = max(bbX, bbY/MEDIA_ASPECT);
