@@ -56,7 +56,7 @@ export const Intro = () => {
               laptop.
             </p>
           </div>
-          <PresetSelector onSetPreset={() => void safeInitVoroforce()} />
+          <PresetSelector onApply={() => void safeInitVoroforce()} />
           <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
             Contains information from Kaggle's "Full TMDB Movies Dataset" which
             is made available under the ODC Attribution License.

@@ -32,12 +32,12 @@ const PRESETS = [
 
 export function PresetSelector({
   className = '',
-  onSetPreset,
+  onApply,
   submitLabel = 'Continue',
   submitProps,
 }: {
   className?: string
-  onSetPreset?: (preset: VOROFORCE_PRESET) => void
+  onApply?: (preset: VOROFORCE_PRESET) => void
   submitLabel?: string | ReactNode
   submitProps?: ButtonProps
 }) {
@@ -121,7 +121,7 @@ export function PresetSelector({
             const preset = selectedPreset || recommendedPreset
             if (preset) {
               setStorePreset(preset)
-              onSetPreset?.(preset)
+              onApply?.(preset)
             }
           }}
           size='lg'

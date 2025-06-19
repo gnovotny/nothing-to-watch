@@ -20,7 +20,7 @@ precision highp float;
 #define DOUBLE_INDEX_POOL 1
 #define DOUBLE_INDEX_POOL_EDGES 1
 #define DOUBLE_INDEX_POOL_BUFFER 0
-#define PIXEL_SEARCH_ALLOWED 1
+#define PIXEL_SEARCH 1
 #define PIXEL_SEARCH_RADIUS 16.
 #define PIXEL_SEARCH_RANDOM_DIR 0
 #define PIXEL_SEARCH_FULL_RANDOM 0
@@ -32,6 +32,9 @@ precision highp float;
 #define BULGE_BASE_RADIUS 1.
 
 #define NOISE 0
+#define NOISE_OCTAVE_LARGE_SCALE 1.
+#define NOISE_OCTAVE_MEDIUM_SCALE 0.
+#define NOISE_OCTAVE_SMALL_SCALE 0.
 
 #define RIPPLE 1
 #define RIPPLE_RADIUS 2.0
@@ -231,7 +234,7 @@ vec3 toGrayscale(vec3 c, float factor) {
     }
 #endif
 
-#if PIXEL_SEARCH_ALLOWED
+#if PIXEL_SEARCH
 #if PIXEL_SEARCH_RANDOM_DIR == 1
     uint hash(inout uint x) {
         x ^= x >> 16;
@@ -696,12 +699,6 @@ void mediaColor(inout vec3 c, inout float a, in Plot plot) {
 
 #if NOISE == 1
 
-const float u_noiseScale1 = 1.;
-const float u_noiseScale2 = 1.;
-const float u_noiseScale3 = 1.;
-//const float u_flowIntensity = 1.;
-const float u_flowIntensity = 0.;
-
 // Improved noise function (simplified Perlin-like noise)
 vec3 permute(vec3 x) {
     return mod(((x * 34.0) + 1.0) * x, 289.0);
@@ -736,24 +733,32 @@ float snoise(vec2 v) {
     return 130.0 * dot(m, g);
 }
 
-// Multi-octave noise for more organic patterns
+// Multi-octave noise
 float fbm(vec2 p, float time) {
     float value = 0.0;
     float amplitude = 0.5;
     float frequency = 1.0;
 
-    // First octave - large scale features
-    value += amplitude * snoise(p * frequency * u_noiseScale1 + vec2(time * 0.3, time * 0.2));
+    #if NOISE_OCTAVE_LARGE_SCALE > 0.
+        // First octave - large scale features
+        value += amplitude * snoise(p * frequency * NOISE_OCTAVE_LARGE_SCALE + vec2(time * 0.3, time * 0.2));
+    #endif
+
     amplitude *= 0.5;
     frequency *= 2.0;
 
-    //    // Second octave - medium scale details
-    //    value += amplitude * snoise(p * frequency * u_noiseScale2 + vec2(time * 0.5, -time * 0.3));
-    //    amplitude *= 0.5;
-    //    frequency *= 2.0;
-    //
-    //    // Third octave - fine details
-    //    value += amplitude * snoise(p * frequency * u_noiseScale3 + vec2(-time * 0.7, time * 0.6));
+    #if NOISE_OCTAVE_MEDIUM_SCALE > 0.
+        // Second octave - medium scale details
+        value += amplitude * snoise(p * frequency * NOISE_OCTAVE_MEDIUM_SCALE + vec2(time * 0.5, -time * 0.3));
+    #endif
+
+    amplitude *= 0.5;
+    frequency *= 2.0;
+
+    #if NOISE_OCTAVE_SMALL_SCALE > 0.
+        // Third octave - fine details
+        value += amplitude * snoise(p * frequency * NOISE_OCTAVE_SMALL_SCALE + vec2(-time * 0.7, time * 0.6));
+    #endif
 
     return value;
 }
@@ -766,9 +771,9 @@ float bulgeSmoothstep(float a) {
     float x = clamp(a * a, 0., 1.);
 
     if (x > .5) {
-        return x * x * x/(3.0*x*x-3.0*x+1.0);
+        return x * x * x/(3.0*x*x-3.0*x+1.0); // IQ: cubic rational
     } else {
-        return x * x * x * (x * (6. * x - 15.) + 10.);
+        return x * x * x * (x * (6. * x - 15.) + 10.); // smootherstep (wiki), also (IQ: Quintic Polynomial)
     }
 
 //    return x * x * (3.0 - 2.0 * x); // equivalent to: return smoothstep(0.0, 1. / percent, percent);
@@ -1110,7 +1115,7 @@ void calcIndices(inout uvec4 indices, inout uvec4 indices2, inout uint neighbors
     vec4 distances2 = vec4(FLOAT_INF);
 
     // pixel search
-    if (PIXEL_SEARCH_ALLOWED == 1 && bPixelSearch) {
+    if (PIXEL_SEARCH == 1 && bPixelSearch) {
         vec2 rad = vec2(PIXEL_SEARCH_RADIUS);
         #if PIXEL_SEARCH_RANDOM_DIR == 1
             uint seed = uint(fragCoord.x) + uint(fragCoord.y);

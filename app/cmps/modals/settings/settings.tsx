@@ -4,7 +4,7 @@ import { ScrollArea } from '../../ui/scroll-area'
 import { Modal } from '../../common/modal'
 import { PresetSelector } from '../../common/preset-selector'
 import {
-  InfinityIcon,
+  Grid3x3Icon,
   Settings as SettingsIcon,
   TriangleAlert,
 } from 'lucide-react'
@@ -75,7 +75,7 @@ export const Settings = () => {
             <div className='hidden md:block'>
               <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
                 <SettingsIcon className='h-5 w-5 text-zinc-900 dark:text-white' />
-                Quality Settings
+                Settings
               </div>
             </div>
             <div className='flex flex-col gap-2 md:hidden'>
@@ -89,7 +89,7 @@ export const Settings = () => {
               </p>
             </div>
             <PresetSelector
-              onSetPreset={(newPreset: VOROFORCE_PRESET) => {
+              onApply={(newPreset: VOROFORCE_PRESET) => {
                 if (newPreset !== preset) reload()
               }}
               submitLabel='Apply'
@@ -102,8 +102,8 @@ export const Settings = () => {
           </div>
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2 font-semibold text-base text-zinc-900 md:text-xl dark:text-white'>
-              <InfinityIcon className='h-5 w-5 text-zinc-900 dark:text-white' />
-              Cell limit override
+              <Grid3x3Icon className='h-5 w-5 text-zinc-900 dark:text-white' />
+              Film limit override
             </div>
             <div className='flex flex-row gap-1'>
               {NUM_CELL_OPTIONS.map((option) => (
@@ -119,7 +119,7 @@ export const Settings = () => {
                     'max-md:hidden': option > 25000,
                   })}
                 >
-                  {option}
+                  {new Intl.NumberFormat('en-US').format(option)}
                 </Badge>
               ))}
             </div>

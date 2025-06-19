@@ -146,7 +146,7 @@ export const LowFpsAlert = () => {
           </p>
         </div>
         <PresetSelector
-          onSetPreset={(newPreset: VOROFORCE_PRESET) => {
+          onApply={(newPreset: VOROFORCE_PRESET) => {
             if (newPreset !== preset) {
               reload()
             } else {
