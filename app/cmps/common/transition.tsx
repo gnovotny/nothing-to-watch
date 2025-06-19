@@ -1,7 +1,7 @@
 import { type PropsWithChildren, useEffect } from 'react'
 
-import { cn } from '../../utls/tw'
 import { useTransitionState } from '../../hks/use-transition-state'
+import { cn } from '../../utls/tw'
 
 export const FadeTransition = ({
   children,

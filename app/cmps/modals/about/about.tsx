@@ -1,17 +1,17 @@
 import { GithubIcon } from 'lucide-react'
 
+import { store, useShallowState } from '@/store'
+import type { PropsWithChildren } from 'react'
+import config from '../../../config'
+import { Modal } from '../../common/modal'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '../../ui/accordion'
-import config from '../../../config'
 import { Button } from '../../ui/button'
-import { store, useShallowState } from '@/store'
-import type { PropsWithChildren } from 'react'
 import { ScrollArea } from '../../ui/scroll-area'
-import { Modal } from '../../common/modal'
 
 const Link = ({ children, href }: PropsWithChildren<{ href: string }>) => (
   <a
@@ -254,7 +254,7 @@ export const About = () => {
         >
           {items.map(({ title, content }, index) => (
             <AccordionItem
-              key={index}
+              key={title}
               value={`${index}`}
               className='w-full cursor-auto'
             >

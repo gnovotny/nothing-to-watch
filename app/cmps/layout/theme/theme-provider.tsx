@@ -1,5 +1,5 @@
-import { type ReactNode, createContext, use, useEffect } from 'react'
 import { store } from '@/store'
+import { type ReactNode, createContext, use, useEffect } from 'react'
 import { THEME } from '../../../consts'
 
 type ThemeProviderProps = {

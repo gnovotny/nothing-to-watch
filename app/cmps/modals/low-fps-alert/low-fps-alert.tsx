@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { useMediaQuery } from '../../../hks/use-media-query'
-import { orientation, up } from '../../../utls/mq'
-import { useShallowState } from '../../../store'
-import { VOROFORCE_PRESET } from '../../../vf'
-import { PresetSelector } from '../../common/preset-selector'
-import { reload } from '../../../utls/misc'
-import { Modal } from '../../common/modal'
 import { TriangleAlert } from 'lucide-react'
+import { useMediaQuery } from '../../../hks/use-media-query'
+import { useShallowState } from '../../../store'
+import { reload } from '../../../utls/misc'
+import { orientation, up } from '../../../utls/mq'
 import { cn } from '../../../utls/tw'
+import { VOROFORCE_PRESET } from '../../../vf'
+import { Modal } from '../../common/modal'
+import { PresetSelector } from '../../common/preset-selector'
 
 export const LowFpsAlert = () => {
   const landscape = useMediaQuery(orientation('landscape'))

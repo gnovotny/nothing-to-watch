@@ -4,15 +4,15 @@ import {
   initSharedLoadedMediaVersionLayersData,
 } from './common/data'
 import { Dimensions, Loader, Store } from './common/helpers'
+import { AutoTicker, ManualTicker } from './common/helpers/ticker'
 import { handleLattice } from './common/lattice'
-import { defaultConfig } from './default-config'
 import Controls from './controls'
+import { defaultConfig } from './default-config'
 import Display from './display'
 import { MultiThreadedSimulation, Simulation } from './simulation'
 import { mergeConfigs } from './utils'
-import { initVisibilityEventHandlers } from './utils/visibility'
-import { ManualTicker, AutoTicker } from './common/helpers/ticker'
 import { CustomEventTarget } from './utils/custom-event-target'
+import { initVisibilityEventHandlers } from './utils/visibility'
 
 export class VisibilityChangeEvent extends Event {
   constructor(visible) {

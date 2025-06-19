@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useMeasure from 'react-use-measure'
 
+import { store, useShallowState } from '@/store'
+import { MIN_LERP_EASING_TYPES, type VoroforceCell, easedMinLerp } from '@/vf'
 import { useMediaQuery } from '../../../hks/use-media-query'
 import { clamp } from '../../../utls/math'
 import { down } from '../../../utls/mq'
 import { cn } from '../../../utls/tw'
-import { MIN_LERP_EASING_TYPES, type VoroforceCell, easedMinLerp } from '@/vf'
 import { Badge } from '../../ui/badge'
-import { FilmRatingGauge } from './shared/film-rating-gauge'
-import { store, useShallowState } from '@/store'
 import { FilmPoster } from './shared/film-poster'
+import { FilmRatingGauge } from './shared/film-rating-gauge'
 
 export const FilmPreview = ({ poster = false }) => {
   const containerRef = useRef<HTMLDivElement>(null)

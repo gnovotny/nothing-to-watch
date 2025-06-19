@@ -1,8 +1,8 @@
 import type { RectReadOnly } from 'react-use-measure'
-import { create } from 'zustand'
-import { useShallow } from 'zustand/react/shallow'
-import { subscribeWithSelector } from 'zustand/middleware'
 import { UAParser } from 'ua-parser-js'
+import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 
 import {
   type ConfigUniforms,
@@ -10,11 +10,11 @@ import {
   type Film,
   type FilmBatch,
   type FilmData,
+  type PerformanceMonitorApi,
   type UserConfig,
   VOROFORCE_MODE,
   type VOROFORCE_PRESET,
   type VoroforceInstance,
-  type PerformanceMonitorApi,
 } from './vf'
 
 import { THEME } from './consts'

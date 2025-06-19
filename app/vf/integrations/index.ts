@@ -1,8 +1,8 @@
 import { handleControls } from './controls'
 import { handleFilmViewInSelectMode } from './film-view'
 import { handleMode } from './mode'
-import { handleTicker } from './ticker'
 import { handleTheme } from './theme'
+import { handleTicker } from './ticker'
 
 export * from './film-view'
 export * from './controls'

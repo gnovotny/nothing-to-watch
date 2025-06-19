@@ -1,6 +1,6 @@
 import { store } from '../../store'
-import { getCellFilm, type VoroforceCell } from '../utils'
 import { VOROFORCE_MODE } from '../consts'
+import { type VoroforceCell, getCellFilm } from '../utils'
 
 export const handleControls = () => {
   const {

@@ -1,10 +1,10 @@
 import { GithubIcon, Info, Settings } from 'lucide-react'
 
 import { useShallowState } from '@/store'
+import config from '../../config'
+import { cn } from '../../utls/tw'
 import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
-import { cn } from '../../utls/tw'
-import config from '../../config'
 
 export const Navbar = () => {
   const { settingsOpen, toggleSettingsOpen, aboutOpen, toggleAboutOpen } =

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 const PRE_ENTER = 0
 const ENTERING = 1

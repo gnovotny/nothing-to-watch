@@ -1,6 +1,6 @@
+import type { VisibilityChangeEvent } from '√'
 import { store } from '../../store'
 import { handleAnimatingUniforms, initPerformanceMonitor } from '../utils'
-import type { VisibilityChangeEvent } from '√'
 
 export const handleTicker = () => {
   const {

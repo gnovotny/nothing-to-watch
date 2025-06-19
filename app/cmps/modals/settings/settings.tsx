@@ -1,21 +1,21 @@
-import { Button } from '../../ui/button'
 import { useShallowState } from '@/store'
-import { ScrollArea } from '../../ui/scroll-area'
-import { Modal } from '../../common/modal'
-import { PresetSelector } from '../../common/preset-selector'
 import {
   Grid3x3Icon,
   Settings as SettingsIcon,
   TriangleAlert,
 } from 'lucide-react'
-import type { VOROFORCE_PRESET } from '../../../vf'
-import { reload } from '../../../utls/misc'
-import { Badge } from '../../ui/badge'
-import { cn } from '../../../utls/tw'
-import { Switch } from '../../ui/switch'
-import { Label } from '../../ui/label'
-import { useTheme } from '../../layout'
 import { THEME } from '../../../consts'
+import { reload } from '../../../utls/misc'
+import { cn } from '../../../utls/tw'
+import type { VOROFORCE_PRESET } from '../../../vf'
+import { Modal } from '../../common/modal'
+import { PresetSelector } from '../../common/preset-selector'
+import { useTheme } from '../../layout'
+import { Badge } from '../../ui/badge'
+import { Button } from '../../ui/button'
+import { Label } from '../../ui/label'
+import { ScrollArea } from '../../ui/scroll-area'
+import { Switch } from '../../ui/switch'
 
 const NUM_CELL_OPTIONS = [5000, 10000, 25000, 50000, 100000]
 

@@ -1,6 +1,6 @@
+import type { THEME } from '../../consts'
 import { store } from '../../store'
 import { updateUniformsByTheme } from '../utils'
-import type { THEME } from '../../consts'
 
 const handleThemeChange = (theme: THEME): void => {
   const {

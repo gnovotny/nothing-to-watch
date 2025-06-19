@@ -1,7 +1,7 @@
-import {useShallowState} from '../../store'
-import {FadeTransition} from '../common/transition'
-import {lazy} from 'react'
-import {VOROFORCE_MODE} from "@/vf";
+import { VOROFORCE_MODE } from '@/vf'
+import { lazy } from 'react'
+import { useShallowState } from '../../store'
+import { FadeTransition } from '../common/transition'
 
 const Modals = lazy(() => import('./modals'))
 

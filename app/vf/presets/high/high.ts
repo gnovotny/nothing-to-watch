@@ -1,3 +1,6 @@
+// import postFrag from './post-high3.frag'
+import { mergeConfigs } from '√'
+import { DEFAULT_VOROFORCE_MODE, VOROFORCE_MODE } from '../../consts'
 import midConfig from '../mid/mid'
 // import postFrag from './post-high2.frag'
 // import postFrag from './post-high22.frag'
@@ -7,9 +10,6 @@ import midConfig from '../mid/mid'
 // import postFrag from './post-high2222-proto2.frag'
 // import postFrag from './post-high2222-proto4.frag'
 import postFrag from './post-high2222-proto5.frag'
-// import postFrag from './post-high3.frag'
-import { mergeConfigs } from '√'
-import { DEFAULT_VOROFORCE_MODE, VOROFORCE_MODE } from '../../consts'
 
 const forceSimulationStepConfigs = {
   [VOROFORCE_MODE.preview]: {

@@ -1,18 +1,18 @@
 import slugify from 'slugify'
 
 import config from '@/config'
-import { cn } from '../../../../utls/tw'
+import { useShallowState } from '@/store'
 import type { Film } from '@/vf'
 import { Copy, Plus, X } from 'lucide-react'
+import { useState } from 'react'
+import { cn } from '../../../../utls/tw'
 import { Button } from '../../../ui/button'
-import { useShallowState } from '@/store'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '../../../ui/tooltip'
-import { useState } from 'react'
 
 export const FilmViewFooter = ({
   film,

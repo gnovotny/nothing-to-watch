@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
 import config from '@/config'
-import { cn } from '../../../../utls/tw'
+import { store } from '@/store'
 import type { Film } from '@/vf'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { cn } from '../../../../utls/tw'
 import { Badge } from '../../../ui/badge'
 import { FilmRatingGauge } from '../shared/film-rating-gauge'
-import { store } from '@/store'
 
 export const FilmView = ({
   film,

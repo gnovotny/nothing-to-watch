@@ -1,16 +1,16 @@
 'use client'
 
-import { type ReactNode, useState } from 'react'
 import { Check } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
 
-import { Button, type ButtonProps } from '../ui/button'
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
-import { useShallowState } from '../../store'
-import { Badge } from '../ui/badge'
-import { VOROFORCE_PRESET } from '../../vf'
 import { useMediaQuery } from '../../hks/use-media-query'
+import { useShallowState } from '../../store'
 import { down } from '../../utls/mq'
 import { cn } from '../../utls/tw'
+import { VOROFORCE_PRESET } from '../../vf'
+import { Badge } from '../ui/badge'
+import { Button, type ButtonProps } from '../ui/button'
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 
 const PRESETS = [
   {
@@ -95,9 +95,9 @@ export function PresetSelector({
               </div>
             </div>
             <ul className='mt-4 list-disc space-y-0 pl-3'>
-              {preset.features.map((feature, index) => (
+              {preset.features.map((feature) => (
                 <li
-                  key={index}
+                  key={feature}
                   className='whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-300'
                 >
                   {feature}

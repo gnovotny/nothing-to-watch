@@ -3,9 +3,9 @@ import { Moon, Sun } from 'lucide-react'
 import { cn } from '../../../utls/tw'
 import { Button } from '../../ui/button'
 
-import { useTheme } from './theme-provider'
 import type { MouseEventHandler } from 'react'
 import { THEME } from '../../../consts'
+import { useTheme } from './theme-provider'
 
 export function ThemeToggle({
   className = '',

@@ -75,8 +75,7 @@ const initSharedCellNeighborsData = (cellOptions, config) => {
 
   let maxNeighbors = 8
 
-  const levels =
-    config.simulation?.steps?.neighbors?.levels
+  const levels = config.simulation?.steps?.neighbors?.levels
   switch (levels) {
     case 2:
       maxNeighbors = 24

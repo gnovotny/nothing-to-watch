@@ -14,4 +14,3 @@ export type VoroforceInstance = SafeVoroforceInstance & {
   simulation: NonNullable<SafeVoroforceInstance['simulation']>
   dimensions: NonNullable<SafeVoroforceInstance['dimensions']>
 }
-

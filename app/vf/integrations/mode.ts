@@ -1,5 +1,5 @@
-import { baseLatticeConfig } from '../config'
 import { store } from '@/store'
+import { baseLatticeConfig } from '../config'
 import { type VoroforceCell, updateUniformsByMode } from '../utils'
 
 import { VOROFORCE_MODE } from '../consts'

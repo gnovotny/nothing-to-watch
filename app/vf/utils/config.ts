@@ -1,15 +1,15 @@
 import { getGPUTier } from 'detect-gpu'
 import { mergeConfigs } from '√'
 import baseConfig, { introModeLatticeConfig } from '../config'
-import presets from '../presets'
 import { introForceSimulationStepConfig } from '../config/simulation/force/intro-force'
+import presets from '../presets'
 
 import { down, matchMediaQuery } from '../../utls/mq'
 
-import type { StoreState } from '../../store'
-import type { ConfigUniform } from './uniforms'
 import type { THEME } from '../../consts'
+import type { StoreState } from '../../store'
 import { type VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
+import type { ConfigUniform } from './uniforms'
 
 export type CustomLink = {
   name: string

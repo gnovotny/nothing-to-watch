@@ -1,9 +1,9 @@
-import { cn } from '../../utls/tw'
 import { useShallowState } from '@/store'
+import { Settings, TriangleAlert } from 'lucide-react'
+import { cn } from '../../utls/tw'
+import { safeInitVoroforce } from '../../vf'
 import { PresetSelector } from '../common/preset-selector'
 import { FadeTransition } from '../common/transition'
-import { safeInitVoroforce } from '../../vf'
-import { Settings, TriangleAlert } from 'lucide-react'
 
 export const Intro = () => {
   const { visible, preset } = useShallowState((state) => ({

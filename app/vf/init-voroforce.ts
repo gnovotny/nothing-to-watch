@@ -1,8 +1,8 @@
 import voroforce from '√/index'
 
+import { store } from '../store'
 import { initVoroforceIntegrations } from './integrations'
 import type { VoroforceInstance } from './types'
-import { store } from '../store'
 import { getVoroforceConfigProps } from './utils'
 
 export const initVoroforce = async (container: HTMLElement) => {

@@ -1,6 +1,6 @@
 export * from './init-voroforce'
 export * from './types'
 export * from './utils'
-export {VOROFORCE_PRESET} from "./consts";
-export {DEFAULT_VOROFORCE_MODE} from "./consts";
-export {VOROFORCE_MODE} from "./consts";
+export { VOROFORCE_PRESET } from './consts'
+export { DEFAULT_VOROFORCE_MODE } from './consts'
+export { VOROFORCE_MODE } from './consts'

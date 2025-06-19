@@ -1,8 +1,8 @@
 import controls from './controls'
 import display from './display'
+import { baseLatticeConfig } from './lattice'
 import media from './media'
 import simulation from './simulation'
-import { baseLatticeConfig } from './lattice'
 
 export default {
   media,

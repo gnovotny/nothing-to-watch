@@ -1,12 +1,12 @@
 import { Geometry, Mesh, Program, Texture, Transform, Triangle } from 'ogl'
+import { lerp } from '../../utils'
 import devPointFragmentShader from './shaders/dev/dev-points.frag'
 import devPointVertexShader from './shaders/dev/dev-points.vert'
 import { CompressedMediaGridArrayTexture } from './utils/compressed-media-grid-array-texture'
 import { copyRenderTargetToCanvas } from './utils/copy-render-target-to-canvas'
 import { NoDepthMultiRenderTarget } from './utils/no-depth-multi-render-target'
-import { VirtualMediaGridArrayTexture } from './utils/virtual-media-grid-array-texture'
 import { readPixelsAsync } from './utils/read-pixels-async'
-import { lerp } from '../../utils'
+import { VirtualMediaGridArrayTexture } from './utils/virtual-media-grid-array-texture'
 
 export default class BaseScene {
   mainRenderTargets = null

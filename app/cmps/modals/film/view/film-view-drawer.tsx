@@ -1,12 +1,12 @@
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { useMediaQuery } from '../../../../hks/use-media-query'
 import { useShallowState } from '@/store'
+import { useMediaQuery } from '../../../../hks/use-media-query'
 import { orientation } from '../../../../utls/mq'
-import { AnimateHeightChange } from '../../../common/animate-height-change'
-import type { Film } from '../../../../vf'
-import { Modal } from '../../../common/modal'
 import { cn } from '../../../../utls/tw'
+import type { Film } from '../../../../vf'
+import { AnimateHeightChange } from '../../../common/animate-height-change'
+import { Modal } from '../../../common/modal'
 import { AddCustomLinkModal } from './add-custom-link-modal'
 
 const FilmView = lazy(() =>
