@@ -11,22 +11,40 @@ import { VOROFORCE_PRESET } from '../../vf'
 import { Badge } from '../ui/badge'
 import { Button, type ButtonProps } from '../ui/button'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
+import {DEVICE_CLASS} from "@/vf/consts.ts";
+
+const DEVICE_CLASSES = [
+    {
+        id: DEVICE_CLASS.low,
+        name: '🥔 Potato',
+    },
+    {
+        id: DEVICE_CLASS.mid,
+        name: '😐 Mid-range',
+    },
+    {
+        id: DEVICE_CLASS.high,
+        name: '💪 High-end',
+    },
+]
 
 const PRESETS = [
   {
     id: VOROFORCE_PRESET.low,
-    name: '🥔 Potato',
+    name: 'Minimal',
     features: ['10,000 films'],
   },
   {
     id: VOROFORCE_PRESET.mid,
-    name: '😐 Mid',
+    name: 'Contours',
     features: ['25,000 films', 'Special effects'],
+    recommendedDeviceClass: DEVICE_CLASS.mid
   },
   {
     id: VOROFORCE_PRESET.high,
-    name: '💪 Beefy',
+    name: 'Depth',
     features: ['50,000 films', 'Raymarching'],
+    recommendedDeviceClass: DEVICE_CLASS.high
   },
 ]
 

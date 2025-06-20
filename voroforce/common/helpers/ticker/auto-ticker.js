@@ -84,4 +84,12 @@ export class AutoTicker extends CustomEventTarget {
       // this.fpsGraph?.end()
     }
   }
+
+  freeze() {
+    this.stop()
+  }
+
+  unfreeze() {
+    this.start()
+  }
 }

@@ -13,3 +13,11 @@ export enum VOROFORCE_PRESET {
   mid = 'mid',
   high = 'high',
 }
+
+export enum DEVICE_CLASS {
+  mobile = 'mobile',
+  low = 'low',
+  lowPrototyping = 'lowPrototyping',
+  mid = 'mid',
+  high = 'high',
+}
