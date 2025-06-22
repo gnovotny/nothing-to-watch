@@ -18,6 +18,7 @@ import {
 } from './vf'
 
 import { THEME } from './consts'
+import type { DEVICE_CLASS } from './vf/consts'
 
 export type StoreState = {
   theme: THEME
@@ -52,8 +53,10 @@ export type StoreState = {
   setPlayedIntro: (playedIntro: boolean) => void
   preset?: VOROFORCE_PRESET
   setPreset: (preset: VOROFORCE_PRESET) => void
-  recommendedPreset?: VOROFORCE_PRESET
-  setRecommendedPreset: (preset: VOROFORCE_PRESET) => void
+  deviceClass?: DEVICE_CLASS
+  setDeviceClass: (deviceClass: DEVICE_CLASS) => void
+  estimatedDeviceClass?: DEVICE_CLASS
+  setEstimatedDeviceClass: (deviceClass: DEVICE_CLASS) => void
   filmViewBounds?: RectReadOnly
   setFilmViewBounds: (filmViewBounds: RectReadOnly) => void
   userConfig: UserConfig
@@ -69,7 +72,8 @@ export type StoreState = {
 const THEME_STORAGE_KEY = 'theme'
 const PLAYED_INTRO_STORAGE_KEY = 'playedIntro'
 const PRESET_STORAGE_KEY = 'preset'
-const RECOMMENDED_PRESET_STORAGE_KEY = 'recommendedPreset'
+const DEVICE_CLASS_STORAGE_KEY = 'deviceClass'
+const ESTIMATED_DEVICE_CLASS_STORAGE_KEY = 'estimatedDeviceClass'
 const USER_CONFIG_STORAGE_KEY = 'userConfig'
 
 const playedIntro = Boolean(localStorage.getItem(PLAYED_INTRO_STORAGE_KEY))
@@ -170,18 +174,29 @@ export const store = create(
           })
           localStorage.setItem(PRESET_STORAGE_KEY, preset)
         },
-        recommendedPreset: localStorage.getItem(RECOMMENDED_PRESET_STORAGE_KEY)
-          ? (localStorage.getItem(
-              RECOMMENDED_PRESET_STORAGE_KEY,
-            ) as VOROFORCE_PRESET)
+        deviceClass: localStorage.getItem(DEVICE_CLASS_STORAGE_KEY)
+          ? (localStorage.getItem(DEVICE_CLASS_STORAGE_KEY) as DEVICE_CLASS)
           : undefined,
-        setRecommendedPreset: (recommendedPreset: VOROFORCE_PRESET) => {
+        setDeviceClass: (deviceClass: DEVICE_CLASS) => {
           set({
-            recommendedPreset,
+            deviceClass,
+          })
+          localStorage.setItem(DEVICE_CLASS_STORAGE_KEY, deviceClass)
+        },
+        estimatedDeviceClass: localStorage.getItem(
+          ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
+        )
+          ? (localStorage.getItem(
+              ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
+            ) as DEVICE_CLASS)
+          : undefined,
+        setEstimatedDeviceClass: (estimatedDeviceClass: DEVICE_CLASS) => {
+          set({
+            estimatedDeviceClass,
           })
           localStorage.setItem(
-            RECOMMENDED_PRESET_STORAGE_KEY,
-            recommendedPreset,
+            ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
+            estimatedDeviceClass,
           )
         },
         setFilmViewBounds: (filmViewBounds: RectReadOnly) => {

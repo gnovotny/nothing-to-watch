@@ -9,6 +9,7 @@ import { cn } from '../../../utls/tw'
 import { VOROFORCE_PRESET } from '../../../vf'
 import { Modal } from '../../common/modal'
 import { PresetSelector } from '../../common/preset-selector'
+import { DEVICE_CLASS } from '../../../vf/consts'
 
 export const LowFpsAlert = () => {
   const landscape = useMediaQuery(orientation('landscape'))
@@ -19,22 +20,26 @@ export const LowFpsAlert = () => {
     preset,
     ticker,
     isSelectMode,
-    setRecommendedPreset,
+    estimatedDeviceClass,
+    setEstimatedDeviceClass,
     setAboutOpen,
     setSettingsOpen,
+    cellLimit,
   } = useShallowState((state) => ({
     performanceMonitor: state.performanceMonitor,
     preset: state.preset,
     ticker: state.voroforce.ticker,
     isSelectMode: state.isSelectMode,
-    recommendedPreset: state.recommendedPreset,
-    setRecommendedPreset: state.setRecommendedPreset,
+    estimatedDeviceClass: state.estimatedDeviceClass,
+    setEstimatedDeviceClass: state.setEstimatedDeviceClass,
     setAboutOpen: state.setAboutOpen,
     setSettingsOpen: state.setSettingsOpen,
+    cellLimit: state.userConfig.cells,
   }))
 
   const canLowerQuality = preset
-    ? [VOROFORCE_PRESET.mid, VOROFORCE_PRESET.high].includes(preset)
+    ? [VOROFORCE_PRESET.contours, VOROFORCE_PRESET.depth].includes(preset) ||
+      (cellLimit && cellLimit > 10000)
     : false
   const warnLimit = !canLowerQuality ? 1 : 2
 
@@ -60,13 +65,13 @@ export const LowFpsAlert = () => {
       setSettingsOpen(false)
     }
 
-    switch (preset) {
-      case VOROFORCE_PRESET.high:
-        setRecommendedPreset(VOROFORCE_PRESET.mid)
+    switch (estimatedDeviceClass) {
+      case DEVICE_CLASS.high:
+        setEstimatedDeviceClass(DEVICE_CLASS.mid)
         break
-      case VOROFORCE_PRESET.mid:
-      case VOROFORCE_PRESET.low:
-        setRecommendedPreset(VOROFORCE_PRESET.low)
+      case DEVICE_CLASS.mid:
+      case DEVICE_CLASS.low:
+        setEstimatedDeviceClass(DEVICE_CLASS.low)
         break
     }
 
@@ -76,8 +81,8 @@ export const LowFpsAlert = () => {
     setCooldown(true)
   }, [
     ticker,
-    preset,
-    setRecommendedPreset,
+    estimatedDeviceClass,
+    setEstimatedDeviceClass,
     isLgScreen,
     setAboutOpen,
     setSettingsOpen,
@@ -131,14 +136,14 @@ export const LowFpsAlert = () => {
             </span>
             <span
               className={cn('max-md:hidden', {
-                hidden: preset === VOROFORCE_PRESET.low,
+                hidden: preset === VOROFORCE_PRESET.minimal,
               })}
             >
               Switch to a lower quality setting?
             </span>
             <span
               className={cn('max-md:hidden', {
-                hidden: preset !== VOROFORCE_PRESET.low,
+                hidden: preset !== VOROFORCE_PRESET.minimal,
               })}
             >
               You're already using the lowest quality setting.

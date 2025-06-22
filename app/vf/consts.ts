@@ -8,16 +8,15 @@ export const DEFAULT_VOROFORCE_MODE: VOROFORCE_MODE = VOROFORCE_MODE.preview
 
 export enum VOROFORCE_PRESET {
   mobile = 'mobile',
-  low = 'low',
-  lowPrototyping = 'lowPrototyping',
-  mid = 'mid',
-  high = 'high',
+  minimal = 'minimal',
+  minimalPrototyping = 'minimalPrototyping',
+  contours = 'contours',
+  depth = 'depth',
 }
 
 export enum DEVICE_CLASS {
-  mobile = 'mobile',
-  low = 'low',
-  lowPrototyping = 'lowPrototyping',
-  mid = 'mid',
-  high = 'high',
+  mobile = 0,
+  low = 1,
+  mid = 2,
+  high = 3,
 }

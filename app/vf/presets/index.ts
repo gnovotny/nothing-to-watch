@@ -8,10 +8,10 @@ import { VOROFORCE_PRESET } from '../consts'
 
 const presets = {
   [VOROFORCE_PRESET.mobile]: mobile,
-  [VOROFORCE_PRESET.low]: low,
-  [VOROFORCE_PRESET.lowPrototyping]: lowPrototyping,
-  [VOROFORCE_PRESET.mid]: mid,
-  [VOROFORCE_PRESET.high]: high,
+  [VOROFORCE_PRESET.minimal]: low,
+  [VOROFORCE_PRESET.minimalPrototyping]: lowPrototyping,
+  [VOROFORCE_PRESET.contours]: mid,
+  [VOROFORCE_PRESET.depth]: high,
 }
 
 export default presets

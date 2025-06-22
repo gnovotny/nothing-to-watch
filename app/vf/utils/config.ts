@@ -8,7 +8,7 @@ import { down, matchMediaQuery } from '../../utls/mq'
 
 import type { THEME } from '../../consts'
 import type { StoreState } from '../../store'
-import { type VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
+import { DEVICE_CLASS, type VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
 import type { ConfigUniform } from './uniforms'
 
 export type CustomLink = {
@@ -63,9 +63,11 @@ export const getConfig = async (state: StoreState) => {
     userConfig,
     playedIntro,
     preset: initialPreset,
-    recommendedPreset: initialRecommendedPreset,
-    setRecommendedPreset,
+    deviceClass: initialDeviceClass,
+    estimatedDeviceClass: initialEstimatedDeviceClass,
+    setEstimatedDeviceClass,
     setPreset,
+    setDeviceClass,
     ua,
   } = state
   const urlParams = new URLSearchParams(window.location.search)
@@ -76,35 +78,37 @@ export const getConfig = async (state: StoreState) => {
   const device = ua.getDevice()
 
   let preset = initialPreset
-  let recommendedPreset = initialRecommendedPreset
+  let deviceClass = initialDeviceClass
+  let estimatedDeviceClass = initialEstimatedDeviceClass
 
-  if (!preset && !recommendedPreset) {
+  if (!preset && !deviceClass && !estimatedDeviceClass) {
     const isSmallScreen = matchMediaQuery(down('md')).matches
     if (device.is('mobile') || device.is('tablet')) {
-      recommendedPreset = VOROFORCE_PRESET.mobile
+      estimatedDeviceClass = DEVICE_CLASS.mobile
     } else if (isSmallScreen) {
-      recommendedPreset = VOROFORCE_PRESET.low
+      estimatedDeviceClass = DEVICE_CLASS.low
     } else {
       const gpuTier = await getGPUTier()
       console.log('gpuTier', gpuTier)
       switch (gpuTier.tier) {
         case 3:
-          // recommendedPreset = VOROFORCE_PRESET.high
-          recommendedPreset = VOROFORCE_PRESET.mid
+          // estimatedDeviceClass = VOROFORCE_PRESET.high
+          estimatedDeviceClass = DEVICE_CLASS.mid
           break
         case 2:
-          recommendedPreset = VOROFORCE_PRESET.mid
+          estimatedDeviceClass = DEVICE_CLASS.mid
           break
         default:
-          recommendedPreset = VOROFORCE_PRESET.low
+          estimatedDeviceClass = DEVICE_CLASS.low
       }
     }
 
     if (isSmallScreen) {
-      preset = recommendedPreset
-      setPreset(preset)
+      deviceClass = estimatedDeviceClass
+      setDeviceClass(deviceClass)
+      setPreset(VOROFORCE_PRESET.mobile)
     }
-    setRecommendedPreset(recommendedPreset)
+    setEstimatedDeviceClass(estimatedDeviceClass)
   }
 
   if (presetOverrideParam && VOROFORCE_PRESET[presetOverrideParam]) {
