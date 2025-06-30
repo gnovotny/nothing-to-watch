@@ -5,7 +5,7 @@ import { useMediaQuery } from '../../../../hks/use-media-query'
 import { orientation } from '../../../../utls/mq'
 import { cn } from '../../../../utls/tw'
 import type { Film } from '../../../../vf'
-import { AnimateHeightChange } from '../../../common/animate-height-change'
+import { AnimateDimensionsChange } from '../../../common/animate-dimensions-change'
 import { Modal } from '../../../common/modal'
 import { AddCustomLinkModal } from './add-custom-link-modal'
 
@@ -96,7 +96,8 @@ export const FilmViewDrawer = () => {
       }}
       additional={<AddCustomLinkModal />}
     >
-      <AnimateHeightChange
+      <AnimateDimensionsChange
+          axis='height'
         className='relative max-lg:landscape:static'
         duration={500}
         delay={100}
@@ -104,7 +105,7 @@ export const FilmViewDrawer = () => {
         onMouseLeave={() => setViewHovered(false)}
       >
         {filmView}
-      </AnimateHeightChange>
+      </AnimateDimensionsChange>
     </Modal>
   )
 }

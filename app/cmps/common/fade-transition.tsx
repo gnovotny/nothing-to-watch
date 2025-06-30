@@ -7,10 +7,12 @@ export const FadeTransition = ({
   children,
   visible,
   className,
+                                 notEnteredClassName = '',
   transitionOptions,
 }: PropsWithChildren<{
   visible: boolean
   className?: string
+  notEnteredClassName?: string
   transitionOptions?: Partial<Parameters<typeof useTransitionState>[0]>
 }>) => {
   const [{ status, isMounted }, toggle] = useTransitionState({
@@ -27,6 +29,7 @@ export const FadeTransition = ({
       <div
         className={cn('transition-opacity duration-700', className, {
           'opacity-0': status !== 'entered',
+          [notEnteredClassName]: status !== 'entered',
         })}
       >
         {children}

@@ -1,12 +1,13 @@
 import { useShallowState } from '@/store'
-import { Settings2, TabletSmartphone, TriangleAlert } from 'lucide-react'
+import { TabletSmartphone, TriangleAlert } from 'lucide-react'
 import { cn } from '../../utls/tw'
 import { safeInitVoroforce } from '../../vf'
-import { PresetSelector } from '../common/preset-selector'
-import { FadeTransition } from '../common/transition'
+import { FadeTransition } from '../common/fade-transition'
 import { DeviceClassSelector } from '../common/device-class-selector'
 import { useMediaQuery } from '../../hks/use-media-query'
 import { down } from '../../utls/mq'
+import { isDefined } from '../../utls/misc'
+import { CoreSettingsWidget } from '../common/core-settings-widget'
 const LegalInfo = () => (
   <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
     Contains information from Kaggle's "Full TMDB Movies Dataset" which is made
@@ -33,9 +34,9 @@ export const Intro = () => {
         initialEntered: visible,
       }}
     >
-      <div className='h-1/3'>&nbsp;</div>
+      <div className='h-1/3' />
       <div className='flex h-1/3 flex-col items-center justify-center'>
-        <h1 className='font-black text-4xl leading-none md:text-4xl lg:text-5xl lg:leading-none'>
+        <h1 className='font-black text-4xl leading-none md:text-5xl md:leading-none'>
           <span className='inline-flex'>
             <span className='max-md:hidden'>"</span>
             <i>There's nothing</i>
@@ -47,41 +48,36 @@ export const Intro = () => {
           </span>
         </h1>
       </div>
-      <div className='flex h-1/3 justify-center'>
-        <FadeTransition visible={!isSmallScreen && !deviceClass}>
-          <div className='hidden md:block'>
-            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-              <TabletSmartphone className='h-5 w-5 text-zinc-900 dark:text-white' />
-              What best describes the device you're using?
-            </div>
-            <p className='text-sm text-zinc-600 dark:text-zinc-300'>
-              You can change this later
-            </p>
+      <div className='relative flex h-1/3 flex-col items-stretch justify-end gap-4 pb-12'>
+        <FadeTransition
+          visible={!isSmallScreen && !isDefined(deviceClass)}
+          notEnteredClassName='absolute inset-x-0 bottom-12'
+        >
+          <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+            <TabletSmartphone className='h-5 w-5 text-zinc-900 dark:text-white' />
+            Your device
           </div>
           <DeviceClassSelector />
           <LegalInfo />
         </FadeTransition>
-        <FadeTransition visible={Boolean(deviceClass) && !preset}>
-          <div className='hidden md:block'>
-            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-              <Settings2 className='h-5 w-5 text-zinc-900 dark:text-white' />
-              Choose a preset
-            </div>
-            <p className='text-sm text-zinc-600 dark:text-zinc-300'>
-              You can change this later
-            </p>
-          </div>
+        <FadeTransition
+          visible={isDefined(deviceClass) && (isSmallScreen || !preset)}
+        >
           <div className='flex flex-col gap-2 py-4 md:hidden'>
             <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
               <TriangleAlert className='h-5 w-5 text-amber-500 ' />
               <div>Warning</div>
             </div>
-            <p className='text-base text-zinc-600 dark:text-zinc-300'>
+            <p className='text-base text-zinc-600 leading-tight dark:text-zinc-300'>
               This page is best viewed on a larger device like a desktop or
               laptop.
             </p>
           </div>
-          <PresetSelector onApply={() => void safeInitVoroforce()} />
+          <CoreSettingsWidget
+            onSubmit={() => void safeInitVoroforce()}
+            submitLabel='Continue'
+            submitVisibility='always'
+          />
           <LegalInfo />
         </FadeTransition>
       </div>

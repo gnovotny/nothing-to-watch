@@ -20,3 +20,76 @@ export enum DEVICE_CLASS {
   mid = 2,
   high = 3,
 }
+
+export const PRESET_ITEMS = [
+  {
+    id: VOROFORCE_PRESET.minimal,
+    name: 'Minimal',
+    features: ['10,000 films'],
+    videoSrc: '/tmp.webm',
+  },
+  {
+    id: VOROFORCE_PRESET.contours,
+    name: 'Contours',
+    features: ['25,000 films', 'Special effects'],
+    videoSrc: '/tmp.webm',
+    recommendedDeviceClass: DEVICE_CLASS.mid,
+  },
+  {
+    id: VOROFORCE_PRESET.depth,
+    name: 'Depth',
+    features: ['50,000 films', 'Raymarching'],
+    videoSrc: '/tmp.webm',
+    recommendedDeviceClass: DEVICE_CLASS.high,
+  },
+]
+
+export enum CELL_LIMIT {
+  xxs = 5000,
+  xs = 10000,
+  sm = 25000,
+  md = 50000,
+  lg = 100000,
+}
+
+export const CELL_LIMIT_ITEMS = [
+  {
+    value: CELL_LIMIT.xxs,
+    label: '5,000',
+  },
+  {
+    value: CELL_LIMIT.xs,
+    label: '10,000',
+    recommendedDeviceClass: DEVICE_CLASS.low,
+  },
+  {
+    value: CELL_LIMIT.sm,
+    label: '25,000',
+    recommendedDeviceClass: DEVICE_CLASS.mid,
+  },
+  {
+    value: CELL_LIMIT.md,
+    label: '50,000',
+    recommendedDeviceClass: DEVICE_CLASS.mid,
+  },
+  {
+    value: CELL_LIMIT.lg,
+    label: '100,000',
+    recommendedDeviceClass: DEVICE_CLASS.high,
+  },
+]
+
+export const DEVICE_CLASSES = [
+  {
+    id: DEVICE_CLASS.low,
+    name: '🥔 Potato',
+  },
+  {
+    id: DEVICE_CLASS.mid,
+    name: '😐 Mid-range',
+  },
+  {
+    id: DEVICE_CLASS.high,
+    name: '💪 High-end',
+  },
+]

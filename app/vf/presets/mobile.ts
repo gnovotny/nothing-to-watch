@@ -1,7 +1,6 @@
 export default {
   cells: 5000,
   media: {
-    enabled: true,
     compressionFormat: 'ktx',
   },
   display: {
@@ -10,14 +9,14 @@ export default {
         uniforms: {
           bPixelSearch: { value: false },
           fBorderRoundnessMod: {
-            value: 8,
+            value: 1,
             animatable: true,
             modes: {
               default: {
-                value: 8,
+                value: 1,
               },
               select: {
-                value: 8,
+                value: 1,
               },
             },
           },

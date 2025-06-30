@@ -8,7 +8,12 @@ import { down, matchMediaQuery } from '../../utls/mq'
 
 import type { THEME } from '../../consts'
 import type { StoreState } from '../../store'
-import { DEVICE_CLASS, type VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
+import {
+  CELL_LIMIT,
+  DEVICE_CLASS,
+  type VOROFORCE_MODE,
+  VOROFORCE_PRESET,
+} from '../consts'
 import type { ConfigUniform } from './uniforms'
 
 export type CustomLink = {
@@ -60,13 +65,14 @@ const handleCustomLinkParam = (
 
 export const getConfig = async (state: StoreState) => {
   const {
-    userConfig,
     playedIntro,
     preset: initialPreset,
+    cellLimit: initialCellLimit,
     deviceClass: initialDeviceClass,
     estimatedDeviceClass: initialEstimatedDeviceClass,
     setEstimatedDeviceClass,
     setPreset,
+    setCellLimit,
     setDeviceClass,
     ua,
   } = state
@@ -92,8 +98,8 @@ export const getConfig = async (state: StoreState) => {
       console.log('gpuTier', gpuTier)
       switch (gpuTier.tier) {
         case 3:
-          // estimatedDeviceClass = VOROFORCE_PRESET.high
-          estimatedDeviceClass = DEVICE_CLASS.mid
+          estimatedDeviceClass = DEVICE_CLASS.high
+          // estimatedDeviceClass = DEVICE_CLASS.mid
           break
         case 2:
           estimatedDeviceClass = DEVICE_CLASS.mid
@@ -107,6 +113,7 @@ export const getConfig = async (state: StoreState) => {
       deviceClass = estimatedDeviceClass
       setDeviceClass(deviceClass)
       setPreset(VOROFORCE_PRESET.mobile)
+      setCellLimit(CELL_LIMIT.xxs)
     }
     setEstimatedDeviceClass(estimatedDeviceClass)
   }
@@ -133,7 +140,8 @@ export const getConfig = async (state: StoreState) => {
 
   config.cells = cellsOverrideParam
     ? Number.parseInt(cellsOverrideParam)
-    : (userConfig.cells ?? config.cells)
+    : // : (userConfig.cells ?? config.cells)
+      (initialCellLimit ?? config.cells)
 
   return config
 }

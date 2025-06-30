@@ -23,7 +23,6 @@ export const FilmPreview = ({ poster = false }) => {
     isPreviewMode: state.isPreviewMode,
   }))
 
-  const [active] = useState(true)
   const [reverseX, setReverseX] = useState(false)
   const [reverseY, setReverseY] = useState(false)
 

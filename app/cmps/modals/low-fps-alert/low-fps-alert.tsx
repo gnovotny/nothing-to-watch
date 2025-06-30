@@ -3,13 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { useMediaQuery } from '../../../hks/use-media-query'
 import { useShallowState } from '../../../store'
-import { reload } from '../../../utls/misc'
 import { orientation, up } from '../../../utls/mq'
 import { cn } from '../../../utls/tw'
 import { VOROFORCE_PRESET } from '../../../vf'
 import { Modal } from '../../common/modal'
-import { PresetSelector } from '../../common/preset-selector'
 import { DEVICE_CLASS } from '../../../vf/consts'
+import { CoreSettingsWidget } from '../../common/core-settings-widget'
 
 export const LowFpsAlert = () => {
   const landscape = useMediaQuery(orientation('landscape'))
@@ -146,19 +145,11 @@ export const LowFpsAlert = () => {
                 hidden: preset !== VOROFORCE_PRESET.minimal,
               })}
             >
-              You're already using the lowest quality setting.
+              You're already using the fastest preset.
             </span>
           </p>
         </div>
-        <PresetSelector
-          onApply={(newPreset: VOROFORCE_PRESET) => {
-            if (newPreset !== preset) {
-              reload()
-            } else {
-              close()
-            }
-          }}
-        />
+        <CoreSettingsWidget onSubmit={() => window.location.reload()} />
       </div>
     </Modal>
   )

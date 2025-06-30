@@ -1,5 +1,3 @@
-'use client'
-
 import { Check } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 
@@ -10,23 +8,8 @@ import { cn } from '../../utls/tw'
 import { Badge } from '../ui/badge'
 import { Button, type ButtonProps } from '../ui/button'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
-import { DEVICE_CLASS } from '@/vf/consts.ts'
+import { type DEVICE_CLASS, DEVICE_CLASSES } from '@/vf/consts.ts'
 import { isDefined } from '../../utls/misc'
-
-const DEVICE_CLASSES = [
-  {
-    id: DEVICE_CLASS.low,
-    name: '🥔 Potato',
-  },
-  {
-    id: DEVICE_CLASS.mid,
-    name: '😐 Mid-range',
-  },
-  {
-    id: DEVICE_CLASS.high,
-    name: '💪 High-end',
-  },
-]
 
 export function DeviceClassSelector({
   className = '',
@@ -61,13 +44,15 @@ export function DeviceClassSelector({
   return (
     <div className={className}>
       <RadioGroup
-        defaultValue={selectedDeviceClass}
-        onValueChange={(p: DEVICE_CLASS) => setSelectedDeviceClass(p)}
+        defaultValue={String(selectedDeviceClass)}
+        onValueChange={(p: string) =>
+          setSelectedDeviceClass(Number.parseInt(p) as DEVICE_CLASS)
+        }
         className='hidden flex-col gap-4 py-4 md:flex md:flex-row'
       >
         {DEVICE_CLASSES.map((deviceClass) => (
           <label
-            htmlFor={deviceClass.id}
+            htmlFor={String(deviceClass.id)}
             key={deviceClass.id}
             className={`relative flex flex-1 cursor-pointer flex-col rounded-xl border-2 p-4 transition-all ${
               selectedDeviceClass === deviceClass.id
@@ -81,8 +66,8 @@ export function DeviceClassSelector({
               </Badge>
             )}
             <RadioGroupItem
-              id={deviceClass.id}
-              value={deviceClass.id}
+              id={String(deviceClass.id)}
+              value={String(deviceClass.id)}
               className='sr-only'
             />
             <div className='flex items-start justify-between'>

@@ -18,7 +18,7 @@ import {
 } from './vf'
 
 import { THEME } from './consts'
-import type { DEVICE_CLASS } from './vf/consts'
+import type { CELL_LIMIT, DEVICE_CLASS } from './vf/consts'
 
 export type StoreState = {
   theme: THEME
@@ -53,6 +53,8 @@ export type StoreState = {
   setPlayedIntro: (playedIntro: boolean) => void
   preset?: VOROFORCE_PRESET
   setPreset: (preset: VOROFORCE_PRESET) => void
+  cellLimit?: CELL_LIMIT
+  setCellLimit: (cellLimit: CELL_LIMIT) => void
   deviceClass?: DEVICE_CLASS
   setDeviceClass: (deviceClass: DEVICE_CLASS) => void
   estimatedDeviceClass?: DEVICE_CLASS
@@ -72,6 +74,7 @@ export type StoreState = {
 const THEME_STORAGE_KEY = 'theme'
 const PLAYED_INTRO_STORAGE_KEY = 'playedIntro'
 const PRESET_STORAGE_KEY = 'preset'
+const CELL_LIMIT_STORAGE_KEY = 'cellLimit'
 const DEVICE_CLASS_STORAGE_KEY = 'deviceClass'
 const ESTIMATED_DEVICE_CLASS_STORAGE_KEY = 'estimatedDeviceClass'
 const USER_CONFIG_STORAGE_KEY = 'userConfig'
@@ -174,20 +177,35 @@ export const store = create(
           })
           localStorage.setItem(PRESET_STORAGE_KEY, preset)
         },
+        cellLimit: localStorage.getItem(CELL_LIMIT_STORAGE_KEY)
+          ? (Number.parseInt(
+              localStorage.getItem(CELL_LIMIT_STORAGE_KEY) as string,
+            ) as CELL_LIMIT)
+          : undefined,
+        setCellLimit: (cellLimit: CELL_LIMIT) => {
+          set({
+            cellLimit,
+          })
+          localStorage.setItem(CELL_LIMIT_STORAGE_KEY, String(cellLimit))
+        },
         deviceClass: localStorage.getItem(DEVICE_CLASS_STORAGE_KEY)
-          ? (localStorage.getItem(DEVICE_CLASS_STORAGE_KEY) as DEVICE_CLASS)
+          ? (Number.parseInt(
+              localStorage.getItem(DEVICE_CLASS_STORAGE_KEY) as string,
+            ) as DEVICE_CLASS)
           : undefined,
         setDeviceClass: (deviceClass: DEVICE_CLASS) => {
           set({
             deviceClass,
           })
-          localStorage.setItem(DEVICE_CLASS_STORAGE_KEY, deviceClass)
+          localStorage.setItem(DEVICE_CLASS_STORAGE_KEY, String(deviceClass))
         },
         estimatedDeviceClass: localStorage.getItem(
           ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
         )
-          ? (localStorage.getItem(
-              ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
+          ? (Number.parseInt(
+              localStorage.getItem(
+                ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
+              ) as string,
             ) as DEVICE_CLASS)
           : undefined,
         setEstimatedDeviceClass: (estimatedDeviceClass: DEVICE_CLASS) => {
@@ -196,7 +214,7 @@ export const store = create(
           })
           localStorage.setItem(
             ESTIMATED_DEVICE_CLASS_STORAGE_KEY,
-            estimatedDeviceClass,
+            String(estimatedDeviceClass),
           )
         },
         setFilmViewBounds: (filmViewBounds: RectReadOnly) => {

@@ -1,29 +1,19 @@
 import { useShallowState } from '@/store'
-import {
-  Grid3x3Icon,
-  Settings as SettingsIcon,
-  TriangleAlert,
-} from 'lucide-react'
+import { TriangleAlert } from 'lucide-react'
 import { THEME } from '../../../consts'
 import { reload } from '../../../utls/misc'
-import { cn } from '../../../utls/tw'
-import type { VOROFORCE_PRESET } from '../../../vf'
 import { Modal } from '../../common/modal'
-import { PresetSelector } from '../../common/preset-selector'
 import { useTheme } from '../../layout'
-import { Badge } from '../../ui/badge'
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
 import { ScrollArea } from '../../ui/scroll-area'
 import { Switch } from '../../ui/switch'
-
-const NUM_CELL_OPTIONS = [5000, 10000, 25000, 50000, 100000]
+import { CoreSettingsWidget } from '../../common/core-settings-widget'
 
 export const Settings = () => {
   const {
     open,
     setOpen,
-    preset,
     userConfig,
     setVConfig,
     setPlayedIntro,
@@ -32,7 +22,6 @@ export const Settings = () => {
   } = useShallowState((state) => ({
     open: state.settingsOpen,
     setOpen: state.setSettingsOpen,
-    preset: state.preset,
     userConfig: state.userConfig,
     setVConfig: state.setUserConfig,
     setPlayedIntro: state.setPlayedIntro,
@@ -71,59 +60,23 @@ export const Settings = () => {
         innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
       >
         <div className='flex w-full flex-col gap-4 p-4 pb-18 md:gap-6 md:p-6 md:pr-10 md:pb-24 lg:pt-12 lg:pb-24'>
-          <div>
-            <div className='hidden md:block'>
-              <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-                <SettingsIcon className='h-5 w-5 text-zinc-900 dark:text-white' />
-                Settings
-              </div>
+          {/*<div className='hidden md:block'>*/}
+          {/*  <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>*/}
+          {/*    <SettingsIcon className='h-5 w-5 text-zinc-900 dark:text-white' />*/}
+          {/*    Settings*/}
+          {/*  </div>*/}
+          {/*</div>*/}
+          <div className='flex flex-col gap-2 md:hidden'>
+            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
+              <TriangleAlert className='h-5 w-5 text-amber-500 ' />
+              <div>Warning</div>
             </div>
-            <div className='flex flex-col gap-2 md:hidden'>
-              <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-                <TriangleAlert className='h-5 w-5 text-amber-500 ' />
-                <div>Warning</div>
-              </div>
-              <p className='text-base text-zinc-600 leading-none dark:text-zinc-300'>
-                This page is best viewed on a larger device like a desktop or
-                laptop.
-              </p>
-            </div>
-            <PresetSelector
-              onApply={(newPreset: VOROFORCE_PRESET) => {
-                if (newPreset !== preset) reload()
-              }}
-              submitLabel='Apply'
-              submitProps={{
-                size: 'default',
-                className: 'text-base leading-none',
-              }}
-              className='max-md:hidden'
-            />
+            <p className='text-base text-zinc-600 leading-none dark:text-zinc-300'>
+              This page is best viewed on a larger device like a desktop or
+              laptop.
+            </p>
           </div>
-          <div className='flex flex-col gap-1'>
-            <div className='flex items-center gap-2 font-semibold text-base text-zinc-900 md:text-xl dark:text-white'>
-              <Grid3x3Icon className='h-5 w-5 text-zinc-900 dark:text-white' />
-              Film limit override
-            </div>
-            <div className='flex flex-row gap-1'>
-              {NUM_CELL_OPTIONS.map((option) => (
-                <Badge
-                  key={option}
-                  onClick={() => {
-                    userConfig.cells = option
-                    setVConfig(userConfig)
-                    reload()
-                  }}
-                  className={cn('cursor-pointer hover:bg-primary', {
-                    'bg-primary/80': userConfig.cells !== option,
-                    'max-md:hidden': option > 25000,
-                  })}
-                >
-                  {new Intl.NumberFormat('en-US').format(option)}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <CoreSettingsWidget onSubmit={() => window.location.reload()} />
           <div className='flex flex-row items-center gap-2'>
             <Switch
               id='light-mode'
