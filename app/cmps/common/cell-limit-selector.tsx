@@ -23,13 +23,23 @@ export function CellLimitSelector({
 }) {
   const cellLimitItems: SelectorItems = useMemo(() => {
     return CELL_LIMIT_ITEMS.map((cellLimit) => {
+      const hasWarning =
+        isDefined(cellLimit.recommendedDeviceClass) &&
+        isDefined(deviceClass) &&
+        cellLimit.recommendedDeviceClass > deviceClass
+
       return {
-        label: cellLimit.label,
+        label: (
+          <span
+            className={cn({
+              'text-amber-500 dark:text-amber-500': hasWarning,
+            })}
+          >
+            {cellLimit.label}
+          </span>
+        ),
         value: String(cellLimit.value),
-        hasWarning:
-          isDefined(cellLimit.recommendedDeviceClass) &&
-          isDefined(deviceClass) &&
-          cellLimit.recommendedDeviceClass > deviceClass,
+        hasWarning,
       }
     })
   }, [deviceClass])
@@ -42,14 +52,14 @@ export function CellLimitSelector({
       </div>
       <Selector
         className={cn('', className)}
-        itemClassName='py-1 text-center text-sm leading-none rounded-lg'
+        itemClassName='py-1 text-center text-sm leading-none rounded-lg flex items-center justify-center'
         defaultValue={String(value)}
         onValueChange={(value) => {
           onValueChange(Number.parseInt(value) as CELL_LIMIT)
         }}
         items={cellLimitItems}
         warningMessage={<DeviceClassWarningMessage deviceClass={deviceClass} />}
-        warningClassName='-translate-y-2/3'
+        warningClassName='-translate-y-2/3 text-xxs leading-none'
         warningIconClassName='[&>svg]:size-3 p-1 group-hover:scale-160'
       />
     </div>

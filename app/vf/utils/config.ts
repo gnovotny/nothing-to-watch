@@ -27,6 +27,7 @@ export type UserConfig = {
   cells?: number
   noPostEffects?: boolean
   forceHigherQuality?: boolean
+  devTools?: boolean
   customLinks?: CustomLink[]
 }
 
@@ -66,6 +67,7 @@ const handleCustomLinkParam = (
 export const getConfig = async (state: StoreState) => {
   const {
     playedIntro,
+    userConfig,
     preset: initialPreset,
     cellLimit: initialCellLimit,
     deviceClass: initialDeviceClass,
@@ -140,8 +142,11 @@ export const getConfig = async (state: StoreState) => {
 
   config.cells = cellsOverrideParam
     ? Number.parseInt(cellsOverrideParam)
-    : // : (userConfig.cells ?? config.cells)
-      (initialCellLimit ?? config.cells)
+    : (initialCellLimit ?? config.cells)
+
+  if ('devTools' in userConfig) {
+    config.devTools.enabled = userConfig.devTools
+  }
 
   return config
 }

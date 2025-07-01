@@ -79,7 +79,7 @@ export const CELL_LIMIT_ITEMS = [
   },
 ]
 
-export const DEVICE_CLASSES = [
+export const DEVICE_CLASS_ITEMS = [
   {
     id: DEVICE_CLASS.low,
     name: '🥔 Potato',

@@ -16,7 +16,11 @@ export default {
   },
   devTools: {
     enabled: false,
-    expanded: false,
+    expanded: true,
+    expandedFolders: {
+      simulation: true,
+      display: true,
+    },
   },
   handleVisibilityChange: {
     enabled: true,

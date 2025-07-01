@@ -14,16 +14,18 @@ export const Settings = () => {
   const {
     open,
     setOpen,
+    voroforce,
     userConfig,
-    setVConfig,
+    setUserConfig,
     setPlayedIntro,
     voroforceDevSceneEnabled,
     setVoroforceDevSceneEnabled,
   } = useShallowState((state) => ({
     open: state.settingsOpen,
     setOpen: state.setSettingsOpen,
+    voroforce: state.voroforce,
     userConfig: state.userConfig,
-    setVConfig: state.setUserConfig,
+    setUserConfig: state.setUserConfig,
     setPlayedIntro: state.setPlayedIntro,
     voroforceDevSceneEnabled: state.voroforceDevSceneEnabled,
     setVoroforceDevSceneEnabled: state.setVoroforceDevSceneEnabled,
@@ -60,12 +62,6 @@ export const Settings = () => {
         innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
       >
         <div className='flex w-full flex-col gap-4 p-4 pb-18 md:gap-6 md:p-6 md:pr-10 md:pb-24 lg:pt-12 lg:pb-24'>
-          {/*<div className='hidden md:block'>*/}
-          {/*  <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>*/}
-          {/*    <SettingsIcon className='h-5 w-5 text-zinc-900 dark:text-white' />*/}
-          {/*    Settings*/}
-          {/*  </div>*/}
-          {/*</div>*/}
           <div className='flex flex-col gap-2 md:hidden'>
             <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
               <TriangleAlert className='h-5 w-5 text-amber-500 ' />
@@ -77,37 +73,43 @@ export const Settings = () => {
             </p>
           </div>
           <CoreSettingsWidget onSubmit={() => window.location.reload()} />
-          <div className='flex flex-row items-center gap-2'>
-            <Switch
-              id='light-mode'
-              checked={theme === THEME.light}
-              onCheckedChange={(checked) => {
-                setTheme(checked ? THEME.light : THEME.dark)
-              }}
-            />
-            <Label htmlFor='light-mode'>Light Mode</Label>
-          </div>
-          <div className='flex flex-row items-center gap-2'>
-            <Switch
-              id='dev-mode'
-              // checked={Boolean(noPostEffects)}
-              onCheckedChange={(checked) => {
-                userConfig.noPostEffects = checked
-                setVConfig(userConfig)
-                reload()
-              }}
-            />
-            <Label htmlFor='dev-mode'>Show Dev Widget</Label>
-          </div>
-          <div className='flex flex-row items-center gap-2'>
-            <Switch
-              id='show-cell-seeds'
-              checked={voroforceDevSceneEnabled}
-              onCheckedChange={(checked) => {
-                setVoroforceDevSceneEnabled(checked)
-              }}
-            />
-            <Label htmlFor='show-cell-seeds'>Show Cell Seeds</Label>
+          <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+            <div className='flex flex-row items-center gap-2'>
+              <Switch
+                id='light-mode'
+                checked={theme === THEME.light}
+                onCheckedChange={(checked) => {
+                  setTheme(checked ? THEME.light : THEME.dark)
+                }}
+              />
+              <Label htmlFor='light-mode'>Bright mode</Label>
+            </div>
+            <div className='flex flex-row items-center gap-2'>
+              <Switch
+                id='dev-tools'
+                checked={Boolean(userConfig.devTools)}
+                onCheckedChange={(checked) => {
+                  userConfig.devTools = checked
+                  setUserConfig(userConfig)
+                  if (checked) {
+                    voroforce.initDevTools(true)
+                  } else {
+                    voroforce.destroyDevTools()
+                  }
+                }}
+              />
+              <Label htmlFor='dev-tools'>Dev tools</Label>
+            </div>
+            <div className='flex flex-row items-center gap-2'>
+              <Switch
+                id='show-cell-seeds'
+                checked={voroforceDevSceneEnabled}
+                onCheckedChange={(checked) => {
+                  setVoroforceDevSceneEnabled(checked)
+                }}
+              />
+              <Label htmlFor='show-cell-seeds'>Cell seeds</Label>
+            </div>
           </div>
         </div>
       </ScrollArea>

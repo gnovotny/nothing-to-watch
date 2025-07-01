@@ -232,9 +232,10 @@ export class Voroforce extends CustomEventTarget {
     }, 1000)
   }
 
-  async initDevTools() {
+  async initDevTools(force = false) {
+    if (this.devTools) return
     this.config.devTools.enabled =
-      this.config.devTools.enabled || window.location.hash === '#dev'
+      force || this.config.devTools.enabled || window.location.hash === '#dev'
 
     if (!this.config.devTools.enabled) return
     this.devTools = new (await import('./common/dev-tools')).default(
@@ -242,6 +243,15 @@ export class Voroforce extends CustomEventTarget {
     )
     this.ticker.fpsGraph = this.devTools.fpsGraph
     this.store.set('devTools', this.devTools)
+  }
+
+  destroyDevTools() {
+    this.config.devTools.enabled = false
+
+    this.ticker.fpsGraph = undefined
+    this.devTools?.dispose()
+    this.devTools = undefined
+    this.store.set('devTools', undefined)
   }
 
   // multithreaded simulation step workers must complete before triggering resize

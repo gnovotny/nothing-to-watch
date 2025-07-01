@@ -2,6 +2,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @custom-variant light (&:is(.light *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: hsl(0 0% 3.9%);
@@ -142,5 +143,9 @@
       html {
           font-size: clamp(.8rem, .5vw + .4rem, 1rem);
       }
+  }
+
+  .tp-dfwv {
+    @apply !top-auto !right-auto left-4 bottom-4 z-50 !w-sm;
   }
 }

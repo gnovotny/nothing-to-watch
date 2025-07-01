@@ -24,6 +24,7 @@ export default class BaseSimulation {
 
   initDevTools() {
     this.handleDevTools = ({ value: devTools }) => {
+      if (!devTools) return
       setupDevTools(
         devTools,
         () => this.handleDevToolsChange(),

@@ -64,6 +64,7 @@ export default class Display {
 
   initDevTools() {
     this.handleDevTools = ({ value: devTools }) => {
+      if (!devTools) return
       setupDevTools(devTools, this, this.config)
     }
     this.store.addEventListener('devTools', this.handleDevTools)

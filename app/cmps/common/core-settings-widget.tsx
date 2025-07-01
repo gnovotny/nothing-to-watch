@@ -75,6 +75,7 @@ export function CoreSettingsWidget({
   )
 
   const [isDirty, setIsDirty] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
 
   return (
     <AnimateDimensionsChange
@@ -107,6 +108,8 @@ export function CoreSettingsWidget({
       >
         <Button
           onClick={() => {
+            if (isSubmitted) return
+            setIsSubmitted(true)
             setStorePreset(
               isDefined(preset) ? preset : VOROFORCE_PRESET.minimal,
             )

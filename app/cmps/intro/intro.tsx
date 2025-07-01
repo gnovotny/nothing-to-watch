@@ -1,13 +1,13 @@
 import { useShallowState } from '@/store'
-import { TabletSmartphone, TriangleAlert } from 'lucide-react'
+import { TriangleAlert } from 'lucide-react'
 import { cn } from '../../utls/tw'
 import { safeInitVoroforce } from '../../vf'
 import { FadeTransition } from '../common/fade-transition'
-import { DeviceClassSelector } from '../common/device-class-selector'
 import { useMediaQuery } from '../../hks/use-media-query'
 import { down } from '../../utls/mq'
 import { isDefined } from '../../utls/misc'
 import { CoreSettingsWidget } from '../common/core-settings-widget'
+import { DeviceClassWidget } from '../common/device-class-widget'
 const LegalInfo = () => (
   <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
     Contains information from Kaggle's "Full TMDB Movies Dataset" which is made
@@ -58,11 +58,7 @@ export const Intro = () => {
               timeout: 500,
             }}
           >
-            <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
-              <TabletSmartphone className='h-5 w-5 text-zinc-900 dark:text-white' />
-              Your device
-            </div>
-            <DeviceClassSelector />
+            <DeviceClassWidget />
             <LegalInfo />
           </FadeTransition>
           <FadeTransition

@@ -1,20 +1,22 @@
 // import * as forceFunctions from '../steps/force/forces'
 
+import { isObject } from '../../utils'
+
 export function setupDevTools(devTools, app, config) {
   const d = devTools.paneFolders[1]
 
-  const dRenderer = d.addFolder({
-    title: 'Renderer',
-    expanded: true,
-  })
-
-  dRenderer
-    .addBinding(config.renderer, 'backgroundColor', {
-      view: 'color',
-    })
-    .on('change', () => {
-      app.canvas.style.backgroundColor = config.renderer.backgroundColor
-    }).label = 'Background color'
+  // const dRenderer = d.addFolder({
+  //   title: 'Renderer',
+  //   expanded: true,
+  // })
+  //
+  // dRenderer
+  //   .addBinding(config.renderer, 'backgroundColor', {
+  //     view: 'color',
+  //   })
+  //   .on('change', () => {
+  //     app.canvas.style.backgroundColor = config.renderer.backgroundColor
+  //   }).label = 'Background color'
 
   // dRenderer
   //   .addBinding(config.renderer, 'pixelRatio', {
@@ -31,6 +33,15 @@ export function setupDevTools(devTools, app, config) {
   const dMain = d.addFolder({
     title: 'Main',
     expanded: true,
+  })
+
+  Object.keys(config.scene.main.uniforms).forEach((key) => {
+    if (isObject(config.scene.main.uniforms[key].value)) return
+    dMain
+      .addBinding(config.scene.main.uniforms[key], 'value')
+      .on('change', () => {
+        app.scene.refreshCustom()
+      }).label = key
   })
 
   // dMain

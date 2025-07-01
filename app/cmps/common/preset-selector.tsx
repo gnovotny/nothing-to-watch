@@ -24,7 +24,7 @@ export function PresetSelector({
         label: (
           <>
             <video
-              className='absolute inset-0 h-full w-full rounded-xl object-cover object-center'
+              className='absolute inset-0 h-full w-full object-cover object-center'
               playsInline
               autoPlay
               muted
@@ -58,7 +58,7 @@ export function PresetSelector({
       </div>
       <Selector
         className={cn('', className)}
-        itemClassName='aspect-video'
+        itemClassName='aspect-video text-white'
         itemBgClassName='z-1'
         defaultValue={value}
         onValueChange={(value) => {

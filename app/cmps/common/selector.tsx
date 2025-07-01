@@ -31,21 +31,18 @@ export function SelectorItemWarning({
       duration={700}
       delay={100}
       className={cn(
-        '-translate-y-1/2 -translate-x-1/2 !text-background !transition-all pointer-events-none absolute top-0 left-1/2 z-10 rounded-2xl bg-amber-200 will-change-[background-color] dark:bg-amber-800',
+        '-translate-y-1/2 -translate-x-1/2 !text-background !transition-all pointer-events-none absolute top-0 left-1/2 z-10 rounded-2xl bg-amber-200 font-semibold text-xs leading-none will-change-[background-color] dark:bg-amber-800',
         {
           'ease-in-out will-change-[transform,translate,height,width,border-radius,background-color] contain-strict group-hover:translate-y-[calc(-100%-1rem)] group-hover:rounded-md':
             !!children,
-          'bg-amber-300 group-hover:will-change-[transform,translate,height,width,border-radius,background-color] dark:group-hover:bg-amber-700':
+          'bg-amber-700 group-hover:will-change-[transform,translate,height,width,border-radius,background-color] dark:group-hover:bg-amber-700':
             !isSelected,
           'bg-amber-500 dark:bg-amber-500': isSelected,
         },
         className,
       )}
-      innerClassName={cn(
-        'flex size-fit flex-row font-semibold text-xs leading-none',
-      )}
+      innerClassName={cn('flex size-fit flex-row')}
     >
-      {/*<div className='px-1.5 py-1.5'>*/}
       <div
         className={cn(
           'p-1.5',
@@ -107,48 +104,50 @@ export function Selector({
     >
       {items.map((item) => {
         const hasWarning = item.hasWarning
-        const isSelected = value === item.value
+        const itemValue = String(item.value)
+        const isSelected = value === itemValue
 
         return (
-          <Label
-            key={item.value}
-            htmlFor={String(item.value)}
-            className={cn(
-              'group relative flex flex-1 cursor-pointer flex-col rounded-xl border-2 p-4 transition-all',
-              'font-semibold text-lg text-zinc-900 dark:text-white',
-              {
-                'border-zinc-200 dark:border-zinc-800': !hasWarning,
-                'hover:border-zinc-300 dark:hover:border-zinc-700':
-                  !hasWarning && !isSelected,
-                'border-amber-200 dark:border-amber-800 ': hasWarning,
-                'hover:border-amber-300 dark:hover:border-amber-700':
-                  hasWarning && !isSelected,
-                // 'border-zinc-900 bg-zinc-50 dark:border-white dark:bg-zinc-800/50':
-                //   isSelected && !hasWarning,
-                // 'border-amber-500 bg-amber-50 dark:border-amber-500 dark:bg-amber-800/50':
-                //   isSelected && hasWarning,
-                'border-zinc-900 dark:border-white ': isSelected && !hasWarning,
-                'border-amber-500 dark:border-amber-500 ':
-                  isSelected && hasWarning,
-              },
-              itemClassName,
-            )}
-          >
-            <div
+          <div key={itemValue} className='group relative flex-1'>
+            <Label
+              htmlFor={itemValue}
               className={cn(
-                '-z-1 absolute inset-0 h-full w-full',
+                'relative flex size-full cursor-pointer flex-col overflow-hidden rounded-xl border-2 p-4 transition-all',
+                'font-semibold text-lg text-zinc-900 dark:text-white',
                 {
-                  'bg-zinc-50 dark:bg-zinc-800/50': isSelected && !hasWarning,
-                  'bg-amber-50 dark:bg-amber-800/50': isSelected && hasWarning,
+                  'border-zinc-200 dark:border-zinc-800': !hasWarning,
+                  'hover:border-zinc-400 dark:hover:border-zinc-700':
+                    !hasWarning && !isSelected,
+                  'border-amber-800 dark:border-amber-800 ': hasWarning,
+                  'hover:border-amber-700 dark:hover:border-amber-700':
+                    hasWarning && !isSelected,
+                  'border-zinc-900 dark:border-white ':
+                    isSelected && !hasWarning,
+                  'border-amber-500 dark:border-amber-500 ':
+                    isSelected && hasWarning,
                 },
-                itemBgClassName,
+                itemClassName,
               )}
-            />
-            <RadioGroupPrimitiveItem
-              id={String(item.value)}
-              value={String(item.value)}
-              className='sr-only'
-            />
+            >
+              <div
+                className={cn(
+                  '-z-1 absolute inset-0 h-full w-full',
+                  {
+                    'bg-zinc-50/25 dark:bg-zinc-800/50':
+                      isSelected && !hasWarning,
+                    'bg-amber-800/50 dark:bg-amber-800/50':
+                      isSelected && hasWarning,
+                  },
+                  itemBgClassName,
+                )}
+              />
+              <RadioGroupPrimitiveItem
+                id={itemValue}
+                value={itemValue}
+                className='sr-only'
+              />
+              {item.label}
+            </Label>
             <div
               className={cn(
                 '-top-2.5 -right-2.5 absolute z-10 transition-opacity duration-300',
@@ -182,8 +181,7 @@ export function Selector({
                 {warningMessage}
               </SelectorItemWarning>
             )}
-            {item.label}
-          </Label>
+          </div>
         )
       })}
     </RadioGroupPrimitiveRoot>
