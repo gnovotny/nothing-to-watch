@@ -49,7 +49,7 @@ const items = [
           materials used remain with their respective owners. I do not claim
           ownership of any third-party content. If you are the rightful owner of
           any material featured here and have concerns about its use, please{' '}
-          <Link href={`mailto:${config.relayEmail}`}>contact</Link> me—I will
+          <Link href={`mailto:${config.relayEmail}`}>contact</Link> me - I will
           address the issue promptly.
         </p>
         <br />
@@ -65,8 +65,8 @@ const items = [
         </p>
         <br />
         <p>
-          Much of the shader code is heavily inspired by—and in some cases
-          directly copied from—the work of talented creators on{' '}
+          Much of the shader code is heavily inspired by - and in some cases
+          directly copied from - the work of talented creators on{' '}
           <Link href='https://shadertoy.com'>Shadertoy</Link>. Many of the
           underlying algorithms they use are themselves adapted from other
           sources.
@@ -132,25 +132,21 @@ const items = [
             Voronoi diagrams
           </Link>{' '}
           are fascinating. Once you're aware of them, you'll start noticing them
-          everywhere—from{' '}
+          everywhere - from{' '}
           <Link href='https://www.google.com/search?q=examples+of+voronoi+patterns+in+nature'>
             nature
           </Link>{' '}
           to art and architecture. While they’re aesthetically pleasing, they
           haven’t traditionally had a strong use case in user interfaces. This
-          is an attempt to give them one—though admittedly, a similar effect
+          is an attempt to give them one - though admittedly, a similar effect
           could be achieved by simply distorting a grid.
         </p>
         <br />
         <p>
           It’s worth noting that this is not a standard Voronoi diagram. The
-          seeds are constrained to a grid, which makes the resulting cells
-          extremely uniform. The focused cell is given slightly more weight to
-          reduce the enlargement of neighboring cells. To balance the additive
-          weighting while maintaining cell aspect ratios, the distance metric is
-          biased 1.5x along the y-axis. Depending on the view mode, there is
-          also a bulging effect centering around the focused cell that affects
-          the distance metric.
+          seeds are loosely constrained to a grid, which makes the resulting
+          cells fairly uniform. The distance metric is biased 1.5x along the
+          y-axis. Depending on the view mode, there is also a bulging effect.
         </p>
         <br />
         <p className='hidden md:inline-block'>
@@ -171,15 +167,13 @@ const items = [
         </p>
         <br />
         <p>
-          In the future, the simulation could potentially be implemented on the
-          GPU with WebGL—though WebGPU would be a better fit once it gains
-          broader adoption.
+          The simulation could potentially be implemented on the GPU with WebGL
+          - though WebGPU would be a better fit once it gains broader adoption.
         </p>
         <br />
         <p>
-          If the simulation remains on the CPU, significant performance gains
-          could be achieved by simulating only a subset of the cells and
-          interpolating the rest.{' '}
+          Alternatively, potential performance gains could be achieved by
+          simulating only a subset of the cells and interpolating the rest.{' '}
         </p>
       </>
     ),
@@ -189,12 +183,24 @@ const items = [
     content: (
       <>
         <p>
-          Much of the shader code is heavily inspired by—if not outright
-          reinterpreted from—various brilliant creators on{' '}
-          <Link href='https://shadertoy.com'>Shadertoy</Link>, though many of
-          their algorithms are themselves sourced from elsewhere.
+          As mentioned earlier, many of the shader algorithms draw heavy
+          inspiration from - if not directly reinterpret - the work of several
+          brilliant creators on{' '}
+          <Link href='https://shadertoy.com'>Shadertoy</Link>.
         </p>
         <br />
+        <p>
+          These shaders do not use the{' '}
+          <Link href='https://en.wikipedia.org/wiki/Jump_flooding_algorithm'>
+            Jump Flooding algorithm
+          </Link>
+          . Instead, the Voronoi diagram is generated in a single pass through a
+          two-pronged approach: comparing distances with immediate grid
+          neighbors and with additional neighbors located within a small
+          pixel-radius search area. Although cell propagation can be relatively
+          slow, this can be masked using simulation speed limits and other
+          visual tricks.
+        </p>
       </>
     ),
   },
@@ -209,9 +215,9 @@ const items = [
           delivers images as small as 4×6 pixels.
         </p>
         <br />
-        <p>
-          If you're interested in visualizing tens of thousands of images but
-          find this project a bit whimsical, check out the (unrelated) project{' '}
+        <p className='pb-6'>
+          If you're just interested in visualizing large amounts of images but
+          find this project a bit silly, check out the (unrelated) project{' '}
           <Link href='https://github.com/pleonard212/pix-plot'>pix-plot</Link>.
         </p>
       </>
