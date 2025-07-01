@@ -1,7 +1,7 @@
 import { THEME } from '../../../consts'
 import { VOROFORCE_MODE } from '../../consts'
-// import mainFrag from './main.frag'
-import mainFrag from './../../presets/low-prototyping/main-lp5.frag'
+import mainFrag from './main.frag'
+// import mainFrag from './../../presets/low-prototyping/main-lp5.frag'
 
 export default {
   scene: {
@@ -100,8 +100,8 @@ export default {
           animatable: true,
           modes: {
             default: {
-              // value: 0.5,
-              value: 0,
+              value: 0.25,
+              // value: 0,
             },
             [VOROFORCE_MODE.select]: {
               // value: 1,

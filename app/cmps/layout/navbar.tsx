@@ -2,7 +2,7 @@ import { GithubIcon, Info, Settings } from 'lucide-react'
 
 import { useShallowState } from '@/store'
 import config from '../../config'
-import { cn } from '../../utls/tw'
+import { cn } from '../../utils/tw'
 import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
 

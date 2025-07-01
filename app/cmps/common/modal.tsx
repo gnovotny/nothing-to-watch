@@ -6,9 +6,9 @@ import React, {
 } from 'react'
 import { type DialogProps, Drawer as DrawerPrimitive } from 'vaul'
 
-import { useMediaQuery } from '../../hks/use-media-query'
-import { orientation } from '../../utls/mq'
-import { cn } from '../../utls/tw'
+import { useMediaQuery } from '../../hooks/use-media-query'
+import { orientation } from '../../utils/mq'
+import { cn } from '../../utils/tw'
 import {
   Drawer,
   DrawerDescription,

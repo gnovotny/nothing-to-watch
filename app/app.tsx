@@ -1,11 +1,11 @@
-import { Intro } from './cmps/intro'
+import { Intro } from './cmps/views/intro'
 import { Navbar, ThemeProvider } from './cmps/layout'
-import Modals from './cmps/modals'
+import LazyMainViews from './cmps/views'
 
 const App = () => (
   <ThemeProvider>
     <Navbar />
-    <Modals />
+    <LazyMainViews />
     <Intro />
   </ThemeProvider>
 )

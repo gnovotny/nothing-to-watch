@@ -4,7 +4,7 @@ import baseConfig, { introModeLatticeConfig } from '../config'
 import { introForceSimulationStepConfig } from '../config/simulation/force/intro-force'
 import presets from '../presets'
 
-import { down, matchMediaQuery } from '../../utls/mq'
+import { down, matchMediaQuery } from '../../utils/mq'
 
 import type { THEME } from '../../consts'
 import type { StoreState } from '../../store'
@@ -189,7 +189,7 @@ const processVoroforceStageConfigUniforms = (
 }
 
 const getVoroforceConfigUniforms = (
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: todo
   config: any,
   mode: VOROFORCE_MODE,
   theme: THEME,
@@ -224,9 +224,6 @@ const getVoroforceConfigUniforms = (
 
 export const getVoroforceConfigProps = async (state: StoreState) => {
   const config = await getConfig(state)
-
-  console.log('config', config)
-
   return {
     config,
     configUniforms: getVoroforceConfigUniforms(config, state.mode, state.theme),

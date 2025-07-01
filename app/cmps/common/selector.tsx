@@ -1,6 +1,6 @@
 import { Check, TriangleAlert } from 'lucide-react'
 import { type PropsWithChildren, type ReactNode, useState } from 'react'
-import { cn } from '../../utls/tw'
+import { cn } from '../../utils/tw'
 import { AnimateDimensionsChange } from './animate-dimensions-change'
 import {
   Root as RadioGroupPrimitiveRoot,

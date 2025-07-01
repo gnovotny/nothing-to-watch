@@ -1,7 +1,7 @@
 import type React from 'react'
 import type { CSSProperties } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { cn } from '../../utls/tw'
+import { cn } from '../../utils/tw'
 
 type AnimateDimensionsChangeProps = React.HTMLAttributes<HTMLDivElement> & {
   children: React.ReactNode

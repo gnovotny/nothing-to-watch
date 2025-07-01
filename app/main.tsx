@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app'
-import { animateHtmlTitleSuffix } from './utls/anim'
+import { animateHtmlTitleSuffix } from './utils/anim'
 import { safeInitVoroforce } from './vf'
 import './styles.css'
 

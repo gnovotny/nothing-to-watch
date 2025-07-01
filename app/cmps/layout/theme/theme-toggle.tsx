@@ -1,6 +1,6 @@
 import { Moon, Sun } from 'lucide-react'
 
-import { cn } from '../../../utls/tw'
+import { cn } from '../../../utils/tw'
 import { Button } from '../../ui/button'
 
 import type { MouseEventHandler } from 'react'

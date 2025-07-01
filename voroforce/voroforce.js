@@ -245,15 +245,6 @@ export class Voroforce extends CustomEventTarget {
     this.store.set('devTools', this.devTools)
   }
 
-  destroyDevTools() {
-    this.config.devTools.enabled = false
-
-    this.ticker.fpsGraph = undefined
-    this.devTools?.dispose()
-    this.devTools = undefined
-    this.store.set('devTools', undefined)
-  }
-
   // multithreaded simulation step workers must complete before triggering resize
   deferredResize() {
     this.ticker.stop()
@@ -360,9 +351,19 @@ export class Voroforce extends CustomEventTarget {
     this.dimensions.removeEventListener('resize', this.resize)
   }
 
+  disposeDevTools() {
+    this.config.devTools.enabled = false
+
+    this.ticker.fpsGraph = undefined
+    this.devTools?.dispose()
+    this.devTools = undefined
+    this.store.set('devTools', undefined)
+  }
+
   // TODO
   dispose() {
     this.removeEventListeners()
+    this.disposeDevTools()
     this.simulation.dispose()
     this.display.dispose()
     this.controls.dispose()
@@ -370,7 +371,6 @@ export class Voroforce extends CustomEventTarget {
     this.ticker.dispose()
     this.loader.dispose()
     this.store.dispose()
-    this.devTools?.dispose()
   }
 }
 

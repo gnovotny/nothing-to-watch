@@ -1,13 +1,13 @@
 import { type PropsWithChildren, useEffect } from 'react'
 
-import { useTransitionState } from '../../hks/use-transition-state'
-import { cn } from '../../utls/tw'
+import { useTransitionState } from '../../hooks/use-transition-state'
+import { cn } from '../../utils/tw'
 
 export const FadeTransition = ({
   children,
   visible,
   className,
-                                 notEnteredClassName = '',
+  notEnteredClassName = '',
   transitionOptions,
 }: PropsWithChildren<{
   visible: boolean
