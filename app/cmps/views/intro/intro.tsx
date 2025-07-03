@@ -1,6 +1,6 @@
 import { useShallowState } from '../../../store'
 import { cn } from '../../../utils/tw'
-import { safeInitVoroforce } from '../../../vf'
+import { safeInitVoroforce, VOROFORCE_MODE } from '../../../vf'
 import { FadeTransition } from '../../common/fade-transition'
 import { useMediaQuery } from '../../../hooks/use-media-query'
 import { down } from '../../../utils/mq'
@@ -20,11 +20,14 @@ const MoviesDatasetLicenseInfo = () => (
 const OBSCURE_VISUAL_DEFECTS = true
 
 export const Intro = () => {
-  const { visible, preset, hasDeviceClass } = useShallowState((state) => ({
-    visible: !(state.playedIntro && Boolean(state.preset)),
-    preset: state.preset,
-    hasDeviceClass: isDefined(state.deviceClass),
-  }))
+  const { visible, preset, hasDeviceClass, isPreviewMode } = useShallowState(
+    (state) => ({
+      visible: !(state.playedIntro && Boolean(state.preset)),
+      preset: state.preset,
+      hasDeviceClass: isDefined(state.deviceClass),
+      isPreviewMode: state.mode === VOROFORCE_MODE.preview,
+    }),
+  )
 
   const isSmallScreen = useMediaQuery(down('md'))
 
@@ -41,15 +44,18 @@ export const Intro = () => {
     const onResize = () => {
       setIsMounted(false)
       clearTimeout(timeout)
-      timeout = setTimeout(() => {
-        setIsMounted(true)
-      }, 300)
+      timeout = setTimeout(
+        () => {
+          setIsMounted(true)
+        },
+        isPreviewMode ? 300 : 1000,
+      )
     }
     window.addEventListener('resize', onResize)
     return () => {
       window.removeEventListener('resize', onResize)
     }
-  }, [])
+  }, [isPreviewMode])
   // }
 
   return (

@@ -32,10 +32,10 @@ export const FilmView = ({
       {!isIOS && (
         <img
           className={cn(
-            'absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-[opacity] duration-500 will-change-[opacity]',
+            'absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-500 will-change-[opacity]',
             {
               '!w-0 !h-0': backdropErrored,
-              '!opacity-60 dark:!opacity-50': !backdropHidden,
+              '!opacity-60 dark:!opacity-60': !backdropHidden,
             },
           )}
           alt=''

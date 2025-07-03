@@ -174,7 +174,8 @@ export default class BaseScene {
     this.mainProgram.uniforms.iResolution.value = this.resolutionUniform
 
     if (this.baseUniforms) {
-      this.resetCenterForceUniforms()
+      // todo hacky solution
+      setTimeout(() => this.resetCenterForceUniforms(), 100)
     }
 
     this.mainRenderTargets?.forEach((target) =>
@@ -467,7 +468,6 @@ export default class BaseScene {
     )
   }
 
-  // todo resetting too early?
   resetCenterForceUniforms() {
     const centerForce = this.getCenterForce()
     const centerForceStrengthMod = this.getCenterForceStrengthMod()
