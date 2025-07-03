@@ -1,6 +1,9 @@
 import { store } from '../../store'
 import { VOROFORCE_MODE } from '../consts'
 import { type VoroforceCell, getCellFilm } from '../utils'
+import type { VoroforceInstance } from '../types'
+import controlsConfig, { controlModeConfigs } from '../config/controls/controls'
+import { mergeConfigs } from '√'
 
 export const handleControls = () => {
   const {
@@ -46,4 +49,14 @@ export const handleControls = () => {
       uniform.value = value
     }
   }) as unknown as EventListener)
+}
+
+export const updateControlsByMode = (
+  controls: VoroforceInstance['controls'],
+  mode: VOROFORCE_MODE,
+) => {
+  controls.config = mergeConfigs(
+    controlsConfig,
+    controlModeConfigs[mode] ? controlModeConfigs[mode] : {},
+  )
 }

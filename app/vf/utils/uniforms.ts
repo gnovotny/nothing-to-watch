@@ -32,9 +32,6 @@ export const handleAnimatingUniforms = (uniforms: ConfigUniforms) => {
       typeof uniform.value === 'number' &&
       typeof uniform.targetValue === 'number'
     ) {
-      if (key === 'fCenterForceBulgeRadius') {
-        console.log(key, uniform)
-      }
       uniform.value = easedMinLerp(
         uniform.value,
         uniform.targetValue,

@@ -173,7 +173,7 @@ export const selectForceSimulationStepConfig = {
       v2RowLevelAdjacencyThreshold: 18,
     },
     breathing: {
-      enabled: true,
+      enabled: false,
     },
     push: {
       // strength: 0.1, // for smaller push radius

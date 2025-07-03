@@ -3,6 +3,7 @@ import { baseLatticeConfig } from '../config'
 import { type VoroforceCell, updateUniformsByMode } from '../utils'
 
 import { VOROFORCE_MODE } from '../consts'
+import { updateControlsByMode } from './controls'
 
 export const revealVoroforceContainer = () => {
   store.getState().container.classList.remove('opacity-0')
@@ -13,7 +14,7 @@ let afterModeChangeTimeout: NodeJS.Timeout
 const handleModeChange = (mode: VOROFORCE_MODE): void => {
   const {
     setMode,
-    voroforce: { simulation },
+    voroforce: { simulation, controls },
     configUniforms: {
       main: mainUniforms,
       post: postUniforms,
@@ -25,6 +26,8 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
   } = store.getState()
 
   setMode(mode)
+
+  updateControlsByMode(controls, mode)
 
   // if (mode === VOROFORCE_MODE.select) {
   //   // renderer.resizeScissor({
@@ -66,19 +69,7 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
       forceStepConfig.parameters.velocityDecay =
         forceStepConfig.parameters.velocityDecayBase
       simulation.updateForceStepConfigParameters(forceStepConfig.parameters)
-
-      // if (mode === 'preview') {
-      //   // updateUniforms(mainUniforms, {
-      //   //   iForcedMaxNeighborLevel: 0,
-      //   // })
-      // } else {
-      //   // renderer.resizeScissor({
-      //   //   offset: {
-      //   //     [landscape ? 'left' : 'top']: 800, // todo measurement
-      //   //   },
-      //   // })
-      // }
-    }, 2000)
+    }, forceStepConfig.parameters.transitionEnterModeDuration ?? 2000)
   } else {
     simulation.updateForceStepConfig(forceStepConfig)
   }

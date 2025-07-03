@@ -48,6 +48,12 @@ export default class Controls extends CustomEventTarget {
     this.store.set('controls', this)
     this.globalConfig = this.store.get('config')
     this.config = this.globalConfig.controls
+    if (
+      this.config.autoFocusCenter?.enabled &&
+      (this.config.autoFocusCenter.enabled !== 'touch' || isTouchDevice)
+    )
+      this.update = this.handleAutoFocusUpdate
+
     this.display = display
   }
 
@@ -86,12 +92,14 @@ export default class Controls extends CustomEventTarget {
         cooldown: this.config.freezeOnShake?.cooldown || 2000, // Minimum time between shake events
       },
     }
+  }
 
-    if (
-      this.config.autoFocusCenter?.enabled &&
-      (this.config.autoFocusCenter.enabled !== 'touch' || isTouchDevice)
-    )
-      this.update = this.handleAutoFocusUpdate
+  updateConfig(config) {
+    this.config = {
+      ...this.config,
+      ...config,
+    }
+    this.handleConfig()
   }
 
   handleUpdate() {

@@ -8,6 +8,7 @@ import { isDefined } from '../../../utils/misc'
 import { CoreSettingsWidget } from '../../common/core-settings/core-settings-widget'
 import { DeviceClassWidget } from '../../common/device-class/device-class-widget'
 import { SmallScreenWarning } from '../../common/small-screen-warning'
+import { useEffect, useState } from 'react'
 
 const MoviesDatasetLicenseInfo = () => (
   <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
@@ -15,6 +16,8 @@ const MoviesDatasetLicenseInfo = () => (
     available under the ODC Attribution License.
   </span>
 )
+
+const OBSCURE_VISUAL_DEFECTS = true
 
 export const Intro = () => {
   const { visible, preset, hasDeviceClass } = useShallowState((state) => ({
@@ -25,23 +28,42 @@ export const Intro = () => {
 
   const isSmallScreen = useMediaQuery(down('md'))
 
-  // const [isMounted, setIsMounted] = useState(false)
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setIsMounted(true)
-  //   }, 300)
-  // }, [])
+  // if (OBSCURE_VISUAL_DEFECTS) {
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setTimeout(() => {
+      setIsMounted(true)
+    }, 300)
+  }, [])
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout
+    const onResize = () => {
+      setIsMounted(false)
+      clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        setIsMounted(true)
+      }, 300)
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
+  // }
 
   return (
     <FadeTransition
       className={cn(
         'fixed inset-x-0 top-0 z-60 flex h-dvh w-full justify-center bg-background px-12',
+        {
+          'duration-150': !isMounted,
+        },
       )}
-      visible={visible}
-      // visible={visible || !isMounted}
+      visible={!isMounted}
       transitionOptions={{
-        initialEntered: visible,
-        // initialEntered: true,
+        initialEntered: OBSCURE_VISUAL_DEFECTS ? true : visible,
+        timeout: !isMounted ? 0 : 1000,
       }}
     >
       <div className='flex h-full flex-col items-stretch'>
