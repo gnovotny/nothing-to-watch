@@ -151,6 +151,9 @@ uniform float fUnweightedEffectMod;
 uniform float fBaseXDistScale;
 uniform float fWeightedXDistScale;
 uniform bool bMediaDistortion;
+uniform float fRippleMod;
+uniform float fNoiseOctaveMod;
+uniform float fNoiseCenterOffsetMod;
 
 in vec2 vUv;
 
@@ -598,7 +601,9 @@ void initCenterForce() {
     centerForceCoords = aspectCoords(centerForce);
 
     #if NOISE == 1 && NOISE_CENTER_OFFSET == 1
-        centerForceCoords += getNoisyCenterOffset(centerForceCoords, 1., 0.125, iTime * 0.5) * 0.1;
+        if (fNoiseCenterOffsetMod > 0.) {
+            centerForceCoords += getNoisyCenterOffset(centerForceCoords, 1., 0.125, iTime * 0.5) * 0.1;
+        }
     #endif
 
     #if BULGE_BLENDING == 1
@@ -608,8 +613,10 @@ void initCenterForce() {
         centerForceCoords3 = aspectCoords(centerForce3);
 
         #if NOISE == 1 && NOISE_CENTER_OFFSET == 1
-            centerForceCoords2 += getNoisyCenterOffset(centerForceCoords, 1., 0.5, iTime * 0.5) * 0.1;
-            centerForceCoords3 += getNoisyCenterOffset(centerForceCoords, 1., 1., iTime * 0.5) * 0.1;
+            if (fNoiseCenterOffsetMod > 0.) {
+                centerForceCoords2 += getNoisyCenterOffset(centerForceCoords, 1., 0.5, iTime * 0.5) * 0.1;
+                centerForceCoords3 += getNoisyCenterOffset(centerForceCoords, 1., 1., iTime * 0.5) * 0.1;
+            }
         #endif
     #endif
 }
@@ -849,15 +856,19 @@ void applyBulge(inout vec2 p, inout float bulgeFactor) {
 
     #if NOISE == 1
         #if NOISE_OCTAVE == 1
-            float noise = fbm(p, iTime);
-            bulgeFactor *= (1.0 + noise * 0.47);
+            if (fNoiseOctaveMod > 0.) {
+                float noise = fbm(p, iTime);
+                bulgeFactor *= (1.0 + noise * 0.47);
+            }
         #endif
     #endif
 
     #if RIPPLE == 1
-        float rippleCenterMod = l < RIPPLE_RADIUS ? (l - RIPPLE_RADIUS) * (l - RIPPLE_RADIUS) : 0.;
-        float ripple = sin(RIPPLE_FREQUENCY * l - (iTime * RIPPLE_SPEED)) * RIPPLE_STRENGTH * rippleCenterMod;
-        bulgeFactor *= (1.0 + ripple * (1.-RIPPLE_DECAY) * fCenterForceBulgeStrength);
+        if (fRippleMod > 0.) {
+            float rippleCenterMod = l < RIPPLE_RADIUS ? (l - RIPPLE_RADIUS) * (l - RIPPLE_RADIUS) : 0.;
+            float ripple = sin(RIPPLE_FREQUENCY * l - (iTime * RIPPLE_SPEED)) * RIPPLE_STRENGTH * rippleCenterMod;
+            bulgeFactor *= (1.0 + ripple * (1.-RIPPLE_DECAY) * fCenterForceBulgeStrength);
+        }
     #endif
 
     p = (p - centerForceCoords) * bulgeFactor + centerForceCoords;

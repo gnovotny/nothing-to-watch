@@ -123,6 +123,39 @@ export default {
           animatable: true,
           value: 1.5, // 0 = undefined, will use fallback
         },
+        fRippleMod: {
+          animatable: true,
+          modes: {
+            default: {
+              value: 1,
+            },
+            [VOROFORCE_MODE.select]: {
+              value: 0,
+            },
+          },
+        },
+        fNoiseOctaveMod: {
+          animatable: true,
+          modes: {
+            default: {
+              value: 1,
+            },
+            [VOROFORCE_MODE.select]: {
+              value: 0,
+            },
+          },
+        },
+        fNoiseCenterOffsetMod: {
+          animatable: true,
+          modes: {
+            default: {
+              value: 1,
+            },
+            [VOROFORCE_MODE.select]: {
+              value: 0,
+            },
+          },
+        },
       },
     },
     post: {

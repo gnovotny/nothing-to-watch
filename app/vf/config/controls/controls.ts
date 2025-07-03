@@ -4,7 +4,7 @@ import type { VoroforceInstance } from '../../types'
 export default {
   autoFocusCenter: {
     enabled: true,
-    random: true,
+    random: false,
   },
   maxSpeed: 10,
   ease: 0.15,

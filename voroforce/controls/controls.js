@@ -493,14 +493,14 @@ export default class Controls extends CustomEventTarget {
       // Object.assign(this.pointer, this.frozenPointer)
       this.unfreezePointer()
     } else {
-      if (this.speed.total < this.options.selectSpeedLimit) {
-        this.cells.selectedIndex =
-          this.cells.selectedIndex !== this.cells.focusedIndex
-            ? this.cells.focusedIndex
-            : undefined
+      // if (this.speed.total < this.options.selectSpeedLimit) {
+      this.cells.selectedIndex =
+        this.cells.selectedIndex !== this.cells.focusedIndex
+          ? this.cells.focusedIndex
+          : undefined
 
-        this.dispatchEvent(new CellSelectedEvent(this.cells.selected))
-      }
+      this.dispatchEvent(new CellSelectedEvent(this.cells.selected))
+      // }
     }
   }
 

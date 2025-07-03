@@ -177,8 +177,8 @@ export const selectForceSimulationStepConfig = {
     },
     push: {
       // strength: 0.1, // for smaller push radius
-      // strength: 0.05,
-      strength: 0.0025,
+      strength: 0.05,
+      // strength: 0.0025,
       selector: 'focused',
       yFactor: 2.5,
       centerXStretchMod: 2.5,
