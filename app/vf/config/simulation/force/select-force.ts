@@ -1,5 +1,7 @@
 export const selectForceSimulationStepConfig = {
   parameters: {
+    // animatable: true,
+
     // alpha: 0.2,
     // velocityDecay: 0.5,
     // velocityDecayBase: 0.5,
@@ -12,8 +14,9 @@ export const selectForceSimulationStepConfig = {
 
     alpha: 0.1,
     velocityDecay: 0.8,
-    velocityDecayBase: 0.9,
-    velocityDecayTransitionEnterMode: 0.85,
+    velocityDecayBase: 0.8,
+    // velocityDecayTransitionEnterMode: 0.85,
+    velocityDecayTransitionEnterMode: 0.9,
   },
   // forces: [
   //   // {

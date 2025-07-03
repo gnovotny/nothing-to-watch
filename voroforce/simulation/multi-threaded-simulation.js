@@ -123,4 +123,11 @@ export default class MultiThreadedSimulation extends BaseSimulation {
   handleForceStepConfigUpdated() {
     this.updateForceWorkerConfig()
   }
+
+  handleForceStepConfigParametersUpdated() {
+    this.forceWorker.postMessage({
+      type: 'updateParameters',
+      data: this.globalConfig.simulation?.steps?.force?.parameters ?? {},
+    })
+  }
 }

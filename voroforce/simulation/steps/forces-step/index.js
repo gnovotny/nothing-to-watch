@@ -1,4 +1,4 @@
-import { isNumber } from '../../../utils'
+import { isNumber, minLerp } from '../../../utils'
 import BaseSimulationStep from '../common/base-simulation-step'
 import * as forceFunctions from './forces'
 
@@ -19,7 +19,20 @@ export default class ForcesSimulationStep extends BaseSimulationStep {
   updateConfig(config) {
     super.updateConfig(config)
     this.config = config.simulation.steps.force ?? {}
-    this.parameters = this.config.parameters
+
+    this.updateParameters(this.config.parameters)
+  }
+
+  updateParameters(parameters, config = { forceAnimatable: false }) {
+    if (!parameters) return
+    if (this.parameters && (config?.forceAnimatable || parameters.animatable)) {
+      this.targetParameters = {
+        alpha: parameters.alpha,
+        velocityDecay: parameters.velocityDecay,
+      }
+    } else {
+      this.parameters = parameters
+    }
   }
 
   initMediaProperties() {
@@ -78,6 +91,27 @@ export default class ForcesSimulationStep extends BaseSimulationStep {
   tick() {
     if (this.mediaConfig.enabled) {
       this.mediaVersionLayerLoadRequests.forEach((set) => set.clear())
+    }
+
+    if (this.targetParameters) {
+      this.parameters.alpha = minLerp(
+        this.parameters.alpha,
+        this.targetParameters.alpha,
+        0.025,
+      )
+      this.parameters.velocityDecay = minLerp(
+        this.parameters.velocityDecay,
+        this.targetParameters.velocityDecay,
+        0.025,
+      )
+
+      console.log('velocityDecay', this.parameters.velocityDecay)
+
+      if (
+        this.parameters.alpha === this.targetParameters.alpha &&
+        this.parameters.velocityDecay === this.targetParameters.velocityDecay
+      )
+        this.targetParameters = null
     }
 
     for (let i = 0; i < this.forces.length; i++) {

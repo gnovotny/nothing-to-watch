@@ -14,7 +14,7 @@ export function mergeConfigs(...configs) {
 
       if (/*Array.isArray(pVal) && */ Array.isArray(oVal)) {
         prev[key] = oVal // overwrites arrays. use "pVal.concat(...oVal)" for concatenation
-      } else if (isObject(pVal) && isObject(oVal)) {
+      } else if (isObject(pVal) && !Array.isArray(pVal) && isObject(oVal)) {
         prev[key] = mergeConfigs(pVal, oVal)
       } else {
         prev[key] = oVal

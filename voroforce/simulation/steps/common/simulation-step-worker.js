@@ -24,6 +24,11 @@ export default function simulationStepWorker(SimulationStepClass) {
         step.setConfig(config)
         break
       }
+      case 'updateParameters': {
+        const parameters = event.data
+        step.updateParameters(parameters, { forceAnimatable: true })
+        break
+      }
       case 'resize':
         step.store.set('config', event.data.config)
         step.store.get('dimensions').set(event.data.dimensions)

@@ -25,10 +25,6 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
   } = store.getState()
 
   setMode(mode)
-  const forceStepConfig = forceStepModeConfigs[mode]
-  // when switching from select to preview mode, need to up velocityDecay during the transition (voronoi cell propagation speed limits in shader)
-  forceStepConfig.parameters.velocityDecay =
-    forceStepConfig.parameters.velocityDecayTransitionEnterMode
 
   // if (mode === VOROFORCE_MODE.select) {
   //   // renderer.resizeScissor({
@@ -51,32 +47,41 @@ const handleModeChange = (mode: VOROFORCE_MODE): void => {
   //   iForcedMaxNeighborLevel: 3,
   // })
 
-  simulation.updateForceStepConfig(forceStepConfig)
-
-  clearTimeout(afterModeChangeTimeout)
-  afterModeChangeTimeout = setTimeout(() => {
-    // we revert back to default neighbor level as using max is extremely expensive
-    // updateUniforms(mainUniforms, {
-    //   iForcedMaxNeighborLevel: 0,
-    // })
-
-    // revert to default velocityDecay after the transition (voronoi cell propagation speed limits in shader, see above)
+  const forceStepConfig = forceStepModeConfigs[mode]
+  if (forceStepConfig.parameters.velocityDecayTransitionEnterMode) {
+    // when switching from select to preview mode, need to up velocityDecay during the transition (voronoi cell propagation speed limits in shader)
     forceStepConfig.parameters.velocityDecay =
-      forceStepConfig.parameters.velocityDecayBase
-    simulation.updateForceStepConfig(forceStepModeConfigs[mode])
+      forceStepConfig.parameters.velocityDecayTransitionEnterMode
 
-    // if (mode === 'preview') {
-    //   // updateUniforms(mainUniforms, {
-    //   //   iForcedMaxNeighborLevel: 0,
-    //   // })
-    // } else {
-    //   // renderer.resizeScissor({
-    //   //   offset: {
-    //   //     [landscape ? 'left' : 'top']: 800, // todo measurement
-    //   //   },
-    //   // })
-    // }
-  }, 2000)
+    simulation.updateForceStepConfig(forceStepConfig)
+
+    clearTimeout(afterModeChangeTimeout)
+    afterModeChangeTimeout = setTimeout(() => {
+      // we revert back to default neighbor level as using max is extremely expensive
+      // updateUniforms(mainUniforms, {
+      //   iForcedMaxNeighborLevel: 0,
+      // })
+
+      // revert to default velocityDecay after the transition (voronoi cell propagation speed limits in shader, see above)
+      forceStepConfig.parameters.velocityDecay =
+        forceStepConfig.parameters.velocityDecayBase
+      simulation.updateForceStepConfigParameters(forceStepConfig.parameters)
+
+      // if (mode === 'preview') {
+      //   // updateUniforms(mainUniforms, {
+      //   //   iForcedMaxNeighborLevel: 0,
+      //   // })
+      // } else {
+      //   // renderer.resizeScissor({
+      //   //   offset: {
+      //   //     [landscape ? 'left' : 'top']: 800, // todo measurement
+      //   //   },
+      //   // })
+      // }
+    }, 2000)
+  } else {
+    simulation.updateForceStepConfig(forceStepConfig)
+  }
 }
 const handleIntro = () => {
   const { voroforce, setPlayedIntro } = store.getState()

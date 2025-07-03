@@ -29,4 +29,11 @@ export default class Simulation extends BaseSimulation {
   handleForceStepConfigUpdated() {
     this.forceStep.setConfig(this.globalConfig)
   }
+
+  handleForceStepConfigParametersUpdated() {
+    this.forceStep.updateParameters(
+      this.globalConfig.simulation?.steps?.force?.parameters ?? {},
+      { forceAnimatable: true },
+    )
+  }
 }

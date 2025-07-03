@@ -447,23 +447,23 @@ export default class BaseScene {
     this.baseUniforms.fCenterForceStrengthMod.value = centerForceStrengthMod
 
     this.baseUniforms.fCenterForce2.value = [
-      lerp(this.baseUniforms.fCenterForce2.value[0], centerForce[0], 0.25),
-      lerp(this.baseUniforms.fCenterForce2.value[1], centerForce[1], 0.25),
+      lerp(this.baseUniforms.fCenterForce2.value[0], centerForce[0], 0.125),
+      lerp(this.baseUniforms.fCenterForce2.value[1], centerForce[1], 0.125),
     ]
     this.baseUniforms.fCenterForceStrengthMod2.value = lerp(
       this.baseUniforms.fCenterForceStrengthMod2.value,
       centerForceStrengthMod,
-      0.25,
+      0.125,
     )
 
     this.baseUniforms.fCenterForce3.value = [
-      lerp(this.baseUniforms.fCenterForce3.value[0], centerForce[0], 0.125),
-      lerp(this.baseUniforms.fCenterForce3.value[1], centerForce[1], 0.125),
+      lerp(this.baseUniforms.fCenterForce3.value[0], centerForce[0], 0.075),
+      lerp(this.baseUniforms.fCenterForce3.value[1], centerForce[1], 0.075),
     ]
     this.baseUniforms.fCenterForceStrengthMod3.value = lerp(
       this.baseUniforms.fCenterForceStrengthMod3.value,
       centerForceStrengthMod,
-      0.025,
+      0.075,
     )
   }
 

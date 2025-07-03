@@ -49,7 +49,16 @@ export default class BaseSimulation {
     this.handleForceStepConfigUpdated()
   }
 
+  updateForceStepConfigParameters(parameters) {
+    this.config.steps.force.parameters = mergeConfigs(
+      defaultForceSimulationStepConfig.parameters,
+      parameters,
+    )
+    this.handleForceStepConfigParametersUpdated()
+  }
+
   handleForceStepConfigUpdated() {}
+  handleForceStepConfigParametersUpdated() {}
 
   dispose() {}
 }

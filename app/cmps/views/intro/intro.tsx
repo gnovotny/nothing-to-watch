@@ -25,14 +25,23 @@ export const Intro = () => {
 
   const isSmallScreen = useMediaQuery(down('md'))
 
+  // const [isMounted, setIsMounted] = useState(false)
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setIsMounted(true)
+  //   }, 300)
+  // }, [])
+
   return (
     <FadeTransition
       className={cn(
         'fixed inset-x-0 top-0 z-60 flex h-dvh w-full justify-center bg-background px-12',
       )}
       visible={visible}
+      // visible={visible || !isMounted}
       transitionOptions={{
         initialEntered: visible,
+        // initialEntered: true,
       }}
     >
       <div className='flex h-full flex-col items-stretch'>

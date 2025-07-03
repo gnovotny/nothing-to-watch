@@ -66,12 +66,6 @@ export class AutoTicker extends CustomEventTarget {
       // this.lastFrameTime =
       //   currentTime - (elapsedSinceLastFrame % this.frameInterval)
 
-      // console.log(
-      //   '(elapsedSinceLastFrame % this.frameInterval)',
-      //   elapsedSinceLastFrame,
-      //   elapsedSinceLastFrame % this.frameInterval,
-      // )
-
       // trigger event
       this.dispatchEvent(
         new TickEvent({

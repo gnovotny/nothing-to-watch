@@ -148,10 +148,6 @@ export default class Controls extends CustomEventTarget {
     // Process the position with capping if needed
     this.position = this.processPosition(this.rawPosition)
 
-    // if (this.options.noProcessing) return
-
-    // console.log('this.position', this.position)
-
     this.positionHistory.push(this.position)
     // Keep array at max size
     if (this.positionHistory.length > this.maxHistory) {
