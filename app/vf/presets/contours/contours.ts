@@ -5,7 +5,7 @@ import baseConfig from '../../config/config'
 import postFrag from './post-mid3.frag'
 
 export default {
-  cells: 25000,
+  cells: 50000,
   media: {
     versions: [
       ...baseConfig.media.versions,

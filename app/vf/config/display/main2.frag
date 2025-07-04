@@ -131,8 +131,8 @@ uniform int iFocusedIndex;
 uniform float iTime;
 uniform int iForcedMaxNeighborLevel;
 uniform float fBorderRoundnessMod;
-uniform float fEdge1Mod;
-uniform float fEdge0Mod;
+uniform float fBorderSmoothnessMod;
+uniform float fBorderThicknessMod;
 uniform float fCenterForceBulgeStrength;
 uniform float fCenterForceBulgeRadius;
 uniform float fWeightOffsetScaleMod;
@@ -314,91 +314,87 @@ float fbm(vec2 p, float time) {
 #endif
 
 #if NOISE_CENTER_OFFSET == 1
-// Generate flow field from noise
 vec2 getNoisyCenterOffset(vec2 p, float scale, float intensity, float time) {
-
     // Use different noise samples for x and y components
     float noiseX = snoise(p * scale + vec2(time * 0.4, 100.0));
     float noiseY = snoise(p * scale + vec2(100.0, time * 0.3));
-
     return vec2(noiseX, noiseY) * intensity;
 }
-
 #endif
 #endif
 
 #if PIXEL_SEARCH
 #if PIXEL_SEARCH_RANDOM_DIR == 1
-    uint hash(inout uint x) {
-        x ^= x >> 16;
-        x *= 0x7feb352dU;
-        x ^= x >> 15;
-        x *= 0x846ca68bU;
-        x ^= x >> 16;
+uint hash(inout uint x) {
+    x ^= x >> 16;
+    x *= 0x7feb352dU;
+    x ^= x >> 15;
+    x *= 0x846ca68bU;
+    x ^= x >> 16;
 
-        return x;
-    }
+    return x;
+}
 
-    float randomFloat(inout uint state) {
-        return float(hash(state)) / 4294967296.0;
-    }
+float randomFloat(inout uint state) {
+    return float(hash(state)) / 4294967296.0;
+}
 
-    vec2 randomDir(inout uint state) {
-        float z = randomFloat(state) * 2.0 - 1.0;
-        float a = randomFloat(state) * TAU;
-        float r = sqrt(1.0f - z * z);
-        float x = r * cos(a);
-        float y = r * sin(a);
-        return vec2(x, y);
-    }
+vec2 randomDir(inout uint state) {
+    float z = randomFloat(state) * 2.0 - 1.0;
+    float a = randomFloat(state) * TAU;
+    float r = sqrt(1.0f - z * z);
+    float x = r * cos(a);
+    float y = r * sin(a);
+    return vec2(x, y);
+}
 #endif
 #if PIXEL_SEARCH_FULL_RANDOM == 1
-    uint wrap1d(uint flatId) {
-        return flatId % uint(iNumCells);
-    }
+uint wrap1d(uint flatId) {
+    return flatId % uint(iNumCells);
+}
 
-    vec2 wrap2d(vec2 id, vec2 resolution) {
-        return fract(id / resolution) * resolution;
-    }
+vec2 wrap2d(vec2 id, vec2 resolution) {
+    return fract(id / resolution) * resolution;
+}
 
-    uint to1d(vec2 id, vec2 resolution) {
-        return uint(id.x + id.y * resolution.x);
-    }
+uint to1d(vec2 id, vec2 resolution) {
+    return uint(id.x + id.y * resolution.x);
+}
 
-    ivec2 to2d(uint flatId, ivec2 resolution) {
-        return ivec2(flatId, flatId / uint(resolution.x)) % resolution;
-    }
+ivec2 to2d(uint flatId, ivec2 resolution) {
+    return ivec2(flatId, flatId / uint(resolution.x)) % resolution;
+}
 
-    uint murmur3( in uint u )
-    {
-        u ^= ( u >> 16 ); u *= 0x85EBCA6Bu;
-        u ^= ( u >> 13 ); u *= 0xC2B2AE35u;
-        u ^= ( u >> 16 );
+uint murmur3( in uint u )
+{
+    u ^= ( u >> 16 ); u *= 0x85EBCA6Bu;
+    u ^= ( u >> 13 ); u *= 0xC2B2AE35u;
+    u ^= ( u >> 16 );
 
-        return u;
-    }
+    return u;
+}
 
-    uint rngSeed = 314159265u;
+uint rngSeed = 314159265u;
 
-    uint xorshift(in uint value) {
-        value ^= value << 13;
-        value ^= value >> 17;
-        value ^= value << 5;
-        return value;
-    }
+uint xorshift(in uint value) {
+    value ^= value << 13;
+    value ^= value >> 17;
+    value ^= value << 5;
+    return value;
+}
 
-    float xorshiftFloat(uint state) {
-        return float(xorshift(state)) / float(0xffffffffU);
-    }
+float xorshiftFloat(uint state) {
+    return float(xorshift(state)) / float(0xffffffffU);
+}
 
-    uint nextUint() {
-        rngSeed = xorshift(rngSeed);
-        return rngSeed;
-    }
+uint nextUint() {
+    rngSeed = xorshift(rngSeed);
+    return rngSeed;
+}
 
-    float nextFloat() {
-        return float(nextUint()) / float(uint(-1));
-    }
+float nextFloat() {
+    return float(nextUint()) / float(uint(-1));
+}
 #endif
 #endif
 
@@ -563,7 +559,7 @@ vec2 normalizedPCoords() {
 float resolutionScale;
 void initResolutionScale() {
     // prev junk method
-//    resolutionScale = ((iResolution.x * iResolution.y) / (1920.*1080.));
+    //    resolutionScale = ((iResolution.x * iResolution.y) / (1920.*1080.));
 
     // Compute a dynamic scale factor based on resolution
     // This creates a scale that increases as resolution increases
@@ -572,13 +568,10 @@ void initResolutionScale() {
     // Alternative scaling approaches:
     // 1. Based on largest dimension
     // resolutionScale = max(iResolution.x, iResolution.y) / 800.0;
-
     // 2. Based on area (gives more weight to resolution changes)
-//     resolutionScale = sqrt(iResolution.x * iResolution.y) / 600.0;
+    // resolutionScale = sqrt(iResolution.x * iResolution.y) / 600.0;
 
-//    if (resolutionScale < 0.9) discard;
-
-//    resolutionScale = clamp(resolutionScale, 0.5, 1.5);
+    // resolutionScale = clamp(resolutionScale, 0.5, 1.5);
     resolutionScale = cheapSqrt(resolutionScale);
 }
 
@@ -602,7 +595,7 @@ void initCenterForce() {
 
     #if NOISE == 1 && NOISE_CENTER_OFFSET == 1
         if (fNoiseCenterOffsetMod > 0.) {
-            centerForceCoords += getNoisyCenterOffset(centerForceCoords, 1., 0.125, iTime * 0.5) * 0.1;
+            centerForceCoords += getNoisyCenterOffset(centerForceCoords, 1., 0.125, iTime * 0.5) * 0.1 * fNoiseCenterOffsetMod;
         }
     #endif
 
@@ -614,8 +607,8 @@ void initCenterForce() {
 
         #if NOISE == 1 && NOISE_CENTER_OFFSET == 1
             if (fNoiseCenterOffsetMod > 0.) {
-                centerForceCoords2 += getNoisyCenterOffset(centerForceCoords, 1., 0.5, iTime * 0.5) * 0.1;
-                centerForceCoords3 += getNoisyCenterOffset(centerForceCoords, 1., 1., iTime * 0.5) * 0.1;
+                centerForceCoords2 += getNoisyCenterOffset(centerForceCoords, 1., 0.5, iTime * 0.5) * 0.1 * fNoiseCenterOffsetMod;
+                centerForceCoords3 += getNoisyCenterOffset(centerForceCoords, 1., 1., iTime * 0.5) * 0.1 * fNoiseCenterOffsetMod;
             }
         #endif
     #endif
@@ -815,20 +808,19 @@ float bulgeSmoothstep(float a) {
     }
 
 //    return x * x * (3.0 - 2.0 * x); // equivalent to: return smoothstep(0.0, 1. / percent, percent);
-    return x * x * x * (x * (6. * x - 15.) + 10.); // smootherstep (wiki), also (IQ: Quintic Polynomial)
+//    return x * x * x * (x * (6. * x - 15.) + 10.); // smootherstep (wiki), also (IQ: Quintic Polynomial)
 //    return x * x * x/(3.0*x*x-3.0*x+1.0); // IQ: cubic rational
-
 //    return pow(x, 1.5) * (2.0 - x); // Custom easing with more gradual falloff
 //    return 1.0 - exp(-3.0 * (1.0 - x)); // Exponential falloff for very gradual transition
 //    return pow(x, 2.5); // Adjustable falloff curve - increase falloffPower for more gradual transition
 }
 
 #if BULGE_BLENDING == 1
-// Different blend modes for combining bulges
+// blend modes for combining bulges
 float blendBulges(float a, float b) {
     #if BULGE_BLEND_MODE == 1
 //        return min(a, b); // Min
-        return smin(a, b, 0.1); // Min
+        return smin(a, b, 0.1); // Smin
     #elif BULGE_BLEND_MODE == 2
         return a * b; // Multiply
     #elif BULGE_BLEND_MODE == 3
@@ -858,7 +850,7 @@ void applyBulge(inout vec2 p, inout float bulgeFactor) {
         #if NOISE_OCTAVE == 1
             if (fNoiseOctaveMod > 0.) {
                 float noise = fbm(p, iTime);
-                bulgeFactor *= (1.0 + noise * 0.47);
+                bulgeFactor *= (1.0 + noise * 0.47 * fNoiseOctaveMod);
             }
         #endif
     #endif
@@ -867,7 +859,7 @@ void applyBulge(inout vec2 p, inout float bulgeFactor) {
         if (fRippleMod > 0.) {
             float rippleCenterMod = l < RIPPLE_RADIUS ? (l - RIPPLE_RADIUS) * (l - RIPPLE_RADIUS) : 0.;
             float ripple = sin(RIPPLE_FREQUENCY * l - (iTime * RIPPLE_SPEED)) * RIPPLE_STRENGTH * rippleCenterMod;
-            bulgeFactor *= (1.0 + ripple * (1.-RIPPLE_DECAY) * fCenterForceBulgeStrength);
+            bulgeFactor *= (1.0 + ripple * (1.-RIPPLE_DECAY) * fCenterForceBulgeStrength * fCenterForceStrengthMod * fCenterForceStrengthMod * fRippleMod);
         }
     #endif
 
@@ -940,8 +932,8 @@ void calcMediaBbox(in uint index, inout vec4 mediaBbox, in vec2 cellCoords, in f
     // TODO
     #if EDGE_CELL_SCALING == 1
     #if EDGE_CELL_SCALING_MODE == 1
-        //            //cellScale = min(bbX, bbY) / 2.;
-    //            cellScale = (bbX + bbY) * 0.5 / 2.;
+    // cellScale = min(bbX, bbY) / 2.;
+    // cellScale = (bbX + bbY) * 0.5 / 2.;
     #endif
     #endif
 
@@ -1258,12 +1250,12 @@ Plot plot() {
         #endif
     #endif
 
-    float borderThickness = EDGE_BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * (numCellsScale * 0.5 + 0.5);
+    float borderThickness = fBorderThicknessMod * EDGE_BORDER_THICKNESS_BASE * borderThicknessScale * resolutionScale * (numCellsScale * 0.5 + 0.5);
 //    #if defined(EDGE_BORDER_THICKNESS_MIN) && defined(EDGE_BORDER_THICKNESS_MAX)
 //        borderThickness = clamp(borderThickness, EDGE_BORDER_THICKNESS_MIN * resolutionScale * numCellsScale, EDGE_BORDER_THICKNESS_MAX * resolutionScale * numCellsScale);
 //    #endif
 
-    float borderSmoothness = EDGE_BORDER_SMOOTHNESS_BASE * borderSmoothnessScale / (numCellsScale * 0.125 + 0.875);
+    float borderSmoothness = fBorderSmoothnessMod * EDGE_BORDER_SMOOTHNESS_BASE * borderSmoothnessScale / (numCellsScale * 0.125 + 0.875);
 //    #if defined(EDGE_BORDER_SMOOTHNESS_MIN) && defined(EDGE_BORDER_SMOOTHNESS_MAX)
 //        borderSmoothness = clamp(borderSmoothness, EDGE_BORDER_SMOOTHNESS_MIN * resolutionScale * numCellsScale, EDGE_BORDER_SMOOTHNESS_MAX * resolutionScale * numCellsScale);
 //    #endif
@@ -1290,8 +1282,6 @@ Plot plot() {
 
     vec2 edge = vec2(0.1);
     calcEdge(indices, indices2, cellCoords, p, edge, weight, weightOffset, weightOffsetScale, borderRoundness, bulgeFactor);
-
-//    float edgeStep = smoothstep(borderSmoothness, borderThickness, edge.x);
     float edgeStep = smoothstep(edgeStepStart, edgeStepEnd, edge.x);
 
     return Plot(indices, indices2, edge, edgeStep, mediaBbox, cellScale, weight, bulgeFactor, debugFlag);
@@ -1300,10 +1290,6 @@ Plot plot() {
 #if EDGES_VISIBLE == 1
 void edgesColor(inout vec3 c, inout float a, in Plot plot) {
     if (!bDrawEdges) return;
-
-//    float smoothness = EDGE_BORDER_SMOOTHNESS_BASE * numCellsScale;
-//    float thickness = EDGE_BORDER_THICKNESS_BASE * numCellsScale;
-//    float step = smoothstep(smoothness, thickness, plot.edge.x);
 
     float step = plot.edgeStep;
 
@@ -1363,6 +1349,5 @@ void main() {
         edgesColor(c, a, plot);
     #endif
     postEffectsColor(c, a, plot);
-
     colorOutput(c, a, plot);
 }

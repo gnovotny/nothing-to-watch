@@ -37,7 +37,7 @@ export default {
             },
           },
         },
-        fEdge1Mod: {
+        fBorderSmoothnessMod: {
           animatable: true,
           modes: {
             default: {
@@ -48,7 +48,7 @@ export default {
             },
           },
         },
-        fEdge0Mod: {
+        fBorderThicknessMod: {
           animatable: true,
           modes: {
             default: {

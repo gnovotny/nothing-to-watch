@@ -13,7 +13,7 @@ export default {
       uniforms: {
         iForcedMaxNeighborLevel: { value: 0 },
         bPixelSearch: { value: true },
-        bMediaDistortion: { value: false },
+        bMediaDistortion: { value: true },
         fBaseColor: {
           animatable: true,
           themes: {
@@ -33,29 +33,29 @@ export default {
             },
             [VOROFORCE_MODE.select]: {
               // value: 3,
-              value: 1,
+              value: 0.5,
             },
           },
         },
-        fEdge1Mod: {
+        fBorderThicknessMod: {
           animatable: true,
           modes: {
             default: {
               value: 1,
             },
             [VOROFORCE_MODE.select]: {
-              value: 5,
+              value: 0.5,
             },
           },
         },
-        fEdge0Mod: {
+        fBorderSmoothnessMod: {
           animatable: true,
           modes: {
             default: {
-              value: 1.5,
+              value: 1,
             },
             [VOROFORCE_MODE.select]: {
-              value: 3,
+              value: 0.5,
             },
           },
         },
@@ -75,7 +75,7 @@ export default {
               // value: 0,
             },
             [VOROFORCE_MODE.select]: {
-              value: 1.5,
+              value: 2,
             },
           },
         },
@@ -117,11 +117,27 @@ export default {
         },
         fBaseXDistScale: {
           animatable: true,
-          value: 1.5, // 0 = undefined, will use fallback
+          modes: {
+            default: {
+              value: 1.5, // 0 = undefined, will use fallback
+            },
+            [VOROFORCE_MODE.select]: {
+              // value: 1,
+              value: 1.5,
+            },
+          },
         },
         fWeightedXDistScale: {
           animatable: true,
-          value: 1.5, // 0 = undefined, will use fallback
+          modes: {
+            default: {
+              value: 1.5, // 0 = undefined, will use fallback
+            },
+            [VOROFORCE_MODE.select]: {
+              // value: 1,
+              value: 1.5,
+            },
+          },
         },
         fRippleMod: {
           animatable: true,

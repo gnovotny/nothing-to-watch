@@ -1,7 +1,7 @@
 import baseConfig, { uncompressedSingleMediaVersionConfig } from '../../config'
 
 export default {
-  cells: 10000,
+  cells: 50000,
   media: {
     versions: [
       ...baseConfig.media.versions,

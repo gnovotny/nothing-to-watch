@@ -95,10 +95,8 @@ export default class Controls extends CustomEventTarget {
   }
 
   updateConfig(config) {
-    this.config = {
-      ...this.config,
-      ...config,
-    }
+    this.config = config
+    this.globalConfig.controls = config
     this.handleConfig()
   }
 

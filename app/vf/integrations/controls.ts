@@ -55,8 +55,10 @@ export const updateControlsByMode = (
   controls: VoroforceInstance['controls'],
   mode: VOROFORCE_MODE,
 ) => {
-  controls.config = mergeConfigs(
-    controlsConfig,
-    controlModeConfigs[mode] ? controlModeConfigs[mode] : {},
+  controls.updateConfig(
+    mergeConfigs(
+      controlsConfig,
+      controlModeConfigs[mode] ? controlModeConfigs[mode] : {},
+    ),
   )
 }

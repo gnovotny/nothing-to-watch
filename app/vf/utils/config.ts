@@ -11,10 +11,12 @@ import type { StoreState } from '../../store'
 import {
   CELL_LIMIT,
   DEVICE_CLASS,
-  type VOROFORCE_MODE,
+  VOROFORCE_MODE,
   VOROFORCE_PRESET,
 } from '../consts'
 import type { ConfigUniform } from './uniforms'
+import type { VoroforceInstance } from '../types'
+import { controlModeConfigs } from '../config/controls/controls'
 
 export type CustomLink = {
   name: string
@@ -31,17 +33,24 @@ export type UserConfig = {
   customLinks?: CustomLink[]
 }
 
-const getIntroConfig = () => ({
-  lattice: introModeLatticeConfig,
-  simulation: {
-    steps: {
-      force: introForceSimulationStepConfig,
+const modeConfigs: {
+  [K in VOROFORCE_MODE]?: Partial<VoroforceInstance['config']>
+} = {
+  [VOROFORCE_MODE.intro]: {
+    lattice: introModeLatticeConfig,
+    simulation: {
+      steps: {
+        force: introForceSimulationStepConfig,
+      },
+    },
+    media: {
+      preload: 'v0', // default is "first" but "high" and "mid" media versions are loaded via "intro" lattice setup
     },
   },
-  media: {
-    preload: 'v0', // default is "first" but "high" and "mid" media versions are loaded via "intro" lattice setup
+  [VOROFORCE_MODE.select]: {
+    controls: controlModeConfigs[VOROFORCE_MODE.select],
   },
-})
+}
 
 const handleCustomLinkParam = (
   customLinkBase64Param: string,
@@ -66,7 +75,6 @@ const handleCustomLinkParam = (
 
 export const getConfig = async (state: StoreState) => {
   const {
-    playedIntro,
     userConfig,
     preset: initialPreset,
     cellLimit: initialCellLimit,
@@ -77,6 +85,7 @@ export const getConfig = async (state: StoreState) => {
     setCellLimit,
     setDeviceClass,
     ua,
+    mode,
   } = state
   const urlParams = new URLSearchParams(window.location.search)
   const presetOverrideParam = urlParams.get('preset') as VOROFORCE_PRESET
@@ -132,7 +141,7 @@ export const getConfig = async (state: StoreState) => {
         ]
       : {},
     {
-      ...(!playedIntro ? getIntroConfig() : {}),
+      ...(modeConfigs[mode] ?? {}),
     },
   )
 

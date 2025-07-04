@@ -8,68 +8,30 @@ import { isDefined } from '../../../utils/misc'
 import { CoreSettingsWidget } from '../../common/core-settings/core-settings-widget'
 import { DeviceClassWidget } from '../../common/device-class/device-class-widget'
 import { SmallScreenWarning } from '../../common/small-screen-warning'
-import { useEffect, useState } from 'react'
-
-const MoviesDatasetLicenseInfo = () => (
-  <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
-    Contains information from Kaggle's "Full TMDB Movies Dataset" which is made
-    available under the ODC Attribution License.
-  </span>
-)
-
-const OBSCURE_VISUAL_DEFECTS = true
+import { useEffect, useReducer } from 'react'
+import { OBSCURE_VISUAL_DEFECTS } from '../../../vf/consts'
 
 export const Intro = () => {
-  const { visible, preset, hasDeviceClass, isPreviewMode } = useShallowState(
-    (state) => ({
-      visible: !(state.playedIntro && Boolean(state.preset)),
-      preset: state.preset,
-      hasDeviceClass: isDefined(state.deviceClass),
-      isPreviewMode: state.mode === VOROFORCE_MODE.preview,
-    }),
-  )
+  const { preset, hasDeviceClass } = useShallowState((state) => ({
+    preset: state.preset,
+    hasDeviceClass: isDefined(state.deviceClass),
+  }))
 
   const isSmallScreen = useMediaQuery(down('md'))
-
-  // if (OBSCURE_VISUAL_DEFECTS) {
-  const [isMounted, setIsMounted] = useState(false)
-  useEffect(() => {
-    setTimeout(() => {
-      setIsMounted(true)
-    }, 300)
-  }, [])
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout
-    const onResize = () => {
-      setIsMounted(false)
-      clearTimeout(timeout)
-      timeout = setTimeout(
-        () => {
-          setIsMounted(true)
-        },
-        isPreviewMode ? 300 : 1000,
-      )
-    }
-    window.addEventListener('resize', onResize)
-    return () => {
-      window.removeEventListener('resize', onResize)
-    }
-  }, [isPreviewMode])
-  // }
+  const visible = useIntroVisible()
 
   return (
     <FadeTransition
       className={cn(
         'fixed inset-x-0 top-0 z-60 flex h-dvh w-full justify-center bg-background px-12',
         {
-          'duration-150': !isMounted,
+          'duration-150': visible,
         },
       )}
-      visible={!isMounted}
+      visible={visible}
       transitionOptions={{
-        initialEntered: OBSCURE_VISUAL_DEFECTS ? true : visible,
-        timeout: !isMounted ? 0 : 1000,
+        initialEntered: visible,
+        timeout: visible ? 0 : 1000,
       }}
     >
       <div className='flex h-full flex-col items-stretch'>
@@ -121,4 +83,63 @@ export const Intro = () => {
       </div>
     </FadeTransition>
   )
+}
+
+const MoviesDatasetLicenseInfo = () => (
+  <span className='inline-flex text-xxs text-zinc-600 leading-none dark:text-zinc-300'>
+    Contains information from Kaggle's "Full TMDB Movies Dataset" which is made
+    available under the ODC Attribution License.
+  </span>
+)
+
+const DEFAULT_REVEAL_SCREEN_DELAY = 1200
+const PREVIEW_MODE_REVEAL_SCREEN_DELAY = 300
+let hideScreen = OBSCURE_VISUAL_DEFECTS
+function useIntroVisible() {
+  const { introRequired, isPreviewMode } = useShallowState((state) => ({
+    introRequired: !state.playedIntro || !state.preset,
+    preset: state.preset,
+    hasDeviceClass: isDefined(state.deviceClass),
+    isPreviewMode: state.mode === VOROFORCE_MODE.preview,
+  }))
+
+  if (OBSCURE_VISUAL_DEFECTS) {
+    const [, forceUpdate] = useReducer((x) => x + 1, 0)
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
+    useEffect(() => {
+      setTimeout(
+        () => {
+          hideScreen = false
+          forceUpdate()
+        },
+        isPreviewMode
+          ? PREVIEW_MODE_REVEAL_SCREEN_DELAY
+          : DEFAULT_REVEAL_SCREEN_DELAY,
+      )
+    }, [])
+
+    useEffect(() => {
+      let timeout: NodeJS.Timeout
+      const onResize = () => {
+        hideScreen = true
+        forceUpdate()
+        clearTimeout(timeout)
+        timeout = setTimeout(
+          () => {
+            hideScreen = false
+            forceUpdate()
+          },
+          isPreviewMode
+            ? PREVIEW_MODE_REVEAL_SCREEN_DELAY
+            : DEFAULT_REVEAL_SCREEN_DELAY,
+        )
+      }
+      window.addEventListener('resize', onResize)
+      return () => {
+        window.removeEventListener('resize', onResize)
+      }
+    }, [isPreviewMode])
+  }
+
+  return introRequired || hideScreen
 }

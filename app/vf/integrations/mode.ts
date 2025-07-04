@@ -79,9 +79,6 @@ const handleIntro = () => {
 
   const { controls, dimensions } = voroforce
 
-  // revealVoroforceContainer()
-  // setPlayedIntro(true)
-  // return
   setTimeout(() => {
     voroforce.config.lattice = {
       ...baseLatticeConfig,
