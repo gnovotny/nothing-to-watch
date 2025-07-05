@@ -45,13 +45,12 @@ export function CellLimitSelector({
   }, [deviceClass])
 
   return (
-    <div className='flex flex-col gap-4 md:flex-row'>
+    <div className={cn('flex flex-col gap-4 md:flex-row', className)}>
       <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 dark:text-white'>
         <Grid3x3Icon className='h-5 w-5 text-zinc-900 dark:text-white' />
         Films
       </div>
       <Selector
-        className={cn('', className)}
         itemClassName='py-1 text-center text-sm leading-none rounded-lg flex items-center justify-center'
         defaultValue={String(value)}
         onValueChange={(value) => {

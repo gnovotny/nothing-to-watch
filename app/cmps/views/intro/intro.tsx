@@ -61,7 +61,7 @@ export const Intro = () => {
             <MoviesDatasetLicenseInfo />
           </FadeTransition>
           <FadeTransition
-            visible={hasDeviceClass && (isSmallScreen || !preset)}
+            visible={hasDeviceClass && !preset}
             className='absolute inset-x-0 bottom-12 w-full duration-1000'
             transitionOptions={{
               timeout: 500,
@@ -98,8 +98,6 @@ let hideScreen = OBSCURE_VISUAL_DEFECTS
 function useIntroVisible() {
   const { introRequired, isPreviewMode } = useShallowState((state) => ({
     introRequired: !state.playedIntro || !state.preset,
-    preset: state.preset,
-    hasDeviceClass: isDefined(state.deviceClass),
     isPreviewMode: state.mode === VOROFORCE_MODE.preview,
   }))
 

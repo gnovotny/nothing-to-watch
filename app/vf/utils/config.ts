@@ -8,12 +8,7 @@ import { down, matchMediaQuery } from '../../utils/mq'
 
 import type { THEME } from '../../consts'
 import type { StoreState } from '../../store'
-import {
-  CELL_LIMIT,
-  DEVICE_CLASS,
-  VOROFORCE_MODE,
-  VOROFORCE_PRESET,
-} from '../consts'
+import { DEVICE_CLASS, VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
 import type { ConfigUniform } from './uniforms'
 import type { VoroforceInstance } from '../types'
 import { controlModeConfigs } from '../config/controls/controls'
@@ -81,8 +76,6 @@ export const getConfig = async (state: StoreState) => {
     deviceClass: initialDeviceClass,
     estimatedDeviceClass: initialEstimatedDeviceClass,
     setEstimatedDeviceClass,
-    setPreset,
-    setCellLimit,
     setDeviceClass,
     ua,
     mode,
@@ -95,14 +88,16 @@ export const getConfig = async (state: StoreState) => {
   const device = ua.getDevice()
 
   let preset = initialPreset
-  let deviceClass = initialDeviceClass
+  const deviceClass = initialDeviceClass
   let estimatedDeviceClass = initialEstimatedDeviceClass
 
   if (!preset && !deviceClass && !estimatedDeviceClass) {
+    const isMobile = device.is('mobile')
+    const isTablet = device.is('tablet')
     const isSmallScreen = matchMediaQuery(down('md')).matches
-    if (device.is('mobile') || device.is('tablet')) {
+    if (isMobile) {
       estimatedDeviceClass = DEVICE_CLASS.mobile
-    } else if (isSmallScreen) {
+    } else if (isSmallScreen || isTablet) {
       estimatedDeviceClass = DEVICE_CLASS.low
     } else {
       const gpuTier = await getGPUTier()
@@ -110,7 +105,6 @@ export const getConfig = async (state: StoreState) => {
       switch (gpuTier.tier) {
         case 3:
           estimatedDeviceClass = DEVICE_CLASS.high
-          // estimatedDeviceClass = DEVICE_CLASS.mid
           break
         case 2:
           estimatedDeviceClass = DEVICE_CLASS.mid
@@ -121,10 +115,9 @@ export const getConfig = async (state: StoreState) => {
     }
 
     if (isSmallScreen) {
-      deviceClass = estimatedDeviceClass
-      setDeviceClass(deviceClass)
-      setPreset(VOROFORCE_PRESET.mobile)
-      setCellLimit(CELL_LIMIT.xxs)
+      setDeviceClass(estimatedDeviceClass)
+      // setPreset(isMobile ? VOROFORCE_PRESET.mobile : VOROFORCE_PRESET.minimal)
+      // setCellLimit(isMobile ? CELL_LIMIT.xxs : CELL_LIMIT.xs)
     }
     setEstimatedDeviceClass(estimatedDeviceClass)
   }
@@ -198,8 +191,7 @@ const processVoroforceStageConfigUniforms = (
 }
 
 const getVoroforceConfigUniforms = (
-  // biome-ignore lint/suspicious/noExplicitAny: todo
-  config: any,
+  config: VoroforceInstance['config'],
   mode: VOROFORCE_MODE,
   theme: THEME,
 ) => {

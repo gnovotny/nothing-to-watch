@@ -105,8 +105,6 @@ export default class ForcesSimulationStep extends BaseSimulationStep {
         0.025,
       )
 
-      console.log('velocityDecay', this.parameters.velocityDecay)
-
       if (
         this.parameters.alpha === this.targetParameters.alpha &&
         this.parameters.velocityDecay === this.targetParameters.velocityDecay

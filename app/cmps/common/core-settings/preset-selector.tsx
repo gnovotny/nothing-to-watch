@@ -46,7 +46,7 @@ export function PresetSelector({
   }, [deviceClass])
 
   return (
-    <div className='flex flex-col gap-4'>
+    <div className={cn('flex flex-col gap-4', className)}>
       <div className='flex items-end gap-4'>
         <div className='flex items-center gap-2 font-semibold text-xl text-zinc-900 leading-none dark:text-white'>
           <Settings2 className='h-5 w-5 text-zinc-900 dark:text-white' />
@@ -57,7 +57,6 @@ export function PresetSelector({
         {/*</p>*/}
       </div>
       <Selector
-        className={cn('', className)}
         itemClassName='aspect-video text-white'
         itemBgClassName='z-1'
         defaultValue={value}

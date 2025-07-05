@@ -9,6 +9,7 @@ import { Button, type ButtonProps } from '../../ui/button'
 import {
   CELL_LIMIT,
   CELL_LIMIT_ITEMS,
+  DEVICE_CLASS,
   PRESET_ITEMS,
 } from '../../../vf/consts.ts'
 import { isDefined } from '../../../utils/misc'
@@ -55,7 +56,9 @@ export function CoreSettingsWidget({
   const [preset, setPreset] = useState<VOROFORCE_PRESET | undefined>(
     storePreset ??
       (isSmallScreen
-        ? VOROFORCE_PRESET.minimal
+        ? deviceClass === DEVICE_CLASS.mobile
+          ? VOROFORCE_PRESET.mobile
+          : VOROFORCE_PRESET.minimal
         : isDefined(deviceClass)
           ? PRESET_ITEMS.find((p) =>
               isDefined(p.recommendedDeviceClass)
@@ -68,7 +71,9 @@ export function CoreSettingsWidget({
   const [cellLimit, setCellLimit] = useState<CELL_LIMIT | undefined>(
     storeCellLimit ??
       (isSmallScreen
-        ? CELL_LIMIT.xxs
+        ? deviceClass === DEVICE_CLASS.mobile
+          ? CELL_LIMIT.xxs
+          : CELL_LIMIT.xs
         : isDefined(deviceClass)
           ? CELL_LIMIT_ITEMS.findLast((p) =>
               isDefined(p.recommendedDeviceClass)
@@ -88,6 +93,7 @@ export function CoreSettingsWidget({
       innerClassName={cn('flex flex-col gap-4', className)}
     >
       <PresetSelector
+        className='max-md:hidden'
         value={preset}
         onValueChange={(value: VOROFORCE_PRESET) => {
           setPreset(value)
@@ -96,6 +102,7 @@ export function CoreSettingsWidget({
         deviceClass={deviceClass}
       />
       <CellLimitSelector
+        className='max-md:hidden'
         value={cellLimit}
         onValueChange={(value: CELL_LIMIT) => {
           setCellLimit(value)

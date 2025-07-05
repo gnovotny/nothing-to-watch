@@ -147,6 +147,7 @@ export const omniForce = ({
         if (speedScale > mediaHighestSpeedLimit) return
 
         if (
+          maxTargetMediaVersion >= 3 &&
           speedScale < mediaV3SpeedLimit &&
           colLevelAdjacency <= mediaV3ColLevelAdjacencyThreshold &&
           rowLevelAdjacency <= mediaV3RowLevelAdjacencyThreshold

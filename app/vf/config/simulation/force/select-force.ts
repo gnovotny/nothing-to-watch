@@ -179,10 +179,12 @@ export const selectForceSimulationStepConfig = {
       // strength: 0.1, // for smaller push radius
       // strength: 0.05,
       // strength: 0.0025,
-      strength: 0,
+      strength: 0.01,
+      // strength: 0,
       selector: 'focused',
-      yFactor: 2.5,
-      centerXStretchMod: 2.5,
+      // yFactor: 2.5,
+      yFactor: 2,
+      centerXStretchMod: 0,
     },
     lattice: {
       strength: 0.8,
@@ -194,7 +196,7 @@ export const selectForceSimulationStepConfig = {
     origin: {
       strength: 0.1,
       // yFactor: 1.5,
-      latticeScale: 4,
+      // latticeScale: 2,
       // latticeScale: 1,
     },
   },
