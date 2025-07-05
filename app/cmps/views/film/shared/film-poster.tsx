@@ -8,7 +8,10 @@ export const FilmPoster = ({
   onPointerOver,
   className = '',
 }: {
-  film: Film
+  film: {
+    title: Film['title']
+    poster?: Film['poster']
+  }
   onPointerOver?: PointerEventHandler<HTMLImageElement>
   className?: string
 }) => {

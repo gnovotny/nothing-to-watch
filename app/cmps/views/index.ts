@@ -1,1 +1,1 @@
-export { default } from './lazy-main-views'
+export { default } from './lazy-primary-views'

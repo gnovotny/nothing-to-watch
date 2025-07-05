@@ -51,7 +51,7 @@ export function CellLimitSelector({
         Films
       </div>
       <Selector
-        itemClassName='py-1 text-center text-sm leading-none rounded-lg flex items-center justify-center'
+        itemClassName='py-1 text-center text-sm md:text-xs xl:text-sm leading-none rounded-lg flex items-center justify-center'
         defaultValue={String(value)}
         onValueChange={(value) => {
           onValueChange(Number.parseInt(value) as CELL_LIMIT)

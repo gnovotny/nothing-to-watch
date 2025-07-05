@@ -1,4 +1,4 @@
-import { GithubIcon, Info, Settings } from 'lucide-react'
+import { GithubIcon, Heart, Info, Settings } from 'lucide-react'
 
 import { useShallowState } from '@/store'
 import config from '../../config'
@@ -7,13 +7,25 @@ import { Button } from '../ui/button'
 import { ThemeToggle } from './theme'
 
 export const Navbar = () => {
-  const { settingsOpen, toggleSettingsOpen, aboutOpen, toggleAboutOpen } =
-    useShallowState((state) => ({
-      settingsOpen: state.settingsOpen,
-      toggleSettingsOpen: state.toggleSettingsOpen,
-      aboutOpen: state.aboutOpen,
-      toggleAboutOpen: state.toggleAboutOpen,
-    }))
+  const {
+    settingsOpen,
+    toggleSettingsOpen,
+    aboutOpen,
+    toggleAboutOpen,
+    favoritesOpen,
+    toggleFavoritesOpen,
+    hasFavorites,
+  } = useShallowState((state) => ({
+    settingsOpen: state.settingsOpen,
+    toggleSettingsOpen: state.toggleSettingsOpen,
+    aboutOpen: state.aboutOpen,
+    toggleAboutOpen: state.toggleAboutOpen,
+    favoritesOpen: state.favoritesOpen,
+    toggleFavoritesOpen: state.toggleFavoritesOpen,
+    hasFavorites:
+      state.userConfig.favorites &&
+      Object.keys(state.userConfig.favorites).length > 0,
+  }))
 
   const buttonClassnames =
     '!size-6 [&_svg]:!size-4 lg:!size-8 lg:[&_svg]:!size-5 pointer-events-auto rounded-full cursor-pointer'
@@ -52,6 +64,25 @@ export const Navbar = () => {
       >
         <Settings />
       </Button>
+      {hasFavorites && (
+        <Button
+          variant='ghost'
+          size='icon'
+          onClick={toggleFavoritesOpen}
+          onPointerDown={(event) => {
+            if (favoritesOpen) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+          }}
+          className={cn(buttonClassnames, {
+            'border border-foreground': favoritesOpen,
+          })}
+        >
+          <Heart />
+        </Button>
+      )}
+
       <ThemeToggle
         className={cn(buttonClassnames, 'hidden lg:inline-flex')}
         onPointerDown={(event) => {

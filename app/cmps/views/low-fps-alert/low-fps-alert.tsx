@@ -128,7 +128,7 @@ export const LowFpsAlert = () => {
             <TriangleAlert className='h-5 w-5 text-amber-500 ' />
             <div>Low FPS detected</div>
           </div>
-          <p className='inline-flex text-base text-zinc-600 max-md:pb-2 dark:text-zinc-300'>
+          <p className='inline-flex pb-2 text-base text-zinc-600 max-md:pb-2 dark:text-zinc-300'>
             <span className='leading-none md:hidden'>
               This page is best viewed on a larger device like a desktop or
               laptop.
@@ -138,7 +138,7 @@ export const LowFpsAlert = () => {
                 hidden: preset === VOROFORCE_PRESET.minimal,
               })}
             >
-              Switch to a lower quality setting?
+              Switch to a faster preset?
             </span>
             <span
               className={cn('max-md:hidden', {

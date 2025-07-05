@@ -12,6 +12,7 @@ import { DEVICE_CLASS, VOROFORCE_MODE, VOROFORCE_PRESET } from '../consts'
 import type { ConfigUniform } from './uniforms'
 import type { VoroforceInstance } from '../types'
 import { controlModeConfigs } from '../config/controls/controls'
+import type { Film } from './films'
 
 export type CustomLink = {
   name: string
@@ -26,6 +27,14 @@ export type UserConfig = {
   forceHigherQuality?: boolean
   devTools?: boolean
   customLinks?: CustomLink[]
+  favorites?: {
+    [key: Film['tmdbId']]: {
+      title: Film['title']
+      tmdbId: Film['tmdbId']
+      imdbId?: Film['imdbId']
+      poster?: Film['poster']
+    }
+  }
 }
 
 const modeConfigs: {

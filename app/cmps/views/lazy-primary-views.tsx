@@ -3,9 +3,9 @@ import { lazy } from 'react'
 import { useShallowState } from '../../store'
 import { FadeTransition } from '../common/fade-transition'
 
-const MainViews = lazy(() => import('./main-views'))
+const PrimaryViews = lazy(() => import('./primary-views'))
 
-function LazyMainViews() {
+function LazyPrimaryViews() {
   const loadViews = useShallowState(
     ({ mode, preset }) => mode !== VOROFORCE_MODE.intro && Boolean(preset),
   )
@@ -15,9 +15,9 @@ function LazyMainViews() {
       visible={loadViews}
       className='relative h-dvh w-full overflow-hidden'
     >
-      {loadViews && <MainViews />}
+      {loadViews && <PrimaryViews />}
     </FadeTransition>
   )
 }
 
-export default LazyMainViews
+export default LazyPrimaryViews

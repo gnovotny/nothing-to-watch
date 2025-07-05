@@ -46,6 +46,9 @@ export type StoreState = {
   aboutOpen: boolean
   setAboutOpen: (aboutOpen: boolean) => void
   toggleAboutOpen: () => void
+  favoritesOpen: boolean
+  setFavoritesOpen: (favoritesOpen: boolean) => void
+  toggleFavoritesOpen: () => void
   newLinkTypeOpen: boolean
   setNewLinkTypeOpen: (open: boolean) => void
   toggleNewLinkTypeOpen: () => void
@@ -147,6 +150,18 @@ export const store = create(
             aboutOpen: !get().aboutOpen,
           })
         },
+        favoritesOpen: false,
+        setFavoritesOpen: (favoritesOpen: boolean) => {
+          set({
+            favoritesOpen,
+          })
+        },
+        toggleFavoritesOpen: () => {
+          set({
+            favoritesOpen: !get().favoritesOpen,
+          })
+        },
+
         newLinkTypeOpen: false,
         setNewLinkTypeOpen: (newLinkTypeOpen: boolean) => {
           set({
